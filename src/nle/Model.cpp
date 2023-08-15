@@ -49,7 +49,6 @@ namespace nle
         }
         
         m_multimesh = new MultiMesh();
-        // prdbg("loaded materials: %lu", loader.LoadedMaterials.size());
 
         for (const auto &mesh : loader.LoadedMeshes)
         {
@@ -58,32 +57,26 @@ namespace nle
             
             Shader *s = m_shader ? m_shader : nle::DEFAULT_SHADER;
             Texture * t = nullptr;
-            // prdbg("loading texture: %s", mesh.MeshMaterial.name.c_str());
 
             if(!mesh.MeshMaterial.map_Kd.empty())
             {
                 std::string tex_path;
-                bool is_fname = tex_path.find_last_of('/') == std::string::npos;
-                if(is_fname) // if only file name is given, we seek it in the same directory
-                    tex_path = path.substr(0, path.find_last_of('/')+1) + mesh.MeshMaterial.map_Kd;
-                else
-                    tex_path = mesh.MeshMaterial.map_Kd;
+                // bool is_fname = (tex_path.find('/') == std::string::npos);
+                std::size_t pos_last_slash = path.find_last_of('/');
 
-                // prdbg("loading texture: %s", tex_path.c_str());
-                std::vector<std::string> possible_locations = {
-                    tex_path,
-                    "../texture/" + tex_path,
-                    "../textures/" + tex_path
-                };
 
-                for(const auto& location  : possible_locations)
+                if(pos_last_slash == std::string::npos) // if only file name is given, we seek it in the same directory
                 {
-                    if(std::filesystem::exists(location))
-                    {
-                        t = new Texture(tex_path);
-                        break;
-                    }
+                    tex_path = path.substr(0, path.find_last_of('/')+1) + mesh.MeshMaterial.map_Kd;
                 }
+                else
+                {
+                    tex_path = mesh.MeshMaterial.map_Kd;
+                }
+                
+                prdbg("texpath: %s", tex_path.c_str());
+
+                t = new Texture(tex_path);
             }
 
             for (const auto &v : mesh.Vertices)
