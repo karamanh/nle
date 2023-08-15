@@ -5,6 +5,7 @@
 #include "tiny_gltf.h"
 
 #include <algorithm>
+#include <filesystem>
 
 namespace nle
 {
@@ -69,7 +70,20 @@ namespace nle
                     tex_path = mesh.MeshMaterial.map_Kd;
 
                 // prdbg("loading texture: %s", tex_path.c_str());
-                t = new Texture(tex_path);
+                std::vector<std::string> possible_locations = {
+                    tex_path,
+                    "../texture/" + tex_path,
+                    "../textures/" + tex_path
+                };
+
+                for(const auto& location  : possible_locations)
+                {
+                    if(std::filesystem::exists(location))
+                    {
+                        t = new Texture(tex_path);
+                        break;
+                    }
+                }
             }
 
             for (const auto &v : mesh.Vertices)

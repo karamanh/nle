@@ -16,16 +16,11 @@ int main(int argc, char *argv[])
 	nle::Nle app;
 
 	std::map<std::string, nle::Model*> models;
+	std::map<std::string, nle::Material*> materials;
 
 	app.window()->input_handler()->key_pressed().bind_callback([&](const int& key){
 		switch(key)
 		{
-			case GLFW_KEY_ESCAPE:
-			app.window()->close();
-			break;
-			case GLFW_KEY_F:
-			app.window()->set_fullscreen(!app.window()->fullscreen());
-			break;
 			case GLFW_KEY_LEFT_CONTROL:
 			app.current_scene()->camera()->set_free_roam(!app.current_scene()->camera()->free_roam());
 			app.window()->set_cursor_visibility(!app.current_scene()->camera()->free_roam());
@@ -34,8 +29,8 @@ int main(int argc, char *argv[])
 	});
 
 	app.current_scene()->set_id("root");
-	app.current_scene()->camera()->set_rotation({-15.f, 0.f, 0.f});
-	app.current_scene()->camera()->set_position({-50.f, 50.f, -50.f});
+	app.current_scene()->camera()->set_rotation({-30.f, 135.f, 0.f});
+	app.current_scene()->camera()->set_position({5.f, 5.f, -5.f});
 	app.current_scene()->light()->set_position(glm::vec3(0.f, 100.f, 0.f));
 	app.current_scene()->light()->set_rotation({180.f, 0.f, 0.f});
 	app.current_scene()->light()->set_ambient_intensity(0.5f);
@@ -43,13 +38,6 @@ int main(int argc, char *argv[])
 	app.current_scene()->light()->set_enabled(true);
 
 	nle::Material material(4.0f, 32);
-
-	models["skybox"] = new nle::Model("models/skybox/skybox.obj", nle::DEFAULT_SHADER, app.texture_factory()->load_and_get("models/skybox/skybox.png", "skybox0"));
-	auto skybox_ins = models["skybox"]->create_instance();
-	skybox_ins->set_id("skybox");
-	
-	skybox_ins->set_scale(glm::vec3(200.f));
-	app.current_scene()->add_child(skybox_ins);
 
 	app.renderer()->gui()->set_draw_callback([&](){
 		ImGuiIO& io = ImGui::GetIO();
@@ -170,7 +158,7 @@ int main(int argc, char *argv[])
 			// camera settings
 			ImGui::TextWrapped("camera settings:");
 			bval = app.current_scene()->camera()->free_roam();
-			ImGui::Checkbox("free roam", &bval);
+			ImGui::Checkbox("free roam [ctrl]", &bval);
 			app.current_scene()->camera()->set_free_roam(bval);
 			fval = app.current_scene()->camera()->speed();
 			ImGui::SliderFloat("speed", &fval, 0.f, 50.f);
@@ -224,7 +212,7 @@ int main(int argc, char *argv[])
 			
 			ImGui::Separator();
 
-			if(ImGui::CollapsingHeader("loaded models"))
+			if(ImGui::CollapsingHeader("loaded models", ImGuiTreeNodeFlags_DefaultOpen))
 			{
 				for(const auto& it : models)
 				{
@@ -232,14 +220,16 @@ int main(int argc, char *argv[])
 					ImGui::SameLine();
 					if(ImGui::Button("create instance"))
 					{
-						app.current_scene()->add_child(it.second->create_instance());
+						auto * instance = it.second->create_instance();
+						instance->set_material_for_meshes(&material);
+						app.current_scene()->add_child(instance);
 					}
 				}
 			}
 
 			ImGui::Separator();
 
-			ImGui::TextWrapped("scene [%s]", app.current_scene()->id().c_str());
+			ImGui::TextWrapped("current scene [%s]", app.current_scene()->id().c_str());
 			for(auto * i : app.current_scene()->children())
 			{
 				nle::MultiMeshInstance *mi = dynamic_cast<nle::MultiMeshInstance*>(i);
@@ -319,13 +309,18 @@ int main(int argc, char *argv[])
 						selected_obj->set_scale(v3val);
 						ImGui::PopID();
 					}
+
+					if(ImGui::Button("delete object"))
+					{
+						app.current_scene()->delete_child(selected_obj);
+						selected_obj = nullptr;
+						// delete selected_obj;
+						// // delete selected_obj;
+						// selected_obj = nullptr;
+					}
 				}
 				ImGui::End();
 			}
-
-			// if(selected_obj != nullptr)
-			// {
-			// }
 
             ImGui::End();
         }
@@ -336,6 +331,11 @@ int main(int argc, char *argv[])
 	for(auto & model: models)
 	{
 		delete model.second;
+	}
+
+	for(auto & material: materials)
+	{
+		delete material.second;
 	}
 
 	return (0);

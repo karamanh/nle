@@ -95,6 +95,17 @@ namespace nle
             prerr("child already added");
     }
 
+    void Object3D::delete_child(Object3D *child)
+    {
+        auto it = std::find(m_children.begin(), m_children.end(), child);
+        if(it != m_children.end())
+        {
+            delete *it;
+            m_children.erase(it);
+            prdbg("deleted");
+        }
+    }
+
     void Object3D::set_id(const std::string& id)
     {
         m_id = id;

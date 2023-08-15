@@ -29,10 +29,7 @@ namespace nle
                 glViewport(0, 0, this->m_parent_window->m_width, this->m_parent_window->m_height);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
                 this->render_scene(this->m_root_scene);
-                if(this->m_imgui->visible())
-                {
-                    this->m_imgui->render();
-                }
+                this->gui()->render();
                 m_render_timestamp = get_time_sec();
             });
     }
@@ -80,10 +77,13 @@ namespace nle
     {
         for(auto *i : scene->m_render_objects)
         {
-            MeshInstance *mi;
-            if((mi = dynamic_cast<MeshInstance*>(i)))
+            if(i)
             {
-                render(mi);
+                MeshInstance *mi;
+                if((mi = dynamic_cast<MeshInstance*>(i)))
+                {
+                    render(mi);
+                }
             }
         }
     }
@@ -94,7 +94,7 @@ namespace nle
         glEnable(GL_TEXTURE_2D);
         glEnable(GL_LIGHTING);
         glDepthFunc(GL_LEQUAL);
-        glClearColor(0.53f, 0.8f, 0.92f, 1.f);
+        glClearColor(0.0f, 0.24f, 0.38f, 1.f);
     }
 
     ImGUI_GLFW *Renderer3D::gui() const

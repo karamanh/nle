@@ -31,7 +31,9 @@ namespace nle
 
     void ImGUI_GLFW::render()
     {
-        // ImGui::Begin("nice little engine", nullptr);
+        if(!m_visible)
+            return;
+
         // create frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -39,10 +41,6 @@ namespace nle
 
 
         m_draw_callback();
-
-
-        // static bool show_demo_window = true;
-        // ImGui::ShowDemoWindow(&show_demo_window);
 
         // render
         ImGui::Render();

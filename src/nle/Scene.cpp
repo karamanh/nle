@@ -34,20 +34,45 @@ namespace nle
 
     void Scene::register_render_object(Object3D *object)
     {
-        m_render_objects.push_back(object);
-        for(auto * c : object->children())
+        auto it = std::find(m_render_objects.begin(), m_render_objects.end(), object);
+        if(it == m_render_objects.end())
         {
-            m_render_objects.push_back(c);
+            m_render_objects.push_back(object);
+            for(auto * c : object->children())
+            {
+                register_render_object(c);
+            }
         }
     }
+
+    void Scene::delete_render_object(Object3D *object)
+    {
+        auto it = std::find(m_render_objects.begin(), m_render_objects.end(), object);
+        if(it != m_render_objects.end())
+        {
+            for(auto * c : object->children())
+            {
+                delete_render_object(c);
+            }
+            m_render_objects.erase(it);
+        }
+    }
+
     std::vector<Object3D *> Scene::render_objects()
     {
         return m_render_objects;
     }
+
     void Scene::add_child(Object3D *child)
     {
         Object3D::add_child(child);
         register_render_object(child);
+    }
+
+    void Scene::delete_child(Object3D *child)
+    {
+        delete_render_object(child);
+        Object3D::delete_child(child);
     }
 
     void Scene::set_id(const std::string &id)

@@ -43,6 +43,7 @@ namespace nle
         virtual glm::vec3 scale() const;
         virtual std::vector<Object3D *> children() const;
         virtual void add_child(Object3D *child);
+        virtual void delete_child(Object3D *child);
         virtual void set_id(const std::string& id);
         virtual std::string id() const;
         virtual void set_parent(Object3D *parent);

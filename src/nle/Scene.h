@@ -25,8 +25,10 @@ namespace nle
         void set_camera(Camera *c);
         Light *light();
         void register_render_object(Object3D *object);
+        void delete_render_object(Object3D *object);
         std::vector<Object3D*> render_objects();
         void add_child(Object3D *child) override;
+        void delete_child(Object3D *child) override;
         void set_id(const std::string& id) override;
         nlohmann::json to_json();
 
