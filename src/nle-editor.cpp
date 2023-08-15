@@ -94,17 +94,20 @@ int main(int argc, char *argv[])
 				if(ImGui::Button("load"))
 				{
 					std::string path(inbuf, strlen(inbuf));
-					auto * m = new nle::Model(path, nle::DEFAULT_SHADER);
-					if(m->name().empty())
+					if(!path.empty())
 					{
-						prerr("model name missing");
-						delete m;
-						file_dialog_open = false;
-					}
-					else
-					{
-						models[m->name()] = m;
-						file_dialog_open = false;
+						auto * m = new nle::Model(path, nle::DEFAULT_SHADER);
+						if(m->name().empty())
+						{
+							prerr("model name missing");
+							delete m;
+							file_dialog_open = false;
+						}
+						else
+						{
+							models[m->name()] = m;
+							file_dialog_open = false;
+						}
 					}
 				}
 				ImGui::SameLine();
