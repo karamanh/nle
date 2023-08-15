@@ -5,8 +5,6 @@ namespace nle
 
     Window::Window(GLuint w, GLuint h, const std::string &title)
     {
-        m_input_handler = new InputHandler();
-
         GLenum err = glfwInit();
         if (err != GLFW_TRUE)
         {
@@ -35,6 +33,8 @@ namespace nle
         glfwSetWindowUserPointer(m_handle, this);
         glfwSetKeyCallback(m_handle, Window::key_handler);
         glfwSetCursorPosCallback(m_handle, Window::mouse_handler);
+
+        m_input_handler = new InputHandler(m_handle);
     }
 
     Window::~Window()
@@ -116,9 +116,12 @@ namespace nle
             return;
         }
 
+        // prdbg("key: %d action %d mode %d", key, action, mode);
+
+        key = (unsigned int)key;
         if (key >= 0 && key < w->m_input_handler->keys().size())
         {
-            if (action == GLFW_PRESS)
+            if ((action == GLFW_PRESS) || (action == GLFW_REPEAT))
             {
                 w->m_input_handler->set_key_state(key, true);
             }

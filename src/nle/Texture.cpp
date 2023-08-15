@@ -31,7 +31,7 @@ namespace nle
         }
 
         int internal_format = GL_RGB;
-        if(file_path.find(".png") != std::string::npos)
+        if((file_path.find(".png") != std::string::npos) || (file_path.find(".tga") != std::string::npos))
         {
             internal_format = GL_RGBA;
         }

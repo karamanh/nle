@@ -160,7 +160,7 @@ namespace nle
     }
 
     MeshInstance::MeshInstance(Mesh *mesh)
-        : m_mesh(mesh), m_visible(true), m_render_layer(RenderLayer::_0)
+        : m_mesh(mesh) //, m_visible(true), m_render_layer(RenderLayer::_0)
     {
     }
 

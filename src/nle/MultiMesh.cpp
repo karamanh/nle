@@ -13,9 +13,9 @@ MultiMesh::~MultiMesh()
         delete i;
 }
 
-std::vector<Mesh*> &MultiMesh::meshes() const
+std::vector<Mesh*> &MultiMesh::meshes()
 {
-    m_meshes;
+    return m_meshes;
 }
 
 MultiMeshInstance *MultiMesh::create_instance()

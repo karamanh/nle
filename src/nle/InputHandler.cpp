@@ -5,7 +5,8 @@
 namespace nle
 {
 
-InputHandler::InputHandler()
+InputHandler::InputHandler(GLFWwindow *handle)
+    : m_handle(handle)
 {
     // m_input_timestamp = get_time_sec();
     // m_thr_input = std::thread(
@@ -20,6 +21,16 @@ InputHandler::InputHandler()
     //             std::this_thread::sleep_for(std::chrono::nanoseconds(NLE_INPUT_PROCESS_SLEEP_TIME_NS));
     //         }
     //     });
+
+    // m_thr_input = std::thread(std::bind(&InputHandler::runner, this));
+}
+
+InputHandler::~InputHandler()
+{
+    // if(m_thr_input.joinable())
+    // {
+    //     m_thr_input.join();
+    // }
 }
 
 void InputHandler::set_key_state(int key, bool state)
@@ -53,7 +64,7 @@ void InputHandler::set_mouse_state(int x, int y)
 
 const std::array<bool, 1024> &InputHandler::keys()
 {
-    m_keys;
+    return m_keys;
 }
 
 bool InputHandler::key_state(int key)

@@ -26,6 +26,7 @@ namespace nle
         void use(GLfloat ambient_intensity_location, GLfloat ambient_color_location,
                  GLfloat diffuse_intensity_location, GLfloat diffuse_direction_location);
         void set_color(GLfloat red, GLfloat green, GLfloat blue);
+        glm::vec3 color();
         void set_ambient_intensity(GLfloat intensity);
         float ambient_intensity();
         void set_diffuse_intensity(GLfloat intensity);
@@ -34,6 +35,7 @@ namespace nle
         float specular_intensity();
         void set_enabled(bool enabled);
         bool enabled();
+        void set_id(const std::string& id) override;
     };
 } // namespace nle
 

@@ -15,7 +15,8 @@ layout (location = 2) in vec2 tex;
 
 void main() {
     gl_Position = projection * view * model * vec4(pos, 1);
-    vertexColor = vec4(clamp(pos, 0.f, 1.f), 1.f);
+    // vertexColor = vec4(clamp(pos, 0.f, 1.f), 1.f);
+    vertexColor = vec4(1.0f);
     textureCoordinates = tex;
     normal = mat3(transpose(inverse(model))) * norm;
     fragPos = (model * vec4(pos, 1.0)).xyz;

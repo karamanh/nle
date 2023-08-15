@@ -37,34 +37,8 @@ namespace nle
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        if(ImGui::BeginMainMenuBar())
-        {
-            if(ImGui::BeginMenu("File"))
-            {
-                if(ImGui::MenuItem("Load Model"))
-                {
-                    prdbg("Load Model");
-                }
-                
-                if(ImGui::MenuItem("Quit"))
-                {
-                    prdbg("Quit");
-                }
-                
-                ImGui::EndMenu();
-            }
 
-            ImGui::EndMainMenuBar();
-        }
-
-        if(ImGui::Begin("nice little engine", nullptr, ImGuiWindowFlags_MenuBar))
-        {
-            ImGui::TextWrapped("https://github.com/grizzlei/nle");
-            ImGui::TextWrapped("hasan karaman - 2023");
-            ImGui::TextWrapped("experimental opengl renderer and physics engine.");
-            ImGui::Separator();
-            ImGui::End();
-        }
+        m_draw_callback();
 
 
         // static bool show_demo_window = true;
@@ -73,6 +47,16 @@ namespace nle
         // render
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    }
+
+    const std::function<void()> &ImGUI_GLFW::draw_callback() const
+    {
+        return m_draw_callback;
+    }
+
+    void ImGUI_GLFW::set_draw_callback(std::function<void()> draw_callback)
+    {
+        m_draw_callback = draw_callback;
     }
 
     bool ImGUI_GLFW::visible() const

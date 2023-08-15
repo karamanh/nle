@@ -35,20 +35,6 @@ namespace nle
                 }
                 m_render_timestamp = get_time_sec();
             });
-
-        // m_input_timestamp = get_time_sec();
-        // m_thr_input = std::thread(
-        //     [this]()
-        //     {
-        //         while (!this->m_parent_window->m_closed)
-        //         {
-        //             this->process_keyboard_input();
-        //             this->process_mouse_input(this->m_parent_window->m_mouse_delta.x, this->m_parent_window->m_mouse_delta.y);
-        //             this->m_parent_window->m_mouse_delta = glm::vec2(0.f);
-
-        //             std::this_thread::sleep_for(std::chrono::nanoseconds(NLE_INPUT_PROCESS_SLEEP_TIME));
-        //         }
-        //     });
     }
 
     Renderer3D::~Renderer3D()
@@ -95,7 +81,7 @@ namespace nle
         for(auto *i : scene->m_render_objects)
         {
             MeshInstance *mi;
-            if(mi = dynamic_cast<MeshInstance*>(i))
+            if((mi = dynamic_cast<MeshInstance*>(i)))
             {
                 render(mi);
             }
@@ -109,6 +95,11 @@ namespace nle
         glEnable(GL_LIGHTING);
         glDepthFunc(GL_LEQUAL);
         glClearColor(0.53f, 0.8f, 0.92f, 1.f);
+    }
+
+    ImGUI_GLFW *Renderer3D::gui() const
+    {
+        return m_imgui;
     }
 
     void Renderer3D::render(MeshInstance *mi)

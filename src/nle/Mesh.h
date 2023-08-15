@@ -51,9 +51,9 @@ namespace nle
     private:
         Mesh *m_mesh;
 
-        RenderLayer m_render_layer;
-        int m_render_mode;
-        bool m_visible;
+        // RenderLayer m_render_layer;
+        // int m_render_mode;
+        // bool m_visible;
 
     public:
         MeshInstance(Mesh *mesh);

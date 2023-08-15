@@ -57,6 +57,7 @@ void main() {
         }
     }
 
+    // color = texture(texture0, textureCoordinates) * lightFactor;
     if(textureEnabled == 1)
     {
         color = texture(texture0, textureCoordinates) * lightFactor;

@@ -37,11 +37,8 @@ namespace nle
         void render_recursively(Object3D *root);
         void render_scene(Scene *scene);
         void initialize();
-        void process_keyboard_input();
-        void process_mouse_input(GLfloat dx, GLfloat dy);
 
     public:
-
         Renderer3D(Window *render_target);
         virtual ~Renderer3D();
         void render(MeshInstance *mi);
@@ -49,6 +46,7 @@ namespace nle
         Scene *root_scene() const;
         void set_render_layer_attributes(RenderLayer layer, RenderLayerAttributes attributes);
         RenderLayerAttributes render_layer_attributes(RenderLayer layer = RenderLayer::_0);
+        ImGUI_GLFW * gui() const;
     };
 } // namespace nle
 

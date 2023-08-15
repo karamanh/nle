@@ -2,6 +2,8 @@
 
 #include "Signal.hpp"
 
+#include <GLFW/glfw3.h>
+
 #include <array>
 
 namespace nle
@@ -10,6 +12,7 @@ namespace nle
 class InputHandler
 {
 private:
+    GLFWwindow *m_handle;
 
     int m_mouse_last_x;
     int m_mouse_last_y;
@@ -32,7 +35,8 @@ private:
     // static void mouse_handler(GLFWwindow *window, double mouse_x, double mouse_y);
 
 public:
-    InputHandler();
+    InputHandler(GLFWwindow *handle);
+    virtual ~InputHandler();
 
     const std::array<bool, 1024>& keys();
     bool key_state(int key);

@@ -14,7 +14,7 @@ namespace nle
     public:
         MultiMesh();
         ~MultiMesh();
-        std::vector<Mesh*>& meshes() const;
+        std::vector<Mesh*>& meshes();
         MultiMeshInstance *create_instance();
     };
 

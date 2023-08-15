@@ -7,7 +7,12 @@ namespace nle
 {
     Camera::Camera()
     {
-        Scene *s= dynamic_cast<Scene*>(root());
+        m_up = glm::vec3(0.f, 1.f, 0.f);
+        m_front = glm::vec3(0.f, 0.f, -1.f);
+        m_right = glm::vec3(1.f, 0.f, 0.f);
+        m_up_world = glm::vec3(0.f, 1.f, 0.f);
+        m_speed = 1.f;
+        m_turn_speed = 1.f;
     }
 
     Camera::Camera(glm::vec3 position)
@@ -51,6 +56,22 @@ namespace nle
         return m_free_roam;
     }
 
+    void Camera::look_at(glm::vec3 position)
+    {
+        glm::vec3 dir = glm::normalize(position - this->position());
+        // // glm::
+        glm::vec3 rot = {
+            atan2(dir.x, 1.f),
+            atan2(dir.y, 1.f),
+            atan2(dir.z, -1.f),
+        };
+
+        this->set_rotation(glm::degrees(rot));
+        ;
+        // glm::euler(glm::lookAt(this->position(), this->position() + dir, m_up_world));
+        // glm::euler<mat4>(glm::lookAt(this->position(), this->position() + dir, m_up_world));
+    }
+
     void Camera::set_free_roam(bool free_roam)
     {
         m_free_roam = free_roam;
@@ -66,6 +87,11 @@ namespace nle
     {
         Object3D::set_position(position);
         update();
+    }
+
+    void Camera::set_id(const std::string &id)
+    {
+        Object3D::set_id("camera_" + id);
     }
 
     void Camera::update()

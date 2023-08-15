@@ -1,5 +1,4 @@
 #include "Object3D.h"
-#include "Scene.h"
 
 #include <algorithm>
 
@@ -86,21 +85,17 @@ namespace nle
         if(!child)
             prerr("child cannot be null");
 
-        Scene * s = dynamic_cast<Scene*>(this->root());
-
         if (std::find(m_children.begin(), m_children.end(), child) == m_children.end())
         {
             m_children.push_back(child);
             child->set_parent(this);
-            if(s)
-                s->register_render_object(child);
             m_sig_child_added.emit(child);
         }
         else
             prerr("child already added");
     }
 
-    void Object3D::set_id(const std::string id)
+    void Object3D::set_id(const std::string& id)
     {
         m_id = id;
     }

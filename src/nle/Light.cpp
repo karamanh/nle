@@ -5,7 +5,6 @@ namespace nle
     Light::Light()
         : m_color(glm::vec3(1.f)), m_ambient_intensity(1.f), m_diffuse_intensity(1.f)
     {
-        this->set_rotation(glm::vec3(0.f, -1.f, 0.f));
     }
 
     Light::Light(GLfloat red, GLfloat green, GLfloat blue, GLfloat ambient_intensity,
@@ -14,7 +13,6 @@ namespace nle
         m_color = glm::vec3(red, green, blue);
         m_ambient_intensity = ambient_intensity;
         m_diffuse_intensity = diffuse_intensity;
-        this->set_rotation(glm::vec3(0.f, -1.f, 0.f));
     }
 
     Light::~Light()
@@ -70,11 +68,21 @@ namespace nle
         return m_enabled;
     }
 
+    void Light::set_id(const std::string &id)
+    {
+        Object3D::set_id("light_" + id);
+    }
+
     void Light::set_color(GLfloat red, GLfloat green, GLfloat blue)
     {
         m_color.r = red;
         m_color.g = green;
         m_color.b = blue;
+    }
+
+    glm::vec3 Light::color()
+    {
+        return m_color;
     }
 
 } // namespace nle
