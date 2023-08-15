@@ -267,6 +267,8 @@ int main(int argc, char *argv[])
 						if(strlen(idbuf) > 0)
 							selected_obj->set_id(idbuf);
 					}
+					
+					ImGui::Separator();
 
 					if(ImGui::CollapsingHeader("transform", ImGuiTreeNodeFlags_DefaultOpen))
 					{
@@ -312,7 +314,7 @@ int main(int argc, char *argv[])
 						selected_obj->set_scale(v3val);
 						ImGui::PopID();
 					}
-					
+
 					ImGui::Separator();
 
 					if(ImGui::CollapsingHeader("material", ImGuiTreeNodeFlags_DefaultOpen))
