@@ -312,6 +312,8 @@ int main(int argc, char *argv[])
 						selected_obj->set_scale(v3val);
 						ImGui::PopID();
 					}
+					
+					ImGui::Separator();
 
 					if(ImGui::CollapsingHeader("material", ImGuiTreeNodeFlags_DefaultOpen))
 					{
@@ -339,6 +341,8 @@ int main(int argc, char *argv[])
 							}
 						}
 					}
+					
+					ImGui::Separator();
 
 					if(ImGui::Button("delete object"))
 					{
