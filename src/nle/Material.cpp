@@ -23,4 +23,24 @@ namespace nle
         glUniform1f(specular_intensity_location, m_specular_intensity);
         glUniform1f(shininess_location, m_shininess);
     }
+
+    void Material::set_specular_intensity(float specular_intensity)
+    {
+        m_specular_intensity = specular_intensity;
+    }
+
+    float Material::specular_intensity() const
+    {
+        return m_specular_intensity;
+    }
+
+    void Material::set_shininess(float shininess)
+    {
+        m_shininess = shininess;
+    }
+
+    float Material::shininess() const
+    {
+        return m_shininess;
+    }
 } // namespace nle

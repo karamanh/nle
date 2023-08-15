@@ -221,7 +221,7 @@ int main(int argc, char *argv[])
 					if(ImGui::Button("create instance"))
 					{
 						auto * instance = it.second->create_instance();
-						instance->set_material_for_meshes(&material);
+						instance->set_material(&material);
 						app.current_scene()->add_child(instance);
 					}
 				}
@@ -308,6 +308,33 @@ int main(int argc, char *argv[])
 						ImGui::InputFloat("z", &v3val.z);
 						selected_obj->set_scale(v3val);
 						ImGui::PopID();
+					}
+
+					if(ImGui::CollapsingHeader("material", ImGuiTreeNodeFlags_DefaultOpen))
+					{
+						nle::MultiMeshInstance *instance;
+						if((instance = dynamic_cast<nle::MultiMeshInstance*>(selected_obj)))
+						{
+							nle::Material *material;
+							if((material = instance->material()))
+							{
+								ImGui::PushID("specular_intensity");
+								fval = material->specular_intensity();
+								ImGui::InputFloat("specular intensity", &fval);
+								material->set_specular_intensity(fval);
+								ImGui::PopID();
+								ImGui::PushID("shininess");
+								fval = material->shininess();
+								ImGui::InputFloat("shininess", &fval);
+								material->set_shininess(fval);
+								ImGui::PopID();
+
+								if(ImGui::Button("clear material"))
+								{
+									instance->set_material(nullptr);
+								}
+							}
+						}
 					}
 
 					if(ImGui::Button("delete object"))

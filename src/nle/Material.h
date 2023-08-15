@@ -15,6 +15,10 @@ namespace nle
         Material(float specular_intensity, float shininess);
         ~Material();
         void use(float specular_intensity_location, float shininess_location);
+        void set_specular_intensity(float specular_intensity); 
+        float specular_intensity() const;
+        void set_shininess(float shininess); 
+        float shininess() const;
     };
 } // namespace nle
 

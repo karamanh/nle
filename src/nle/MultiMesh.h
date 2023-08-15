@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Mesh.h"
+#include "Material.h"
 #include "RenderObject3D.h"
 
 namespace nle
@@ -22,10 +23,13 @@ namespace nle
     {
     private:
         MultiMesh *m_multimesh;
+        Material *m_material = nullptr;
+        void set_material_for_meshes(Material *material);
     public:
         MultiMeshInstance(MultiMesh *mm);
         ~MultiMeshInstance();
         MultiMesh *multimesh() const;
-        void set_material_for_meshes(Material *material);
+        void set_material(Material *material);
+        Material *material() const;
     };
 } // namespace nle
