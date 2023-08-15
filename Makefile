@@ -33,7 +33,7 @@ INCLUDE	:= include src
 LIB		:= lib
 
 ifeq ($(OS),Windows_NT)
-MAIN	:= nle-demo.exe
+MAIN	:= nle-editor.exe
 SOURCEDIRS	:= $(SRC)
 INCLUDEDIRS	:= $(INCLUDE)
 LIBDIRS		:= $(LIB)
@@ -41,7 +41,7 @@ FIXPATH = $(subst /,\,$1)
 RM			:= del /q /f
 MD	:= mkdir
 else
-MAIN	:= nle-demo
+MAIN	:= nle-editor
 SOURCEDIRS	:= $(shell find $(SRC) -type d)
 INCLUDEDIRS	:= $(shell find $(INCLUDE) -type d)
 LIBDIRS		:= $(shell find $(LIB) -type d)

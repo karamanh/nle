@@ -15,6 +15,8 @@ int main(int argc, char *argv[])
 {
 	nle::Nle app;
 
+	std::map<std::string, nle::Model*> models;
+
 	app.window()->input_handler()->key_pressed().bind_callback([&](const int& key){
 		switch(key)
 		{
@@ -28,9 +30,6 @@ int main(int argc, char *argv[])
 			app.current_scene()->camera()->set_free_roam(!app.current_scene()->camera()->free_roam());
 			app.window()->set_cursor_visibility(!app.current_scene()->camera()->free_roam());
 			break;
-			case GLFW_KEY_G:
-			app.renderer()->gui()->set_visible(!app.renderer()->gui()->visible());
-			break;
 		}
 	});
 
@@ -42,6 +41,15 @@ int main(int argc, char *argv[])
 	app.current_scene()->light()->set_ambient_intensity(0.5f);
 	app.current_scene()->light()->set_diffuse_intensity(1.0f);
 	app.current_scene()->light()->set_enabled(true);
+
+	nle::Material material(4.0f, 32);
+
+	models["skybox"] = new nle::Model("models/skybox/skybox.obj", nle::DEFAULT_SHADER, app.texture_factory()->load_and_get("models/skybox/skybox.png", "skybox0"));
+	auto skybox_ins = models["skybox"]->create_instance();
+	skybox_ins->set_id("skybox");
+	
+	skybox_ins->set_scale(glm::vec3(200.f));
+	app.current_scene()->add_child(skybox_ins);
 
 	app.renderer()->gui()->set_draw_callback([&](){
 		ImGuiIO& io = ImGui::GetIO();
@@ -97,11 +105,19 @@ int main(int argc, char *argv[])
 				ImGui::InputText("model path", inbuf, sizeof(inbuf) -1);
 				if(ImGui::Button("load"))
 				{
-					std::string path(inbuf, strlen(inbuf)); // = std::string(buf, sizeof(buf));
-					nle::Model mod(path, nle::DEFAULT_SHADER);
-					auto * instance = mod.create_instance();
-					app.current_scene()->add_child(instance);
-					file_dialog_open = false;
+					std::string path(inbuf, strlen(inbuf));
+					auto * m = new nle::Model(path, nle::DEFAULT_SHADER);
+					if(m->name().empty())
+					{
+						prerr("model name missing");
+						delete m;
+						file_dialog_open = false;
+					}
+					else
+					{
+						models[m->name()] = m;
+						file_dialog_open = false;
+					}
 				}
 				ImGui::SameLine();
 				if(ImGui::Button("cancel"))
@@ -115,7 +131,7 @@ int main(int argc, char *argv[])
 		if(about_open)
 		{
 			ImGui::SetNextWindowPos(ImVec2(display_size.x * 0.5f, display_size.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f,0.5f));
-			if(ImGui::Begin("about", nullptr, ImGuiWindowFlags_NoCollapse))
+			if(ImGui::Begin("about", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize))
 			{
 				ImGui::Text("https://github.com/grizzlei/nle");
 				ImGui::Text("hasan karaman - 2023");
@@ -208,7 +224,22 @@ int main(int argc, char *argv[])
 			
 			ImGui::Separator();
 
-			ImGui::TextWrapped("scene");
+			if(ImGui::CollapsingHeader("loaded models"))
+			{
+				for(const auto& it : models)
+				{
+					ImGui::Text(it.second->name().c_str());
+					ImGui::SameLine();
+					if(ImGui::Button("create instance"))
+					{
+						app.current_scene()->add_child(it.second->create_instance());
+					}
+				}
+			}
+
+			ImGui::Separator();
+
+			ImGui::TextWrapped("scene [%s]", app.current_scene()->id().c_str());
 			for(auto * i : app.current_scene()->children())
 			{
 				nle::MultiMeshInstance *mi = dynamic_cast<nle::MultiMeshInstance*>(i);
@@ -300,36 +331,12 @@ int main(int argc, char *argv[])
         }
 	});
 
-	nle::Material material(4.0f, 32);
-
-	auto skybox = nle::Model("models/skybox/skybox.obj", nle::DEFAULT_SHADER, app.texture_factory()->load_and_get("models/skybox/skybox.png", "skybox0"));
-	auto skybox_ins = skybox.create_instance();
-	skybox_ins->set_scale(glm::vec3(200.f));
-	app.current_scene()->add_child(skybox_ins);
-
-	// auto rla = app.renderer()->render_layer_attributes(nle::RenderLayer::_0);
-	// rla.render_distance = 1000;
-	// app.renderer()->set_render_layer_attributes(nle::RenderLayer::_0, rla);
-
-	// nle::Model mod_minecraft_block("models/Minecraft_Grass_Block_OBJ/Grass_Block.obj", nle::DEFAULT_SHADER, app.texture_factory()->load_and_get("models/Minecraft_Grass_Block_OBJ/Grass_Block_TEX.png", "grass_block"));
-	// nle::Model mod_hasan("models/hasan/hasan.obj", nle::DEFAULT_SHADER, app.texture_factory()->load_and_get("models/hasan/hasan.jpg", "hasan"));
-	// nle::Model mod_camera("models/obj-camera/source/Obj_Camera.obj", nle::DEFAULT_SHADER, app.texture_factory()->load_and_get("models/obj-camera/textures/Texture_OldCamera_copy.png", "camera"));
-	// nle::Model mod_car("models/hugecity/hugecity.obj", nle::DEFAULT_SHADER);
-	// // nle::Model mod_car("models/85-cottage_obj/cottage_obj.obj", nle::DEFAULT_SHADER, app.texture_factory()->load_and_get("models/85-cottage_obj/cottage_textures/cottage_diffuse.png", "cottage"));
-
-	// prdbg("%d blocks created", app.current_scene()->render_objects().size());
-
-	// hasan = mod_hasan.create_instance();
-	// hasan->set_scale(glm::vec3(10.f));
-	// app.current_scene()->add_child(hasan);
-	// hasan->set_position(app.current_scene()->light()->position());
-
-	// auto *house = mod_car.create_instance();
-	// house->set_material_for_meshes(&material);
-	// app.current_scene()->add_child(house);
-
 	app.run();
-	// prdbg("%s", app.current_scene()->to_json().dump().c_str());
+
+	for(auto & model: models)
+	{
+		delete model.second;
+	}
 
 	return (0);
 }

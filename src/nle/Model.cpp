@@ -12,6 +12,7 @@ namespace nle
         : m_shader(shader), m_texture(texture)
     {
         std::string fmt = path.substr(path.find_last_of("."));
+        m_name = path.substr(path.find_last_of('/')+1);
         
         std::transform(fmt.begin(), fmt.end(), fmt.begin(),
         [](unsigned char c){ return std::tolower(c); });
@@ -20,6 +21,16 @@ namespace nle
         {
             load_obj(path);
         }
+    }
+
+    void Model::set_name(const std::string &name)
+    {
+        m_name = name;
+    }
+
+    const std::string &Model::name() const
+    {
+        return m_name;
     }
 
     MultiMeshInstance *Model::create_instance()
@@ -37,7 +48,7 @@ namespace nle
         }
         
         m_multimesh = new MultiMesh();
-        prdbg("loaded materials: %lu", loader.LoadedMaterials.size());
+        // prdbg("loaded materials: %lu", loader.LoadedMaterials.size());
 
         for (const auto &mesh : loader.LoadedMeshes)
         {
@@ -46,7 +57,7 @@ namespace nle
             
             Shader *s = m_shader ? m_shader : nle::DEFAULT_SHADER;
             Texture * t = nullptr;
-            prdbg("loading texture: %s", mesh.MeshMaterial.name.c_str());
+            // prdbg("loading texture: %s", mesh.MeshMaterial.name.c_str());
 
             if(!mesh.MeshMaterial.map_Kd.empty())
             {
@@ -57,7 +68,7 @@ namespace nle
                 else
                     tex_path = mesh.MeshMaterial.map_Kd;
 
-                prdbg("loading texture: %s", tex_path.c_str());
+                // prdbg("loading texture: %s", tex_path.c_str());
                 t = new Texture(tex_path);
             }
 

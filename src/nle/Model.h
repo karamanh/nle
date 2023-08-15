@@ -15,6 +15,7 @@ namespace nle
     class Model
     {
     private:
+        std::string m_name;
         MultiMesh *m_multimesh;
         Shader *m_shader = nullptr;
         Texture *m_texture = nullptr;
@@ -22,6 +23,8 @@ namespace nle
 
     public:
         Model(const std::string& path, Shader *shader, Texture *texture = nullptr);
+        void set_name(const std::string& name);
+        const std::string& name() const;
         MultiMeshInstance *create_instance();
         bool load_obj(const std::string &path);
         bool load_gltf(const std::string &path);
