@@ -108,12 +108,16 @@ namespace nle
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ebo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.size() * sizeof(m_indices[0]), m_indices.data(), GL_STATIC_DRAW);
 
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(m_vertices[0]) * 8, (void *)0);
+        unsigned int cluster_size = 11;
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(m_vertices[0]) * cluster_size, (void *)0);
         glEnableVertexAttribArray(0);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(m_vertices[0]) * 8, (void *)(sizeof(m_vertices[0]) * 3));
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(m_vertices[0]) * cluster_size, (void *)(sizeof(m_vertices[0]) * 3));
         glEnableVertexAttribArray(1);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(m_vertices[0]) * 8, (void *)(sizeof(m_vertices[0]) * 6));
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(m_vertices[0]) * cluster_size, (void *)(sizeof(m_vertices[0]) * 6));
         glEnableVertexAttribArray(2);
+        glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(m_vertices[0]) * cluster_size, (void *)(sizeof(m_vertices[0]) * 9));
+        glEnableVertexAttribArray(3);
 
         glBindVertexArray(0);
     }

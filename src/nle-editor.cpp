@@ -96,17 +96,20 @@ int main(int argc, char *argv[])
 					std::string path(inbuf, strlen(inbuf));
 					if(!path.empty())
 					{
-						auto * m = new nle::Model(path, nle::DEFAULT_SHADER);
-						if(m->name().empty())
+						if(std::filesystem::exists(path))
 						{
-							prerr("model name missing");
-							delete m;
-							file_dialog_open = false;
-						}
-						else
-						{
-							models[m->name()] = m;
-							file_dialog_open = false;
+							auto * m = new nle::Model(path, nle::DEFAULT_SHADER);
+							if(m->name().empty())
+							{
+								prerr("model name missing");
+								delete m;
+								file_dialog_open = false;
+							}
+							else
+							{
+								models[m->name()] = m;
+								file_dialog_open = false;
+							}
 						}
 					}
 				}
@@ -221,12 +224,19 @@ int main(int argc, char *argv[])
 				{
 					ImGui::Text(it.second->name().c_str());
 					ImGui::SameLine();
+					ImGui::PushID(it.second->name().c_str());
 					if(ImGui::Button("create instance"))
 					{
+						prdbg("created instance pressed");
 						auto * instance = it.second->create_instance();
-						instance->set_material(&material);
-						app.current_scene()->add_child(instance);
+						if(instance)
+						{
+							prdbg("created instance with id: %s", instance->id().c_str());
+							// instance->set_material(&material);
+							app.current_scene()->add_child(instance);
+						}
 					}
+					ImGui::PopID();
 				}
 			}
 

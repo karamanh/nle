@@ -87,6 +87,9 @@ namespace nle
                 vertices.push_back(v.Normal.X);
                 vertices.push_back(v.Normal.Y);
                 vertices.push_back(v.Normal.Z);
+                vertices.push_back(mesh.MeshMaterial.Kd.X);
+                vertices.push_back(mesh.MeshMaterial.Kd.Y);
+                vertices.push_back(mesh.MeshMaterial.Kd.Z);
                 vertices.push_back(t ? v.TextureCoordinate.X : 0.f);
                 vertices.push_back(t ? v.TextureCoordinate.Y : 0.f);
             }
