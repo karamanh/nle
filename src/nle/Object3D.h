@@ -28,6 +28,8 @@ namespace nle
 
         Signal<Object3D*> m_sig_child_added;
 
+        bool m_physics_enabled = false;
+
         void set_root(Object3D *root);
 
     public:
@@ -46,6 +48,8 @@ namespace nle
         virtual void delete_child(Object3D *child);
         virtual void set_id(const std::string& id);
         virtual std::string id() const;
+        virtual void set_physics_enabled(bool enabled);
+        virtual bool physics_enabled() const;
         virtual void set_parent(Object3D *parent);
         virtual Object3D *parent() const;
         virtual Object3D *root() const;

@@ -29,6 +29,7 @@ namespace nle
         {
             attach_physics_body(c);
         }
+        body->set_physics_enabled(true);
     }
 
     void PhysicsEngine::detach_physics_body(Object3D *body)
@@ -36,8 +37,14 @@ namespace nle
         auto it = std::find(m_realm->bodies.begin(), m_realm->bodies.end(), body);
         if(it != m_realm->bodies.end())
         {
+            for(auto *c : body->children())
+            {
+                detach_physics_body(c);
+            }
             m_realm->bodies.erase(it);
         }
+        body->set_physics_enabled(false);
+        body->set_velocity(glm::vec3(0.f));
     }
 
     void PhysicsEngine::bind_physics_process_callback(std::function<void(Object3D * object, double delta)> callback)

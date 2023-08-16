@@ -116,6 +116,16 @@ namespace nle
         return m_id;
     }
 
+    void Object3D::set_physics_enabled(bool enabled)
+    {
+        m_physics_enabled = enabled;
+    }
+
+    bool Object3D::physics_enabled() const
+    {
+        return m_physics_enabled;
+    }
+
     void Object3D::set_parent(Object3D *parent)
     {
         m_parent = parent;

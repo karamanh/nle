@@ -360,9 +360,18 @@ int main(int argc, char *argv[])
 					{
 						app.current_scene()->delete_child(selected_obj);
 						selected_obj = nullptr;
-						// delete selected_obj;
-						// // delete selected_obj;
-						// selected_obj = nullptr;
+					}
+
+					if(ImGui::Button(selected_obj->physics_enabled() ? "disable_physics" : "enable physics"))
+					{
+						if(selected_obj->physics_enabled())
+						{
+							app.physics_engine()->detach_physics_body(selected_obj);
+						}
+						else
+						{
+							app.physics_engine()->attach_physics_body(selected_obj);
+						}
 					}
 				}
 				ImGui::End();
