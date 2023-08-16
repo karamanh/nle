@@ -31,22 +31,6 @@ int main(int argc, char *argv[])
 			prdbg("loading %s", dir_entry.path().c_str());
 			models[name] = new nle::Model(path, nle::DEFAULT_SHADER);
 		}
-
-		// if(name.substr(name.find_last_of('.')) == ".obj")
-		// {
-		// 	prdbg("loading %s", dir_entry.path().c_str());
-		// 	models[name] = new nle::Model(path, nle::DEFAULT_SHADER);
-		// }
-		// std::size_t n;
-		// if((n = path.find_last_of('/')) != std::string::npos)
-		// {
-		// 	name = path.substr(n);
-		// 	if((name.find_last_of('.')) == ".obj")
-		// 	{
-		// 		prdbg("loading %s", dir_entry.path().c_str());
-		// 		models[name] = new nle::Model(path, nle::DEFAULT_SHADER);
-		// 	}
-		// }
 	}
 
 	app.window()->input_handler()->key_pressed().bind_callback([&](const int& key){
@@ -78,14 +62,12 @@ int main(int argc, char *argv[])
 		bool bval;
 		int ival;
 
-		static float right_window_w = 300.f;
 		static float bottom_window_h = 300.f;
 		static bool file_dialog_open = false;
 		static bool about_open = false;
 		static char inbuf[512] = {0};
 		static nle::RenderObject3D * selected_obj = nullptr;
-		ImVec2 menubar_size;
-		ImVec2 display_size = io.DisplaySize;
+		ImVec2 menubar_size, control_panel_size, assets_size, scene_size, bottom_window_size, object_properties_size = {300.f, 0.f}, display_size = io.DisplaySize;
 
         if(ImGui::BeginMainMenuBar())
         {
@@ -168,9 +150,10 @@ int main(int argc, char *argv[])
 
 		// left window
 		ImGui::SetNextWindowPos(ImVec2(0.f, menubar_size.y), ImGuiCond_Always, ImVec2(0.f,0.f));
-		ImGui::SetNextWindowSize({0.f, io.DisplaySize.y - menubar_size.y});
+		// ImGui::SetNextWindowSize({0.f, io.DisplaySize.y - menubar_size.y});
         if(ImGui::Begin("control panel", nullptr, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse))
         {
+			control_panel_size = ImGui::GetWindowSize();
 			// renderer settings
             ImGui::TextWrapped("renderer settings");
 			bval = app.window()->fullscreen();
@@ -248,7 +231,14 @@ int main(int argc, char *argv[])
 				ImGui::PopID();
 			}
 			
-			ImGui::Separator();
+            ImGui::End();
+        }
+
+		ImGui::SetNextWindowPos({0.f, menubar_size.y + control_panel_size.y});
+		ImGui::SetNextWindowSize({control_panel_size.x, (display_size.y - menubar_size.y - control_panel_size.y) / 2});
+		if(ImGui::Begin("assets", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize))
+		{
+			scene_size = assets_size = ImGui::GetWindowSize();
 
 			if(ImGui::CollapsingHeader("loaded models", ImGuiTreeNodeFlags_DefaultOpen))
 			{
@@ -272,8 +262,14 @@ int main(int argc, char *argv[])
 				}
 			}
 
-			ImGui::Separator();
+			ImGui::End();
+		}
 
+		// current scene window
+		ImGui::SetNextWindowPos({0.f, menubar_size.y + control_panel_size.y + assets_size.y});
+		ImGui::SetNextWindowSize({control_panel_size.x, scene_size.y});
+		if(ImGui::Begin("current scene", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize))
+		{
 			ImGui::TextWrapped("current scene [%s]", app.current_scene()->id().c_str());
 			for(auto * i : app.current_scene()->children())
 			{
@@ -292,18 +288,15 @@ int main(int argc, char *argv[])
 					}
 				}
 			}
+			ImGui::End();
+		}
 
-			
-
-            ImGui::End();
-        }
-
-		// right window
-		ImGui::SetNextWindowPos(ImVec2(display_size.x -right_window_w, menubar_size.y));
-		ImGui::SetNextWindowSize(ImVec2(right_window_w, display_size.y));
+		// object manager window
+		ImGui::SetNextWindowPos(ImVec2(display_size.x -object_properties_size.x, menubar_size.y));
+		ImGui::SetNextWindowSize(ImVec2(object_properties_size.x, display_size.y));
 		if(ImGui::Begin("object properties", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize))
 		{
-			right_window_w = ImGui::GetWindowSize().x;
+			object_properties_size = ImGui::GetWindowSize();
 
 			if(selected_obj)
 			{
@@ -393,12 +386,6 @@ int main(int argc, char *argv[])
 				
 				ImGui::Separator();
 
-				if(ImGui::Button("delete object"))
-				{
-					app.current_scene()->delete_child(selected_obj);
-					selected_obj = nullptr;
-				}
-
 				if(ImGui::Button(selected_obj->physics_enabled() ? "disable_physics" : "enable physics"))
 				{
 					if(selected_obj->physics_enabled())
@@ -409,6 +396,12 @@ int main(int argc, char *argv[])
 					{
 						app.physics_engine()->attach_physics_body(selected_obj);
 					}
+				}
+
+				if(ImGui::Button("delete object"))
+				{
+					app.current_scene()->delete_child(selected_obj);
+					selected_obj = nullptr;
 				}
 			}
 			ImGui::End();
