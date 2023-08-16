@@ -73,6 +73,18 @@ namespace nle
         Object3D::set_id("light_" + id);
     }
 
+    nlohmann::json Light::to_json()
+    {
+        auto ret = Object3D::to_json();
+        ret["color"]["r"] = m_color.r;
+        ret["color"]["g"] = m_color.g;
+        ret["color"]["b"] = m_color.b;
+        ret["ambient_intensity"] = m_ambient_intensity;
+        ret["diffuse_intensity"] = m_diffuse_intensity;
+        ret["enabled"] = m_enabled;
+        return ret;
+    }
+
     void Light::set_color(GLfloat red, GLfloat green, GLfloat blue)
     {
         m_color.r = red;

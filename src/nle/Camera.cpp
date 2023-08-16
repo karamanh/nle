@@ -94,6 +94,15 @@ namespace nle
         Object3D::set_id("camera_" + id);
     }
 
+    nlohmann::json Camera::to_json()
+    {
+        auto ret = Object3D::to_json();
+        ret["turn_speed"] = m_turn_speed;
+        ret["speed"] = m_speed;
+        ret["free_roam"] = m_free_roam;
+        return ret;
+    }
+
     void Camera::update()
     {
         m_front.x = cos(glm::radians(rotation().y)) * cos(glm::radians(rotation().x));

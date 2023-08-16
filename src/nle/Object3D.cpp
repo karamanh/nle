@@ -132,6 +132,29 @@ namespace nle
         set_root(parent->root());
     }
 
+    nlohmann::json Object3D::to_json()
+    {
+        auto ret = nlohmann::json();
+        
+        ret["id"] = this->id();
+        ret["position"]["x"] = this->position().x;
+        ret["position"]["y"] = this->position().y;
+        ret["position"]["z"] = this->position().z;
+        ret["rotation"]["x"] = this->rotation().x;
+        ret["rotation"]["y"] = this->rotation().y;
+        ret["rotation"]["z"] = this->rotation().z;
+        ret["scale"]["x"] = this->scale().x;
+        ret["scale"]["y"] = this->scale().y;
+        ret["scale"]["z"] = this->scale().z;
+
+        for(auto * c : m_children)
+        {
+            ret["children"].push_back(c->to_json());
+        }
+
+        return ret;
+    }
+
     Object3D *Object3D::parent() const
     {
         return m_parent;

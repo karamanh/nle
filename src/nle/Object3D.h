@@ -3,6 +3,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include "nlohmann/json.hpp"
 
 #include "Utils.h"
 #include "Signal.hpp"
@@ -51,6 +52,7 @@ namespace nle
         virtual void set_physics_enabled(bool enabled);
         virtual bool physics_enabled() const;
         virtual void set_parent(Object3D *parent);
+        virtual nlohmann::json to_json();
         virtual Object3D *parent() const;
         virtual Object3D *root() const;
         Signal<Object3D*> sig_child_added() const;

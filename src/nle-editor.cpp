@@ -11,12 +11,27 @@
 
 #include "FastNoiseLite.h"
 
+#include <filesystem>
+
 int main(int argc, char *argv[])
 {
 	nle::Nle app;
 
 	std::map<std::string, nle::Model*> models;
 	std::map<std::string, nle::Material*> materials;
+
+
+    // for (auto const& dir_entry : std::filesystem::recursive_directory_iterator("."))
+    // {
+	// 	std::string path = dir_entry.path().c_str();
+	// 	std::string name;
+	// 	if((name = path.substr(path.find_last_of('.'))).find(".obj") != std::string::npos)
+	// 	{
+	// 		// prdbg(name.c_str());
+	// 		models[name] = new nle::Model(path, nle::DEFAULT_SHADER);
+	// 	}
+    // }
+	// return 0;
 
 	app.window()->input_handler()->key_pressed().bind_callback([&](const int& key){
 		switch(key)
@@ -128,13 +143,14 @@ int main(int argc, char *argv[])
 			if(ImGui::Begin("about", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize))
 			{
 				ImGui::Text("https://github.com/grizzlei/nle");
-				ImGui::Text("hasan karaman - 2023");
 				ImGui::Text("experimental opengl renderer");
+				ImGui::Text("hasan karaman - hk@hasankaraman.dev - 2023");
 				about_open = !ImGui::Button("close");
 				ImGui::End();
 			}
 		}
 
+		// left window
 		ImGui::SetNextWindowPos(ImVec2(0.f, menubar_size.y), ImGuiCond_Always, ImVec2(0.f,0.f));
 		ImGui::SetNextWindowSize({0.f, io.DisplaySize.y - menubar_size.y});
         if(ImGui::Begin("control panel", nullptr, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse))
@@ -261,127 +277,131 @@ int main(int argc, char *argv[])
 				}
 			}
 
-			// right window
-			ImGui::SetNextWindowPos(ImVec2(display_size.x -right_window_w, menubar_size.y));
-			ImGui::SetNextWindowSize(ImVec2(right_window_w, display_size.y));
-			if(ImGui::Begin("object properties", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize))
-			{
-				right_window_w = ImGui::GetWindowSize().x;
-
-				if(selected_obj)
-				{
-					char idbuf[64] = {0};
-					strncpy(idbuf, selected_obj->id().c_str(), sizeof(idbuf) - 1);
-					if(ImGui::InputText("id", idbuf, sizeof(idbuf) -1))
-					{
-						if(strlen(idbuf) > 0)
-							selected_obj->set_id(idbuf);
-					}
-					
-					ImGui::Separator();
-
-					if(ImGui::CollapsingHeader("transform", ImGuiTreeNodeFlags_DefaultOpen))
-					{
-						ImGui::Text("position");
-						ImGui::PushID("position");
-						v3val =selected_obj->position();
-						ImGui::SetNextItemWidth(60.f);
-						ImGui::InputFloat("x", &v3val.x);
-						ImGui::SameLine();
-						ImGui::SetNextItemWidth(60.f);
-						ImGui::InputFloat("y", &v3val.y);
-						ImGui::SameLine();
-						ImGui::SetNextItemWidth(60.f);
-						ImGui::InputFloat("z", &v3val.z);
-						selected_obj->set_position(v3val);
-						ImGui::PopID();
-
-						ImGui::Text("rotation");
-						ImGui::PushID("rotation");
-						v3val = selected_obj->rotation();
-						ImGui::SetNextItemWidth(60.f);
-						ImGui::InputFloat("x", &v3val.x);
-						ImGui::SameLine();
-						ImGui::SetNextItemWidth(60.f);
-						ImGui::InputFloat("y", &v3val.y);
-						ImGui::SameLine();
-						ImGui::SetNextItemWidth(60.f);
-						ImGui::InputFloat("z", &v3val.z);
-						selected_obj->set_rotation(v3val);
-						ImGui::PopID();
-
-						ImGui::Text("scale");
-						ImGui::PushID("scale");
-						v3val = selected_obj->scale();
-						ImGui::SetNextItemWidth(60.f);
-						ImGui::InputFloat("x", &v3val.x);
-						ImGui::SameLine();
-						ImGui::SetNextItemWidth(60.f);
-						ImGui::InputFloat("y", &v3val.y);
-						ImGui::SameLine();
-						ImGui::SetNextItemWidth(60.f);
-						ImGui::InputFloat("z", &v3val.z);
-						selected_obj->set_scale(v3val);
-						ImGui::PopID();
-					}
-
-					ImGui::Separator();
-
-					if(ImGui::CollapsingHeader("material", ImGuiTreeNodeFlags_DefaultOpen))
-					{
-						nle::MultiMeshInstance *instance;
-						if((instance = dynamic_cast<nle::MultiMeshInstance*>(selected_obj)))
-						{
-							nle::Material *material;
-							if((material = instance->material()))
-							{
-								ImGui::PushID("specular_intensity");
-								fval = material->specular_intensity();
-								ImGui::InputFloat("specular intensity", &fval);
-								material->set_specular_intensity(fval);
-								ImGui::PopID();
-								ImGui::PushID("shininess");
-								fval = material->shininess();
-								ImGui::InputFloat("shininess", &fval);
-								material->set_shininess(fval);
-								ImGui::PopID();
-
-								if(ImGui::Button("clear material"))
-								{
-									instance->set_material(nullptr);
-								}
-							}
-						}
-					}
-					
-					ImGui::Separator();
-
-					if(ImGui::Button("delete object"))
-					{
-						app.current_scene()->delete_child(selected_obj);
-						selected_obj = nullptr;
-					}
-
-					if(ImGui::Button(selected_obj->physics_enabled() ? "disable_physics" : "enable physics"))
-					{
-						if(selected_obj->physics_enabled())
-						{
-							app.physics_engine()->detach_physics_body(selected_obj);
-						}
-						else
-						{
-							app.physics_engine()->attach_physics_body(selected_obj);
-						}
-					}
-				}
-				ImGui::End();
-			}
+			
 
             ImGui::End();
         }
+
+		// right window
+		ImGui::SetNextWindowPos(ImVec2(display_size.x -right_window_w, menubar_size.y));
+		ImGui::SetNextWindowSize(ImVec2(right_window_w, display_size.y));
+		if(ImGui::Begin("object properties", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			right_window_w = ImGui::GetWindowSize().x;
+
+			if(selected_obj)
+			{
+				char idbuf[64] = {0};
+				strncpy(idbuf, selected_obj->id().c_str(), sizeof(idbuf) - 1);
+				if(ImGui::InputText("id", idbuf, sizeof(idbuf) -1))
+				{
+					if(strlen(idbuf) > 0)
+						selected_obj->set_id(idbuf);
+				}
+				
+				ImGui::Separator();
+
+				if(ImGui::CollapsingHeader("transform", ImGuiTreeNodeFlags_DefaultOpen))
+				{
+					ImGui::Text("position");
+					ImGui::PushID("position");
+					v3val =selected_obj->position();
+					ImGui::SetNextItemWidth(60.f);
+					ImGui::InputFloat("x", &v3val.x);
+					ImGui::SameLine();
+					ImGui::SetNextItemWidth(60.f);
+					ImGui::InputFloat("y", &v3val.y);
+					ImGui::SameLine();
+					ImGui::SetNextItemWidth(60.f);
+					ImGui::InputFloat("z", &v3val.z);
+					selected_obj->set_position(v3val);
+					ImGui::PopID();
+
+					ImGui::Text("rotation");
+					ImGui::PushID("rotation");
+					v3val = selected_obj->rotation();
+					ImGui::SetNextItemWidth(60.f);
+					ImGui::InputFloat("x", &v3val.x);
+					ImGui::SameLine();
+					ImGui::SetNextItemWidth(60.f);
+					ImGui::InputFloat("y", &v3val.y);
+					ImGui::SameLine();
+					ImGui::SetNextItemWidth(60.f);
+					ImGui::InputFloat("z", &v3val.z);
+					selected_obj->set_rotation(v3val);
+					ImGui::PopID();
+
+					ImGui::Text("scale");
+					ImGui::PushID("scale");
+					v3val = selected_obj->scale();
+					ImGui::SetNextItemWidth(60.f);
+					ImGui::InputFloat("x", &v3val.x);
+					ImGui::SameLine();
+					ImGui::SetNextItemWidth(60.f);
+					ImGui::InputFloat("y", &v3val.y);
+					ImGui::SameLine();
+					ImGui::SetNextItemWidth(60.f);
+					ImGui::InputFloat("z", &v3val.z);
+					selected_obj->set_scale(v3val);
+					ImGui::PopID();
+				}
+
+				ImGui::Separator();
+
+				if(ImGui::CollapsingHeader("material", ImGuiTreeNodeFlags_DefaultOpen))
+				{
+					nle::MultiMeshInstance *instance;
+					if((instance = dynamic_cast<nle::MultiMeshInstance*>(selected_obj)))
+					{
+						nle::Material *material;
+						if((material = instance->material()))
+						{
+							ImGui::PushID("specular_intensity");
+							fval = material->specular_intensity();
+							ImGui::InputFloat("specular intensity", &fval);
+							material->set_specular_intensity(fval);
+							ImGui::PopID();
+							ImGui::PushID("shininess");
+							fval = material->shininess();
+							ImGui::InputFloat("shininess", &fval);
+							material->set_shininess(fval);
+							ImGui::PopID();
+
+							if(ImGui::Button("clear material"))
+							{
+								instance->set_material(nullptr);
+							}
+						}
+					}
+				}
+				
+				ImGui::Separator();
+
+				if(ImGui::Button("delete object"))
+				{
+					app.current_scene()->delete_child(selected_obj);
+					selected_obj = nullptr;
+				}
+
+				if(ImGui::Button(selected_obj->physics_enabled() ? "disable_physics" : "enable physics"))
+				{
+					if(selected_obj->physics_enabled())
+					{
+						app.physics_engine()->detach_physics_body(selected_obj);
+					}
+					else
+					{
+						app.physics_engine()->attach_physics_body(selected_obj);
+					}
+				}
+			}
+			ImGui::End();
+		}
 	});
 
 	app.run();
+
+	prdbg("%s", app.current_scene()->to_json().dump().c_str());
 
 	for(auto & model: models)
 	{

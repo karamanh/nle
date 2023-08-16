@@ -30,7 +30,8 @@ namespace nle
         void add_child(Object3D *child) override;
         void delete_child(Object3D *child) override;
         void set_id(const std::string& id) override;
-        nlohmann::json to_json();
+        nlohmann::json to_json() override;
+        static Scene* from_json(const nlohmann::json& j);
 
         friend class Renderer3D;
     };
