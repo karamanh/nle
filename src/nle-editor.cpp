@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 	std::size_t max_logs = 100;
 
 	auto push_log = [&](const std::string& msg){
-		prdbg("%s", msg.c_str());
+		prinf("%s", msg.c_str());
 		logs.push_back(msg);
 		if(logs.size() > max_logs)
 		{
@@ -31,6 +31,7 @@ int main(int argc, char *argv[])
 		}
 	};
 
+	prinf("autoloading assets");
 	for (auto const& dir_entry : std::filesystem::recursive_directory_iterator(std::filesystem::current_path()))
 	{
 		std::string path = dir_entry.path().c_str();
@@ -39,11 +40,12 @@ int main(int argc, char *argv[])
 
 		if(dir_entry.path().filename().extension() == ".obj")
 		{
-			push_log("loading " + std::string(dir_entry.path().c_str()));
+			prdbg("loading %s", dir_entry.path().c_str());
 
 			models[name] = new nle::Model(path, nle::DEFAULT_SHADER);
 		}
 	}
+	prinf("%lu models loaded", models.size());
 
 	app.window()->input_handler()->key_pressed().bind_callback([&](const int& key){
 		switch(key)

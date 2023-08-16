@@ -102,7 +102,6 @@ namespace nle
         {
             delete *it;
             m_children.erase(it);
-            prdbg("deleted");
         }
     }
 
