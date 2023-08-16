@@ -37,6 +37,7 @@ namespace nle
         bool enabled();
         void set_id(const std::string& id) override;
         nlohmann::json to_json() override;
+        void from_json(const nlohmann::json& j) override;
     };
 } // namespace nle
 

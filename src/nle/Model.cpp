@@ -36,7 +36,9 @@ namespace nle
 
     MultiMeshInstance *Model::create_instance()
     {
-        return m_multimesh->create_instance();
+        auto * ret = m_multimesh->create_instance();
+        ret->m_source = m_name;
+        return ret;
     }
 
     bool Model::load_obj(const std::string &path)

@@ -20,18 +20,34 @@ int main(int argc, char *argv[])
 	std::map<std::string, nle::Model*> models;
 	std::map<std::string, nle::Material*> materials;
 
+	for (auto const& dir_entry : std::filesystem::recursive_directory_iterator(std::filesystem::current_path()))
+	{
+		std::string path = dir_entry.path().c_str();
+		std::string name = dir_entry.path().filename();
+		std::size_t n;
 
-    // for (auto const& dir_entry : std::filesystem::recursive_directory_iterator("."))
-    // {
-	// 	std::string path = dir_entry.path().c_str();
-	// 	std::string name;
-	// 	if((name = path.substr(path.find_last_of('.'))).find(".obj") != std::string::npos)
-	// 	{
-	// 		// prdbg(name.c_str());
-	// 		models[name] = new nle::Model(path, nle::DEFAULT_SHADER);
-	// 	}
-    // }
-	// return 0;
+		if(dir_entry.path().filename().extension() == ".obj")
+		{
+			prdbg("loading %s", dir_entry.path().c_str());
+			models[name] = new nle::Model(path, nle::DEFAULT_SHADER);
+		}
+
+		// if(name.substr(name.find_last_of('.')) == ".obj")
+		// {
+		// 	prdbg("loading %s", dir_entry.path().c_str());
+		// 	models[name] = new nle::Model(path, nle::DEFAULT_SHADER);
+		// }
+		// std::size_t n;
+		// if((n = path.find_last_of('/')) != std::string::npos)
+		// {
+		// 	name = path.substr(n);
+		// 	if((name.find_last_of('.')) == ".obj")
+		// 	{
+		// 		prdbg("loading %s", dir_entry.path().c_str());
+		// 		models[name] = new nle::Model(path, nle::DEFAULT_SHADER);
+		// 	}
+		// }
+	}
 
 	app.window()->input_handler()->key_pressed().bind_callback([&](const int& key){
 		switch(key)

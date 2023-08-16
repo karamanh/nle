@@ -97,6 +97,7 @@ namespace nle
     nlohmann::json Camera::to_json()
     {
         auto ret = Object3D::to_json();
+        ret["type"] = 2;
         ret["turn_speed"] = m_turn_speed;
         ret["speed"] = m_speed;
         ret["free_roam"] = m_free_roam;

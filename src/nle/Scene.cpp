@@ -87,12 +87,16 @@ namespace nle
     nlohmann::json Scene::to_json()
     {
         auto ret = Object3D::to_json();
+        ret["type"] = 1;
         ret["camera"] = m_camera->to_json();
         ret["light"] = m_light->to_json();
         return ret;
     }
 
-    Scene* Scene::from_json(const nlohmann::json &j)
+    void Scene::from_json(const nlohmann::json &j)
     {
+        Object3D::from_json(j);
+        m_camera->from_json(j["camera"]);
+        m_light->from_json(j["light"]);
     }
 } // namespace nle

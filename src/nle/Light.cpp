@@ -76,6 +76,7 @@ namespace nle
     nlohmann::json Light::to_json()
     {
         auto ret = Object3D::to_json();
+        ret["type"] = 3;
         ret["color"]["r"] = m_color.r;
         ret["color"]["g"] = m_color.g;
         ret["color"]["b"] = m_color.b;
@@ -83,6 +84,17 @@ namespace nle
         ret["diffuse_intensity"] = m_diffuse_intensity;
         ret["enabled"] = m_enabled;
         return ret;
+    }
+
+    void Light::from_json(const nlohmann::json &j)
+    {
+        Object3D::from_json(j);
+        m_color.r = j["color"]["r"];
+        m_color.g = j["color"]["g"];
+        m_color.b = j["color"]["b"];
+        m_ambient_intensity = j["ambient_intensity"];
+        m_diffuse_intensity = j["diffuse_intensity"];
+        m_enabled = j["enabled"];
     }
 
     void Light::set_color(GLfloat red, GLfloat green, GLfloat blue)

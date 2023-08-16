@@ -20,17 +20,13 @@ namespace nle
         glm::vec3 m_rotation;
         glm::vec3 m_scale;
         glm::vec3 m_velocity;
-
         std::vector<Object3D *> m_children;
         std::string m_id;
-
         Object3D *m_parent;
         Object3D *m_root;
-
         Signal<Object3D*> m_sig_child_added;
-
         bool m_physics_enabled = false;
-
+        
         void set_root(Object3D *root);
 
     public:
@@ -53,6 +49,7 @@ namespace nle
         virtual bool physics_enabled() const;
         virtual void set_parent(Object3D *parent);
         virtual nlohmann::json to_json();
+        virtual void from_json(const nlohmann::json& j);
         virtual Object3D *parent() const;
         virtual Object3D *root() const;
         Signal<Object3D*> sig_child_added() const;

@@ -136,6 +136,7 @@ namespace nle
     {
         auto ret = nlohmann::json();
         
+        ret["type"] = 0;
         ret["id"] = this->id();
         ret["position"]["x"] = this->position().x;
         ret["position"]["y"] = this->position().y;
@@ -153,6 +154,20 @@ namespace nle
         }
 
         return ret;
+    }
+
+    void Object3D::from_json(const nlohmann::json &j)
+    {
+        m_id = j["id"];
+        m_position.x = j["position"]["x"];
+        m_position.y = j["position"]["y"];
+        m_position.z = j["position"]["z"];
+        m_rotation.x = j["rotation"]["x"];
+        m_rotation.y = j["rotation"]["y"];
+        m_rotation.z = j["rotation"]["z"];
+        m_scale.x = j["scale"]["x"];
+        m_scale.y = j["scale"]["y"];
+        m_scale.z = j["scale"]["z"];
     }
 
     Object3D *Object3D::parent() const

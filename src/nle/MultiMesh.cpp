@@ -63,4 +63,18 @@ Material *MultiMeshInstance::material() const
     return m_material;
 }
 
+nlohmann::json MultiMeshInstance::to_json()
+{
+    auto ret = Object3D::to_json();
+    ret["type"] = 4;
+    ret["source"] = this->m_source;
+    return ret;
+}
+
+void MultiMeshInstance::from_json(const nlohmann::json &j)
+{
+    Object3D::from_json(j);
+    m_source = j["source"];
+}
+
 } // namespace nle
