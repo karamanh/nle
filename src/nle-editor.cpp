@@ -19,6 +19,17 @@ int main(int argc, char *argv[])
 
 	std::map<std::string, nle::Model*> models;
 	std::map<std::string, nle::Material*> materials;
+	std::vector<std::string> logs;
+	std::size_t max_logs = 100;
+
+	auto push_log = [&](const std::string& msg){
+		prdbg("%s", msg.c_str());
+		logs.push_back(msg);
+		if(logs.size() > max_logs)
+		{
+			logs.erase(logs.begin());
+		}
+	};
 
 	for (auto const& dir_entry : std::filesystem::recursive_directory_iterator(std::filesystem::current_path()))
 	{
@@ -28,7 +39,8 @@ int main(int argc, char *argv[])
 
 		if(dir_entry.path().filename().extension() == ".obj")
 		{
-			prdbg("loading %s", dir_entry.path().c_str());
+			push_log("loading " + std::string(dir_entry.path().c_str()));
+
 			models[name] = new nle::Model(path, nle::DEFAULT_SHADER);
 		}
 	}
@@ -249,12 +261,9 @@ int main(int argc, char *argv[])
 					ImGui::PushID(it.second->name().c_str());
 					if(ImGui::Button("create instance"))
 					{
-						prdbg("created instance pressed");
 						auto * instance = it.second->create_instance();
 						if(instance)
 						{
-							prdbg("created instance with id: %s", instance->id().c_str());
-							// instance->set_material(&material);
 							app.current_scene()->add_child(instance);
 						}
 					}
@@ -270,7 +279,39 @@ int main(int argc, char *argv[])
 		ImGui::SetNextWindowSize({control_panel_size.x, scene_size.y});
 		if(ImGui::Begin("current scene", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize))
 		{
+			bottom_window_size = ImGui::GetWindowSize();
+			
+			// static std::function<void(nle::Object3D*)> add_to_tree = [&](nle::Object3D *o){
+
+			// 	// nle::MultiMeshInstance *mi = dynamic_cast<nle::MultiMeshInstance*>(o);
+			// 	// if(mi)
+			// 	// {
+			// 	// }
+			// 	ImGui::TreePush();
+			// 	if(ImGui::TreeNode(o->id().c_str()))
+			// 	{
+			// 		if(selected_obj)
+			// 		{
+			// 			selected_obj = nullptr;
+			// 		}
+			// 		else
+			// 			selected_obj = o;
+			// 	}
+			// 	for(auto * c : o->children())
+			// 	{
+			// 		add_to_tree(c);
+			// 	}
+			// 	ImGui::TreePop();
+			// };
+
+
 			ImGui::TextWrapped("current scene [%s]", app.current_scene()->id().c_str());
+
+			// if (ImGui::TreeNode(app.current_scene()->id().c_str()))
+			// {
+			// 	add_to_tree()
+			// }
+
 			for(auto * i : app.current_scene()->children())
 			{
 				nle::MultiMeshInstance *mi = dynamic_cast<nle::MultiMeshInstance*>(i);
@@ -287,6 +328,18 @@ int main(int argc, char *argv[])
 							selected_obj = mi;
 					}
 				}
+			}
+			ImGui::End();
+		}
+
+		// current scene window
+		ImGui::SetNextWindowPos({scene_size.x, menubar_size.y + control_panel_size.y + assets_size.y});
+		ImGui::SetNextWindowSize({display_size.x - scene_size.x - object_properties_size.x, scene_size.y});
+		if(ImGui::Begin("logs", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize))
+		{
+			for(auto & it: logs)
+			{
+				ImGui::TextWrapped(it.c_str());
 			}
 			ImGui::End();
 		}
@@ -390,16 +443,19 @@ int main(int argc, char *argv[])
 				{
 					if(selected_obj->physics_enabled())
 					{
+						push_log("enabled physics for " + selected_obj->id());
 						app.physics_engine()->detach_physics_body(selected_obj);
 					}
 					else
 					{
+						push_log("disabled physics for " + selected_obj->id());
 						app.physics_engine()->attach_physics_body(selected_obj);
 					}
 				}
 
 				if(ImGui::Button("delete object"))
 				{
+					push_log("deleted " + selected_obj->id());
 					app.current_scene()->delete_child(selected_obj);
 					selected_obj = nullptr;
 				}
@@ -410,7 +466,7 @@ int main(int argc, char *argv[])
 
 	app.run();
 
-	prdbg("%s", app.current_scene()->to_json().dump().c_str());
+	push_log("saving scene " + app.current_scene()->to_json().dump());
 
 	for(auto & model: models)
 	{

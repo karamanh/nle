@@ -75,8 +75,6 @@ namespace nle
                 {
                     tex_path = mesh.MeshMaterial.map_Kd;
                 }
-                
-                prdbg("texpath: %s", tex_path.c_str());
 
                 t = new Texture(tex_path);
             }
