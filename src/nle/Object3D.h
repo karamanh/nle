@@ -53,6 +53,7 @@ namespace nle
         virtual Object3D *parent() const;
         virtual Object3D *root() const;
         Signal<Object3D*> sig_child_added() const;
+        const std::type_info &type() const;
     };
 } // namespace nle
 

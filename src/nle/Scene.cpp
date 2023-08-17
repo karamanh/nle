@@ -1,4 +1,5 @@
 #include "Scene.h"
+#include "MultiMesh.h"
 
 namespace nle
 {
@@ -6,9 +7,6 @@ namespace nle
     Scene::Scene()
         : m_camera(new Camera(glm::vec3(0.f, 0.f, 0.f))), m_light(new Light(1.f, 1.f, 1.f, 1.f, 1.f))
     {
-        // this->sig_child_added().bind_callback([this](const Object3D*& msg){
-        //     this->register_render_object(c);
-        // });
     }
 
     Scene::~Scene()

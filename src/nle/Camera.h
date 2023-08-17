@@ -39,8 +39,10 @@ namespace nle
         void set_position(glm::vec3 position) override;
         void set_id(const std::string& id) override;
         nlohmann::json to_json() override;
+        void from_json(const nlohmann::json& j) override;
 
         friend class Renderer3D;
+        friend class Nle;
     };
 } // namespace nle
 

@@ -104,6 +104,14 @@ namespace nle
         return ret;
     }
 
+    void Camera::from_json(const nlohmann::json &j)
+    {
+        Object3D::from_json(j);
+        m_turn_speed = j["turn_speed"];
+        m_speed = j["speed"];
+        m_free_roam = j["free_roam"];
+    }
+
     void Camera::update()
     {
         m_front.x = cos(glm::radians(rotation().y)) * cos(glm::radians(rotation().x));
@@ -150,38 +158,41 @@ namespace nle
 
     void Camera::on_key_pressed(int key)
     {
-        if(!m_free_roam)
+        if (key == GLFW_KEY_LEFT_CONTROL)
         {
-            return;
+            m_free_roam = !m_free_roam;
         }
+        
+        if(m_free_roam)
+        {
+            glm::vec3 dposf = m_front * m_speed;
+            glm::vec3 dposr = m_right * m_speed;
+            glm::vec3 dposu = m_up * m_speed;
 
-        glm::vec3 dposf = m_front * m_speed;
-        glm::vec3 dposr = m_right * m_speed;
-        glm::vec3 dposu = m_up * m_speed;
-
-        if (key == GLFW_KEY_W)
-        {
-            set_position(position() + dposf);
-        }
-        if (key == GLFW_KEY_S)
-        {
-            set_position(position() - dposf);
-        }
-        if (key == GLFW_KEY_D)
-        {
-            set_position(position() + dposr);
-        }
-        if (key == GLFW_KEY_A)
-        {
-            set_position(position() - dposr);
-        }
-        if (key == GLFW_KEY_E)
-        {
-            set_position(position() + dposu);
-        }
-        if (key == GLFW_KEY_Q)
-        {
-            set_position(position() - dposu);
+            if (key == GLFW_KEY_W)
+            {
+                set_position(position() + dposf);
+            }
+            if (key == GLFW_KEY_S)
+            {
+                set_position(position() - dposf);
+            }
+            if (key == GLFW_KEY_D)
+            {
+                set_position(position() + dposr);
+            }
+            if (key == GLFW_KEY_A)
+            {
+                set_position(position() - dposr);
+            }
+            if (key == GLFW_KEY_E)
+            {
+                set_position(position() + dposu);
+            }
+            if (key == GLFW_KEY_Q)
+            {
+                set_position(position() - dposu);
+            }
         }
     }
 } // namespace nle

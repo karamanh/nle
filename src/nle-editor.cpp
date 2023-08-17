@@ -11,14 +11,28 @@
 
 #include "FastNoiseLite.h"
 
+#include <fstream>
+#include <typeinfo> 
 #include <filesystem>
+
+std::string
+nle_proj_extension = ".nleproj",
+nle_scene_extension = ".nlescn",
+nle_workdir = ".",
+nle_projdir = nle_workdir + "/nle_projdir";
+
+// void build_scene(nle::Scene *s, const nlohmann::json& j);
+
+void object_builder(nle::Object3D *o, const nlohmann::json& j, std::map<std::string, nle::Model*>& models);
+void build_scene_from_json(nle::Object3D *o, const nlohmann::json &j, std::map<std::string, nle::Model*>& models);
 
 int main(int argc, char *argv[])
 {
 	nle::Nle app;
 
+	std::map<std::string, nle::Scene*> scenes;
 	std::map<std::string, nle::Model*> models;
-	std::map<std::string, nle::Material*> materials;
+	std::vector<nle::Material*> materials;
 	std::vector<std::string> logs;
 	std::size_t max_logs = 100;
 
@@ -47,16 +61,6 @@ int main(int argc, char *argv[])
 	}
 	prinf("%lu models loaded", models.size());
 
-	app.window()->input_handler()->key_pressed().bind_callback([&](const int& key){
-		switch(key)
-		{
-			case GLFW_KEY_LEFT_CONTROL:
-			app.current_scene()->camera()->set_free_roam(!app.current_scene()->camera()->free_roam());
-			app.window()->set_cursor_visibility(!app.current_scene()->camera()->free_roam());
-			break;
-		}
-	});
-
 	app.current_scene()->set_id("root");
 	app.current_scene()->camera()->set_rotation({-30.f, 135.f, 0.f});
 	app.current_scene()->camera()->set_position({5.f, 5.f, -5.f});
@@ -65,8 +69,6 @@ int main(int argc, char *argv[])
 	app.current_scene()->light()->set_ambient_intensity(0.5f);
 	app.current_scene()->light()->set_diffuse_intensity(1.0f);
 	app.current_scene()->light()->set_enabled(true);
-
-	nle::Material material(4.0f, 32);
 
 	app.renderer()->gui()->set_draw_callback([&](){
 		ImGuiIO& io = ImGui::GetIO();
@@ -77,8 +79,9 @@ int main(int argc, char *argv[])
 		int ival;
 
 		static float bottom_window_h = 300.f;
-		static bool file_dialog_open = false;
-		static bool about_open = false;
+		static bool show_load_model = false, 
+					show_load_scene = false,
+					show_about = false;
 		static char inbuf[512] = {0};
 		static nle::RenderObject3D * selected_obj = nullptr;
 		ImVec2 menubar_size, control_panel_size, assets_size, scene_size, bottom_window_size, object_properties_size = {300.f, 0.f}, display_size = io.DisplaySize;
@@ -87,7 +90,32 @@ int main(int argc, char *argv[])
         {
             if(ImGui::BeginMenu("file"))
             {
-				file_dialog_open = ImGui::MenuItem("load model");
+				show_load_model = ImGui::MenuItem("load model");
+
+				if(ImGui::MenuItem("save scene"))
+				{
+					push_log("saving scene " + app.current_scene()->to_json().dump());
+
+					if(!std::filesystem::exists(nle_projdir))
+					{
+						if(!std::filesystem::create_directory(nle_projdir))
+						{
+							prerr("could not create directory %s", nle_projdir.c_str());
+						}
+					}
+
+					std::ofstream ofs(nle_projdir + "/" + app.current_scene()->id() + nle_scene_extension);
+					if(ofs.is_open())
+					{
+						ofs << app.current_scene()->to_json().dump(4, ' ');
+						ofs.close();
+					}
+				}
+
+				if(show_load_scene = ImGui::MenuItem("load scene"))
+				{
+					// prerr("not implemented");
+				}
 
                 if(ImGui::MenuItem("quit"))
                 {
@@ -102,7 +130,7 @@ int main(int argc, char *argv[])
             }
             if(ImGui::BeginMenu("help"))
             {
-				about_open = ImGui::MenuItem("about");
+				show_about = ImGui::MenuItem("about");
 
                 ImGui::EndMenu();
             }
@@ -112,7 +140,7 @@ int main(int argc, char *argv[])
             ImGui::EndMainMenuBar();
         }
 
-		if(file_dialog_open)
+		if(show_load_model)
 		{
 			ImGui::SetNextWindowPos(ImVec2(display_size.x * 0.5f, display_size.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f,0.5f));
 			if(ImGui::Begin("enter path to *.obj file", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_Modal | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize))
@@ -130,26 +158,90 @@ int main(int argc, char *argv[])
 							{
 								prerr("model name missing");
 								delete m;
-								file_dialog_open = false;
 							}
 							else
 							{
 								models[m->name()] = m;
-								file_dialog_open = false;
 							}
+							show_load_model = false;
 						}
 					}
 				}
 				ImGui::SameLine();
 				if(ImGui::Button("cancel"))
 				{
-					file_dialog_open = false;
+					show_load_model = false;
 				}
 				ImGui::End();
 			}
 		}
 
-		if(about_open)
+		if(show_load_scene)
+		{
+			ImGui::SetNextWindowPos(ImVec2(display_size.x * 0.5f, display_size.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f,0.5f));
+			if(ImGui::Begin("enter path to scene", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_Modal | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize))
+			{
+				for (auto const& dir_entry : std::filesystem::recursive_directory_iterator(nle_projdir))
+				{
+					std::string path = dir_entry.path().c_str();
+					std::string name = dir_entry.path().filename();
+					std::size_t n;
+
+					if(dir_entry.path().filename().extension() == nle_scene_extension)
+					{
+						if(ImGui::Button(dir_entry.path().c_str()))
+						{
+							memset(inbuf, 0x00, sizeof(inbuf));
+							memcpy(inbuf, dir_entry.path().c_str(), sizeof(inbuf) - 1);
+						}
+					}
+				}
+
+				ImGui::InputText("scene path", inbuf, sizeof(inbuf) -1);
+				if(ImGui::Button("load"))
+				{
+					std::string path(inbuf, strlen(inbuf));
+					if(!path.empty())
+					{
+						if(std::filesystem::exists(path))
+						{
+							nle::Scene *s;
+
+							scenes[s->id()] = s;
+							std::ifstream ifs(path);
+							if(ifs.is_open())
+							{
+								auto j = nlohmann::json::parse(ifs);
+								object_builder(s, j, models);
+								app.set_current_scene(s);
+								ifs.close();
+							}
+
+							// auto *s = new nle::Scene();
+							// if(s->id().empty())
+							// {
+							// 	prerr("scene name missing");
+							// 	delete s;
+							// }
+							// else
+							// {
+							// }
+
+
+							show_load_scene = false;
+						}
+					}
+				}
+				ImGui::SameLine();
+				if(ImGui::Button("cancel"))
+				{
+					show_load_model = false;
+				}
+				ImGui::End();
+			}
+		}
+
+		if(show_about)
 		{
 			ImGui::SetNextWindowPos(ImVec2(display_size.x * 0.5f, display_size.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f,0.5f));
 			if(ImGui::Begin("about", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize))
@@ -157,15 +249,16 @@ int main(int argc, char *argv[])
 				ImGui::Text("https://github.com/grizzlei/nle");
 				ImGui::Text("experimental opengl renderer");
 				ImGui::Text("hasan karaman - hk@hasankaraman.dev - 2023");
-				about_open = !ImGui::Button("close");
+				show_about = !ImGui::Button("close");
 				ImGui::End();
 			}
 		}
 
 		// left window
-		ImGui::SetNextWindowPos(ImVec2(0.f, menubar_size.y), ImGuiCond_Always, ImVec2(0.f,0.f));
+		ImGui::SetNextWindowPos(ImVec2(0.f, menubar_size.y));
+		// ImGui::SetNextWindowPos(ImVec2(0.f, menubar_size.y), ImGuiCond_Always, ImVec2(0.f,0.f));
 		// ImGui::SetNextWindowSize({0.f, io.DisplaySize.y - menubar_size.y});
-        if(ImGui::Begin("control panel", nullptr, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse))
+        if(ImGui::Begin("general controls", nullptr, ImGuiWindowFlags_NoCollapse))
         {
 			control_panel_size = ImGui::GetWindowSize();
 			// renderer settings
@@ -309,11 +402,6 @@ int main(int argc, char *argv[])
 
 			ImGui::TextWrapped("current scene [%s]", app.current_scene()->id().c_str());
 
-			// if (ImGui::TreeNode(app.current_scene()->id().c_str()))
-			// {
-			// 	add_to_tree()
-			// }
-
 			for(auto * i : app.current_scene()->children())
 			{
 				nle::MultiMeshInstance *mi = dynamic_cast<nle::MultiMeshInstance*>(i);
@@ -327,7 +415,9 @@ int main(int argc, char *argv[])
 							selected_obj = nullptr;
 						}
 						else
+						{
 							selected_obj = mi;
+						}
 					}
 				}
 			}
@@ -436,6 +526,15 @@ int main(int argc, char *argv[])
 								instance->set_material(nullptr);
 							}
 						}
+						else
+						{
+							if(ImGui::Button("new material"))
+							{
+								material = new nle::Material(1.f, 32.f);
+								materials.push_back(material);
+								instance->set_material(material);
+							}
+						}
 					}
 				}
 				
@@ -468,8 +567,6 @@ int main(int argc, char *argv[])
 
 	app.run();
 
-	push_log("saving scene " + app.current_scene()->to_json().dump());
-
 	for(auto & model: models)
 	{
 		delete model.second;
@@ -477,8 +574,186 @@ int main(int argc, char *argv[])
 
 	for(auto & material: materials)
 	{
-		delete material.second;
+		delete material;
 	}
 
 	return (0);
+}
+
+// void build_scene_from_json(nle::Object3D *o, const nlohmann::json &j, std::map<std::string, nle::Model*>& models)
+// {
+// 	for(const auto& it: j["children"])
+// 	{
+// 		nle::Object3D * child;
+
+// 		int type = it["type"];
+// 		switch (type)
+// 		{
+// 			case 1:
+// 			{
+// 				auto *s = new nle::Scene();
+// 				s->from_json(it);
+// 				child = s;
+// 				break;
+// 			}
+// 			case 2:
+// 			{
+// 				auto *c = new nle::Camera();
+// 				c->from_json(it);
+// 				child = c;
+// 				break;
+// 			}
+// 			case 3:
+// 			{
+// 				auto *l = new nle::Light();
+// 				l->from_json(it);
+// 				child = l;
+// 				break;
+// 			}
+// 			case 4:
+// 			{
+
+// 				std::string source = it["source"];
+// 				if(models.find(source) != models.end())
+// 				{
+// 					auto *mmi = models[source]->create_instance();
+// 					mmi->from_json(it);
+// 					child = mmi;
+// 				}
+// 				else
+// 				{
+// 					prerr("model %s not found", source.c_str());
+// 				}
+// 				break;
+// 			}
+// 		}
+
+// 		if(child)
+// 		{
+// 			o->add_child(child);
+// 			build_scene_from_json(child, it, models);
+// 		}
+// 	}
+// }
+
+// void scene_builder(nle::Scene *s, const nlohmann::json& j, std::map<std::string, nle::Model*>& models)
+// {
+// 	s->from_json(j);
+
+// 	auto j_to_obj = [&models](const nlohmann::json& node) -> nle::Object3D*
+// 	{
+// 		for(const auto& it: node["children"])
+// 		{
+// 			nle::Object3D * child;
+
+// 			int type = it["type"];
+// 			switch (type)
+// 			{
+// 				case 1:
+// 				{
+// 					auto *s = new nle::Scene();
+// 					s->from_json(it);
+// 					child = s;
+// 					break;
+// 				}
+// 				case 2:
+// 				{
+// 					auto *c = new nle::Camera();
+// 					c->from_json(it);
+// 					child = c;
+// 					break;
+// 				}
+// 				case 3:
+// 				{
+// 					auto *l = new nle::Light();
+// 					l->from_json(it);
+// 					child = l;
+// 					break;
+// 				}
+// 				case 4:
+// 				{
+
+// 					std::string source = it["source"];
+// 					if(models.find(source) != models.end())
+// 					{
+// 						auto *mmi = models[source]->create_instance();
+// 						mmi->from_json(it);
+// 						child = mmi;
+// 					}
+// 					else
+// 					{
+// 						prerr("model %s not found", source.c_str());
+// 					}
+// 					break;
+// 				}
+// 			}
+
+// 			if(child)
+// 			{
+// 				o->add_child(child);
+// 				build_scene_from_json(child, it, models);
+// 			}
+// 		}
+// 	};
+	
+// 	for(const auto& it : j["children"])
+// 	{
+
+// 	}
+// }
+
+
+void object_builder(nle::Object3D *o, const nlohmann::json& j, std::map<std::string, nle::Model*>& models)
+{
+	int type = j["type"];
+	switch (type)
+	{
+		case 1:
+		{
+			auto *s = new nle::Scene();
+			s->from_json(j);
+			o = s;
+			break;
+		}
+		case 2:
+		{
+			auto *c = new nle::Camera();
+			c->from_json(j);
+			o = c;
+			break;
+		}
+		case 3:
+		{
+			auto *l = new nle::Light();
+			l->from_json(j);
+			o = l;
+			break;
+		}
+		case 4:
+		{
+
+			std::string source = j["source"];
+			if(models.find(source) != models.end())
+			{
+				auto *mmi = models[source]->create_instance();
+				mmi->from_json(j);
+				o = mmi;
+			}
+			else
+			{
+				prerr("model %s not found", source.c_str());
+			}
+			break;
+		}
+	}
+
+	for(const auto& it : j["children"])
+	{
+		nle::Object3D * c;
+		object_builder(c, it, models);
+		if(c)
+		{
+			o->add_child(c);
+		}
+	}
 }

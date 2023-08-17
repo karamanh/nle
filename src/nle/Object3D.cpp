@@ -80,6 +80,11 @@ namespace nle
         return m_sig_child_added;
     }
 
+    const std::type_info& Object3D::type() const
+    {
+        return typeid(*this);
+    }
+
     void Object3D::add_child(Object3D *child)
     {
         if(!child)
