@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
 				ImGui::PopID();
 
 				show_load_scene = ImGui::MenuItem("load scene");
-				
+
 				ImGui::Separator();
 
                 if(ImGui::MenuItem("quit"))
@@ -461,21 +461,9 @@ int main(int argc, char *argv[])
 			ImGui::End();
 		}
 
-		// current scene window
-		ImGui::SetNextWindowPos({scene_size.x, menubar_size.y + control_panel_size.y + assets_size.y});
-		ImGui::SetNextWindowSize({display_size.x - scene_size.x - object_properties_size.x, scene_size.y});
-		if(ImGui::Begin("logs", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize))
-		{
-			for(auto & it: logs)
-			{
-				ImGui::TextWrapped(it.c_str());
-			}
-			ImGui::End();
-		}
-
 		// object manager window
 		ImGui::SetNextWindowPos(ImVec2(display_size.x -object_properties_size.x, menubar_size.y));
-		ImGui::SetNextWindowSize(ImVec2(object_properties_size.x, display_size.y));
+		ImGui::SetNextWindowSize(ImVec2(object_properties_size.x, (display_size.y - menubar_size.y)*0.66));
 		if(ImGui::Begin("object properties", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize))
 		{
 			object_properties_size = ImGui::GetWindowSize();
@@ -597,6 +585,18 @@ int main(int argc, char *argv[])
 					app.current_scene()->delete_child(selected_obj);
 					selected_obj = nullptr;
 				}
+			}
+			ImGui::End();
+		}
+
+		// current scene window
+		ImGui::SetNextWindowPos({display_size.x - object_properties_size.x, menubar_size.y + object_properties_size.y});
+		ImGui::SetNextWindowSize({object_properties_size.x, display_size.y - object_properties_size.y - menubar_size.y});
+		if(ImGui::Begin("logs", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize))
+		{
+			for(auto & it: logs)
+			{
+				ImGui::TextWrapped(it.c_str());
 			}
 			ImGui::End();
 		}
