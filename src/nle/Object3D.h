@@ -20,14 +20,19 @@ namespace nle
         glm::vec3 m_rotation;
         glm::vec3 m_scale;
         glm::vec3 m_velocity;
+        glm::vec3 m_front;
+        glm::vec3 m_up;
+        glm::vec3 m_right;
         std::vector<Object3D *> m_children;
         std::string m_id;
         Object3D *m_parent;
         Object3D *m_root;
         Signal<Object3D*> m_sig_child_added;
         bool m_physics_enabled = false;
+        float m_speed;
         
         void set_root(Object3D *root);
+        void update();
 
     public:
         Object3D(const std::string &id = "");
@@ -54,6 +59,17 @@ namespace nle
         virtual Object3D *root() const;
         Signal<Object3D*> sig_child_added() const;
         const std::type_info &type() const;
+        virtual void move_forward();
+        virtual void move_backwards();
+        virtual void move_right();
+        virtual void move_left();
+        virtual void move_up();
+        virtual void move_down();
+        virtual glm::vec3 front() const;
+        virtual glm::vec3 right() const;
+        virtual glm::vec3 up() const;
+        virtual void set_speed(float speed);
+        virtual float speed() const;
     };
 } // namespace nle
 

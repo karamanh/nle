@@ -2,10 +2,20 @@
 
 #include <algorithm>
 
+static const glm::vec3 WORLD_UP = {0.f, 1.f, 0.f};
+
 namespace nle
 {
     Object3D::Object3D(const std::string &id)
-        : m_position(0), m_rotation(0), m_scale(1.f), m_velocity(0.f), m_root(this)
+        : m_position(0), 
+        m_rotation(0), 
+        m_scale(1.f), 
+        m_velocity(0.f),
+        m_speed(1.f),
+        m_root(this),
+        m_up({0.f, 1.f, 0.f}),
+        m_front({0.f, 0.f, -1.f}),
+        m_right({1.f, 0.f, 0.f})
     {
         m_id = id.empty() ? generate_random_alphanumeric_string() : id;
     }
@@ -25,6 +35,7 @@ namespace nle
         {
             c->set_position(pos);
         }
+        update();
     }
 
     glm::vec3 Object3D::position() const
@@ -39,6 +50,7 @@ namespace nle
         {
             c->set_rotation(rotation);
         }
+        update();
     }
 
     glm::vec3 Object3D::rotation() const
@@ -53,6 +65,7 @@ namespace nle
         {
             c->set_scale(scale);
         }
+        update();
     }
 
     glm::vec3 Object3D::velocity() const
@@ -83,6 +96,78 @@ namespace nle
     const std::type_info& Object3D::type() const
     {
         return typeid(*this);
+    }
+
+    void Object3D::move_forward()
+    {
+        glm::vec3 dpos = m_front * m_speed;
+        set_position(position() + dpos);
+    }
+
+    void Object3D::move_backwards()
+    {
+        glm::vec3 dpos = -(m_front * m_speed);
+        set_position(position() + dpos);
+    }
+
+    void Object3D::move_right()
+    {
+        glm::vec3 dpos = m_right * m_speed;
+        set_position(position() + dpos);
+    }
+
+    void Object3D::move_left()
+    {
+        glm::vec3 dpos = -(m_right * m_speed);
+        set_position(position() + dpos);
+    }
+
+    void Object3D::move_up()
+    {
+        glm::vec3 dpos = m_up * m_speed;
+        set_position(position() + dpos);
+    }
+
+    void Object3D::move_down()
+    {
+        glm::vec3 dpos = -(m_up * m_speed);
+        set_position(position() + dpos);
+    }
+
+    glm::vec3 Object3D::front() const
+    {
+        return m_front;
+    }
+
+    glm::vec3 Object3D::right() const
+    {
+        return m_right;
+    }
+
+    glm::vec3 Object3D::up() const
+    {
+        return m_up;
+    }
+
+    void Object3D::set_speed(float speed)
+    {
+        m_speed = speed;
+    }
+
+    float Object3D::speed() const
+    {
+        return m_speed;
+    }
+
+    void Object3D::update()
+    {
+        m_front.x = cos(glm::radians(rotation().y)) * cos(glm::radians(rotation().x));
+        m_front.y = sin(glm::radians(rotation().x));
+        m_front.z = sin(glm::radians(rotation().y)) * cos(glm::radians(rotation().x));
+        m_front = glm::normalize(m_front);
+
+        m_right = glm::normalize(glm::cross(m_front, WORLD_UP));
+        m_up = glm::normalize(glm::cross(m_right, m_front));
     }
 
     void Object3D::add_child(Object3D *child)
