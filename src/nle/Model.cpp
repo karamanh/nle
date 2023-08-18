@@ -13,12 +13,13 @@ namespace nle
         : m_shader(shader), m_texture(texture)
     {
         std::string fmt = path.substr(path.find_last_of("."));
-        m_name = path.substr(path.find_last_of('/')+1);
-        
-        std::transform(fmt.begin(), fmt.end(), fmt.begin(),
-        [](unsigned char c){ return std::tolower(c); });
+        m_name = path.substr(path.find_last_of('/') + 1);
 
-        if(fmt == ".obj")
+        std::transform(fmt.begin(), fmt.end(), fmt.begin(),
+                       [](unsigned char c)
+                       { return std::tolower(c); });
+
+        if (fmt == ".obj")
         {
             load_obj(path);
         }
@@ -36,7 +37,7 @@ namespace nle
 
     MultiMeshInstance *Model::create_instance()
     {
-        auto * ret = m_multimesh->create_instance();
+        auto *ret = m_multimesh->create_instance();
         ret->m_source = m_name;
         return ret;
     }
@@ -49,34 +50,39 @@ namespace nle
         {
             return false;
         }
-        
+
         m_multimesh = new MultiMesh();
 
         for (const auto &mesh : loader.LoadedMeshes)
         {
             std::vector<float> vertices;
             std::vector<unsigned int> indices;
-            
+
             Shader *s = m_shader ? m_shader : nle::DEFAULT_SHADER;
-            Texture * t = nullptr;
+            Texture *t = nullptr;
 
-            if(!mesh.MeshMaterial.map_Kd.empty())
+            if (!mesh.MeshMaterial.map_Kd.empty())
             {
-                std::string tex_path;
-                // bool is_fname = (tex_path.find('/') == std::string::npos);
-                std::size_t pos_last_slash = path.find_last_of('/');
 
+                auto texpath = std::filesystem::path(mesh.MeshMaterial.map_Kd);
 
-                if(pos_last_slash == std::string::npos) // if only file name is given, we seek it in the same directory
+                if (texpath.is_absolute())
                 {
-                    tex_path = path.substr(0, path.find_last_of('/')+1) + mesh.MeshMaterial.map_Kd;
+                    if (std::filesystem::exists(texpath))
+                    {
+                        t = new Texture(texpath);
+                    }
                 }
-                else
+                else if (texpath.is_relative())
                 {
-                    tex_path = mesh.MeshMaterial.map_Kd;
+                    for (auto const &dir_entry : std::filesystem::recursive_directory_iterator(std::filesystem::path(path).parent_path()))
+                    {
+                        if (dir_entry.path().filename() == texpath.filename())
+                        {
+                            t = new Texture(dir_entry.path());
+                        }
+                    }
                 }
-
-                t = new Texture(tex_path);
             }
 
             for (const auto &v : mesh.Vertices)
@@ -90,8 +96,8 @@ namespace nle
                 vertices.push_back(mesh.MeshMaterial.Kd.X);
                 vertices.push_back(mesh.MeshMaterial.Kd.Y);
                 vertices.push_back(mesh.MeshMaterial.Kd.Z);
-                vertices.push_back(t ? v.TextureCoordinate.X : 0.f);
-                vertices.push_back(t ? v.TextureCoordinate.Y : 0.f);
+                vertices.push_back(v.TextureCoordinate.X);
+                vertices.push_back(v.TextureCoordinate.Y);
             }
 
             for (const auto &i : mesh.Indices)
@@ -131,7 +137,6 @@ namespace nle
         //     {
         //         for(const auto& it2 : it1.targets)
         //     }
-
 
         //     Shader *s = m_shader ? m_shader : DEFAULT_SHADER;
         //     m_multimesh->meshes().push_back(new Mesh(vertices, indices, s, m_texture));

@@ -23,7 +23,7 @@ nle_projdir = nle_workdir + "/nle_projdir";
 
 // void build_scene(nle::Scene *s, const nlohmann::json& j);
 
-void object_builder(nle::Object3D *o, const nlohmann::json& j, std::map<std::string, nle::Model*>& models);
+void object_builder(nle::Object3D **o, const nlohmann::json& j, std::map<std::string, nle::Model*>& models);
 void build_scene_from_json(nle::Object3D *o, const nlohmann::json &j, std::map<std::string, nle::Model*>& models);
 
 int main(int argc, char *argv[])
@@ -92,25 +92,27 @@ int main(int argc, char *argv[])
             {
 				show_load_model = ImGui::MenuItem("load model");
 
-				if(ImGui::MenuItem("save scene"))
-				{
-					push_log("saving scene " + app.current_scene()->to_json().dump());
-
-					if(!std::filesystem::exists(nle_projdir))
+				ImGui::PushID("menuitem_save_screen");
+					if(ImGui::MenuItem("save scene"))
 					{
-						if(!std::filesystem::create_directory(nle_projdir))
+						push_log("saving scene " + app.current_scene()->to_json().dump());
+
+						if(!std::filesystem::exists(nle_projdir))
 						{
-							prerr("could not create directory %s", nle_projdir.c_str());
+							if(!std::filesystem::create_directory(nle_projdir))
+							{
+								prerr("could not create directory %s", nle_projdir.c_str());
+							}
+						}
+
+						std::ofstream ofs(nle_projdir + "/" + app.current_scene()->id() + nle_scene_extension);
+						if(ofs.is_open())
+						{
+							ofs << app.current_scene()->to_json().dump(4, ' ');
+							ofs.close();
 						}
 					}
-
-					std::ofstream ofs(nle_projdir + "/" + app.current_scene()->id() + nle_scene_extension);
-					if(ofs.is_open())
-					{
-						ofs << app.current_scene()->to_json().dump(4, ' ');
-						ofs.close();
-					}
-				}
+				ImGui::PopID();
 
 				if(show_load_scene = ImGui::MenuItem("load scene"))
 				{
@@ -205,27 +207,26 @@ int main(int argc, char *argv[])
 					{
 						if(std::filesystem::exists(path))
 						{
-							nle::Scene *s;
 
-							scenes[s->id()] = s;
 							std::ifstream ifs(path);
 							if(ifs.is_open())
 							{
 								auto j = nlohmann::json::parse(ifs);
-								object_builder(s, j, models);
-								app.set_current_scene(s);
+								nle::Scene *new_scene;
+								object_builder(reinterpret_cast<nle::Object3D**>(&new_scene), j, models);
+
+								if(new_scene)
+								{
+									scenes[new_scene->id()] = new_scene;
+									app.set_current_scene(new_scene);
+									prinf("loaded scene %s", new_scene->id().c_str());
+								}
+								else
+								{
+									prerr("could not load scene from %s", path.c_str());
+								}
 								ifs.close();
 							}
-
-							// auto *s = new nle::Scene();
-							// if(s->id().empty())
-							// {
-							// 	prerr("scene name missing");
-							// 	delete s;
-							// }
-							// else
-							// {
-							// }
 
 
 							show_load_scene = false;
@@ -235,7 +236,7 @@ int main(int argc, char *argv[])
 				ImGui::SameLine();
 				if(ImGui::Button("cancel"))
 				{
-					show_load_model = false;
+					show_load_scene = false;
 				}
 				ImGui::End();
 			}
@@ -375,29 +376,6 @@ int main(int argc, char *argv[])
 		if(ImGui::Begin("current scene", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize))
 		{
 			bottom_window_size = ImGui::GetWindowSize();
-			
-			// static std::function<void(nle::Object3D*)> add_to_tree = [&](nle::Object3D *o){
-
-			// 	// nle::MultiMeshInstance *mi = dynamic_cast<nle::MultiMeshInstance*>(o);
-			// 	// if(mi)
-			// 	// {
-			// 	// }
-			// 	ImGui::TreePush();
-			// 	if(ImGui::TreeNode(o->id().c_str()))
-			// 	{
-			// 		if(selected_obj)
-			// 		{
-			// 			selected_obj = nullptr;
-			// 		}
-			// 		else
-			// 			selected_obj = o;
-			// 	}
-			// 	for(auto * c : o->children())
-			// 	{
-			// 		add_to_tree(c);
-			// 	}
-			// 	ImGui::TreePop();
-			// };
 
 
 			ImGui::TextWrapped("current scene [%s]", app.current_scene()->id().c_str());
@@ -580,164 +558,41 @@ int main(int argc, char *argv[])
 	return (0);
 }
 
-// void build_scene_from_json(nle::Object3D *o, const nlohmann::json &j, std::map<std::string, nle::Model*>& models)
-// {
-// 	for(const auto& it: j["children"])
-// 	{
-// 		nle::Object3D * child;
-
-// 		int type = it["type"];
-// 		switch (type)
-// 		{
-// 			case 1:
-// 			{
-// 				auto *s = new nle::Scene();
-// 				s->from_json(it);
-// 				child = s;
-// 				break;
-// 			}
-// 			case 2:
-// 			{
-// 				auto *c = new nle::Camera();
-// 				c->from_json(it);
-// 				child = c;
-// 				break;
-// 			}
-// 			case 3:
-// 			{
-// 				auto *l = new nle::Light();
-// 				l->from_json(it);
-// 				child = l;
-// 				break;
-// 			}
-// 			case 4:
-// 			{
-
-// 				std::string source = it["source"];
-// 				if(models.find(source) != models.end())
-// 				{
-// 					auto *mmi = models[source]->create_instance();
-// 					mmi->from_json(it);
-// 					child = mmi;
-// 				}
-// 				else
-// 				{
-// 					prerr("model %s not found", source.c_str());
-// 				}
-// 				break;
-// 			}
-// 		}
-
-// 		if(child)
-// 		{
-// 			o->add_child(child);
-// 			build_scene_from_json(child, it, models);
-// 		}
-// 	}
-// }
-
-// void scene_builder(nle::Scene *s, const nlohmann::json& j, std::map<std::string, nle::Model*>& models)
-// {
-// 	s->from_json(j);
-
-// 	auto j_to_obj = [&models](const nlohmann::json& node) -> nle::Object3D*
-// 	{
-// 		for(const auto& it: node["children"])
-// 		{
-// 			nle::Object3D * child;
-
-// 			int type = it["type"];
-// 			switch (type)
-// 			{
-// 				case 1:
-// 				{
-// 					auto *s = new nle::Scene();
-// 					s->from_json(it);
-// 					child = s;
-// 					break;
-// 				}
-// 				case 2:
-// 				{
-// 					auto *c = new nle::Camera();
-// 					c->from_json(it);
-// 					child = c;
-// 					break;
-// 				}
-// 				case 3:
-// 				{
-// 					auto *l = new nle::Light();
-// 					l->from_json(it);
-// 					child = l;
-// 					break;
-// 				}
-// 				case 4:
-// 				{
-
-// 					std::string source = it["source"];
-// 					if(models.find(source) != models.end())
-// 					{
-// 						auto *mmi = models[source]->create_instance();
-// 						mmi->from_json(it);
-// 						child = mmi;
-// 					}
-// 					else
-// 					{
-// 						prerr("model %s not found", source.c_str());
-// 					}
-// 					break;
-// 				}
-// 			}
-
-// 			if(child)
-// 			{
-// 				o->add_child(child);
-// 				build_scene_from_json(child, it, models);
-// 			}
-// 		}
-// 	};
-	
-// 	for(const auto& it : j["children"])
-// 	{
-
-// 	}
-// }
-
-
-void object_builder(nle::Object3D *o, const nlohmann::json& j, std::map<std::string, nle::Model*>& models)
+void object_builder(nle::Object3D **o, const nlohmann::json& j, std::map<std::string, nle::Model*>& models)
 {
 	int type = j["type"];
 	switch (type)
 	{
 		case 1:
 		{
-			auto *s = new nle::Scene();
-			s->from_json(j);
-			o = s;
+			nle::Scene * h = new nle::Scene();
+			h->from_json(j);
+			(*o) = h;
 			break;
 		}
 		case 2:
 		{
-			auto *c = new nle::Camera();
-			c->from_json(j);
-			o = c;
+			nle::Camera * h = new nle::Camera();
+			h->from_json(j);
+			(*o) = h;
 			break;
 		}
 		case 3:
 		{
-			auto *l = new nle::Light();
-			l->from_json(j);
-			o = l;
+			nle::Light * h = new nle::Light();
+			h->from_json(j);
+			(*o) = h;
 			break;
 		}
 		case 4:
 		{
-
 			std::string source = j["source"];
 			if(models.find(source) != models.end())
 			{
-				auto *mmi = models[source]->create_instance();
-				mmi->from_json(j);
-				o = mmi;
+				nle::MultiMeshInstance *h = models[source]->create_instance();
+				h->from_json(j);
+				// nle::MultiMeshInstance * h; (h = dynamic_cast<nle::MultiMeshInstance*>(o))->from_json(j);
+				(*o) = h;				
 			}
 			else
 			{
@@ -747,13 +602,19 @@ void object_builder(nle::Object3D *o, const nlohmann::json& j, std::map<std::str
 		}
 	}
 
-	for(const auto& it : j["children"])
+	if(*o) // can be null if it's a multimesh instance, and model not found.
 	{
-		nle::Object3D * c;
-		object_builder(c, it, models);
-		if(c)
+		if(j.find("children") != j.end())
 		{
-			o->add_child(c);
+			for(const auto& it : j["children"])
+			{
+				nle::Object3D * c = nullptr;
+				object_builder(&c, it, models);
+				if(c)
+				{
+					(*o)->add_child(c);
+				}
+			}
 		}
 	}
 }

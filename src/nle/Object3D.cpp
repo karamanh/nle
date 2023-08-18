@@ -162,16 +162,10 @@ namespace nle
 
     void Object3D::from_json(const nlohmann::json &j)
     {
-        m_id = j["id"];
-        m_position.x = j["position"]["x"];
-        m_position.y = j["position"]["y"];
-        m_position.z = j["position"]["z"];
-        m_rotation.x = j["rotation"]["x"];
-        m_rotation.y = j["rotation"]["y"];
-        m_rotation.z = j["rotation"]["z"];
-        m_scale.x = j["scale"]["x"];
-        m_scale.y = j["scale"]["y"];
-        m_scale.z = j["scale"]["z"];
+        this->set_id(j["id"]);
+        this->set_position({j["position"]["x"], j["position"]["y"], j["position"]["z"]});
+        this->set_rotation({j["rotation"]["x"], j["rotation"]["y"], j["rotation"]["z"]});
+        this->set_scale({j["scale"]["x"], j["scale"]["y"], j["scale"]["z"]});
     }
 
     Object3D *Object3D::parent() const
