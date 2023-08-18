@@ -65,6 +65,18 @@ namespace nle
         // @TODO: check for collisions and move if there's no obstacle
 
         body->set_position(body->position() + body->velocity());
+        
+        // fake collision
+        auto pos = body->position();
+        if(pos.y < 0.f)
+        {
+            pos.y = 0.f;
+            auto vel = body->velocity();
+            vel.y = 0.0;
+            body->set_velocity(vel);
+        }
+        body->set_position(pos);
+        // fake collision
 
         m_on_physics_process.emit(body, delta_time);
     }
