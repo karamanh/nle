@@ -8,7 +8,7 @@
       - not sure if imgui_glfw class is needed, a whole new editor.cpp would be good
       - dynamic texture setting
     - gltf & glb loading
-    - scene saving and loading (in progress)
+    - ~~scene saving and loading~~
     - point light
     - mouse ray for 3d interaction
     - default shaders need tidying up
