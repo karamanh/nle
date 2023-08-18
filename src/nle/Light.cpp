@@ -70,7 +70,7 @@ namespace nle
 
     void Light::set_id(const std::string &id)
     {
-        Object3D::set_id("light_" + id);
+        Object3D::set_id(id);
     }
 
     nlohmann::json Light::to_json()

@@ -91,6 +91,7 @@ int main(int argc, char *argv[])
             if(ImGui::BeginMenu("file"))
             {
 				show_load_model = ImGui::MenuItem("load model");
+				ImGui::Separator();
 
 				ImGui::PushID("menuitem_save_screen");
 					if(ImGui::MenuItem("save scene"))
@@ -114,10 +115,9 @@ int main(int argc, char *argv[])
 					}
 				ImGui::PopID();
 
-				if(show_load_scene = ImGui::MenuItem("load scene"))
-				{
-					// prerr("not implemented");
-				}
+				show_load_scene = ImGui::MenuItem("load scene");
+				
+				ImGui::Separator();
 
                 if(ImGui::MenuItem("quit"))
                 {
@@ -247,9 +247,11 @@ int main(int argc, char *argv[])
 			ImGui::SetNextWindowPos(ImVec2(display_size.x * 0.5f, display_size.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f,0.5f));
 			if(ImGui::Begin("about", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize))
 			{
-				ImGui::Text("https://github.com/grizzlei/nle");
-				ImGui::Text("experimental opengl renderer");
-				ImGui::Text("hasan karaman - hk@hasankaraman.dev - 2023");
+				ImGui::TextWrapped("nice little engine");
+				ImGui::Separator();
+				ImGui::TextWrapped("https://github.com/grizzlei/nle");
+				ImGui::TextWrapped("experimental opengl renderer");
+				ImGui::TextWrapped("hasan karaman - hk@hasankaraman.dev - 2023");
 				show_about = !ImGui::Button("close");
 				ImGui::End();
 			}
@@ -380,25 +382,82 @@ int main(int argc, char *argv[])
 
 			ImGui::TextWrapped("current scene [%s]", app.current_scene()->id().c_str());
 
-			for(auto * i : app.current_scene()->children())
-			{
-				nle::MultiMeshInstance *mi = dynamic_cast<nle::MultiMeshInstance*>(i);
-				if(mi)
+			// for(auto * i : app.current_scene()->children())
+			// {
+			// 	nle::MultiMeshInstance *mi = dynamic_cast<nle::MultiMeshInstance*>(i);
+			// 	if(mi)
+			// 	{
+			// 		if(ImGui::Button(i->id().c_str()))
+			// 		{
+			// 			mi->set_render_mode(mi->render_mode() == nle::Fill ? nle::Line : nle::Fill);
+			// 			if(selected_obj)
+			// 			{
+			// 				selected_obj = nullptr;
+			// 			}
+			// 			else
+			// 			{
+			// 				selected_obj = mi;
+			// 			}
+			// 		}
+			// 	}
+			// }
+
+			std::function<void(nle::Object3D*)> generate_tree = [&](nle::Object3D* o){
+
+				if(ImGui::TreeNodeEx(o->id().c_str()))
 				{
-					if(ImGui::Button(i->id().c_str()))
+					for(auto *i : o->children())
 					{
-						mi->set_render_mode(mi->render_mode() == nle::Fill ? nle::Line : nle::Fill);
-						if(selected_obj)
+						nle::MultiMeshInstance *mi = dynamic_cast<nle::MultiMeshInstance*>(i);
+						if(mi)
 						{
-							selected_obj = nullptr;
+							generate_tree(mi);
+
+							// mi->set_render_mode(selected_obj == mi ? nle::Line : nle::Fill);
+						}
+					}
+
+					nle::MultiMeshInstance *mi = dynamic_cast<nle::MultiMeshInstance*>(o);
+					if(mi)
+					{
+						mi->set_render_mode(selected_obj == mi ? nle::Line : nle::Fill);
+						if(selected_obj != mi)
+						{
+							if(ImGui::Button("select"))
+							{
+								selected_obj = mi;
+							}
 						}
 						else
 						{
-							selected_obj = mi;
+							if(ImGui::Button("deselect"))
+							{
+								selected_obj = nullptr;
+							}
+						}
+						ImGui::SameLine();
+						if(ImGui::Button("delete"))
+						{
+							o->parent()->delete_child(o);
+							selected_obj = nullptr;
 						}
 					}
+
+					ImGui::TreePop();
 				}
-			}
+			};
+
+			generate_tree(app.current_scene());
+
+			// if(ImGui::TreeNode("current scene [%s]", app.current_scene()->id().c_str()))
+			// {
+
+			// }
+
+			// if (ImGui::TreeNode(child->name))
+			// {
+			// 	ImGui::TreePop();
+			// }
 			ImGui::End();
 		}
 

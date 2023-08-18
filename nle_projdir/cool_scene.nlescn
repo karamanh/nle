@@ -1,7 +1,7 @@
 {
     "camera": {
         "free_roam": false,
-        "id": "camera_camera_camera_camera_pm1Og8JScmieiMkq",
+        "id": "pm1Og8JScmieiMkq",
         "position": {
             "x": -9.98362922668457,
             "y": 1.510434627532959,
@@ -3579,7 +3579,7 @@
             "type": 4
         }
     ],
-    "id": "scene_scene_scene_scene_scene_root",
+    "id": "root",
     "light": {
         "ambient_intensity": 1.0,
         "color": {
@@ -3589,7 +3589,7 @@
         },
         "diffuse_intensity": 1.0,
         "enabled": true,
-        "id": "light_light_light_light_lRQfi82zjCde42Oo",
+        "id": "lRQfi82zjCde42Oo",
         "position": {
             "x": 0.0,
             "y": 100.0,

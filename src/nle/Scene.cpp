@@ -75,7 +75,7 @@ namespace nle
 
     void Scene::set_id(const std::string &id)
     {
-        Object3D::set_id("scene_" + id);
+        Object3D::set_id(id);
     }
 
     nlohmann::json Scene::serialize(Object3D *o)

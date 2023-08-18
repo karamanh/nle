@@ -91,7 +91,7 @@ namespace nle
 
     void Camera::set_id(const std::string &id)
     {
-        Object3D::set_id("camera_" + id);
+        Object3D::set_id(id);
     }
 
     nlohmann::json Camera::to_json()
