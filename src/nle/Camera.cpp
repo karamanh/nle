@@ -6,6 +6,7 @@
 namespace nle
 {
     Camera::Camera()
+        : m_fov(45.f), m_near(0.1f), m_far(10000.f)
     {
         // m_up = glm::vec3(0.f, 1.f, 0.f);
         // m_front = glm::vec3(0.f, 0.f, -1.f);
@@ -16,6 +17,7 @@ namespace nle
     }
 
     Camera::Camera(glm::vec3 position)
+        : m_fov(45.f), m_near(0.1f), m_far(10000.f)
     {
         set_position(position);
         set_rotation(glm::vec3(0.f));
@@ -110,6 +112,36 @@ namespace nle
         m_turn_speed = j["turn_speed"];
         m_speed = j["speed"];
         m_free_roam = j["free_roam"];
+    }
+
+    void Camera::set_fov(float fov)
+    {
+        m_fov = fov;
+    }
+
+    float Camera::fov() const
+    {
+        return m_fov;
+    }
+
+    void Camera::set_near(float near)
+    {
+        m_near = near;
+    }
+
+    float Camera::near() const
+    {
+        return m_near;
+    }
+
+    void Camera::set_far(float far)
+    {
+        m_far = far;
+    }
+
+    float Camera::far() const
+    {
+        return m_far;
     }
 
     // void Camera::update()

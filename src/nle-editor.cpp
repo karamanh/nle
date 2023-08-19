@@ -33,6 +33,7 @@ int main(int argc, char *argv[])
 	std::map<std::string, nle::Scene*> scenes;
 	std::map<std::string, nle::Model*> models;
 	std::vector<nle::Material*> materials;
+	std::vector<nle::Mesh*> aabb_meshes;
 	std::vector<std::string> logs;
 	std::size_t max_logs = 100;
 
@@ -85,6 +86,13 @@ int main(int argc, char *argv[])
 		static char inbuf[512] = {0};
 		static nle::RenderObject3D * selected_obj = nullptr;
 		ImVec2 menubar_size, control_panel_size, assets_size, scene_size, bottom_window_size, object_properties_size = {300.f, 0.f}, display_size = io.DisplaySize;
+
+		app.renderer()->object_intersects().bind_callback([&](nle::MultiMeshInstance*mmi){
+			if(!io.WantCaptureMouse)
+			{
+				selected_obj = mmi;
+			}
+		});
 
         if(ImGui::BeginMainMenuBar())
         {
@@ -362,6 +370,42 @@ int main(int argc, char *argv[])
 						auto * instance = it.second->create_instance();
 						if(instance)
 						{
+
+							// for(auto * m : instance->multimesh()->meshes())
+							// {
+								
+							// 	auto * nm = new nle::Mesh(
+							// 		{
+							// 			m->aabb_min().x, m->aabb_min().y, m->aabb_min().z, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f,
+							// 			m->aabb_max().x, m->aabb_min().y, m->aabb_min().z, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f,
+							// 			m->aabb_max().x, m->aabb_max().y, m->aabb_min().z, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f,
+							// 			m->aabb_min().x, m->aabb_max().y, m->aabb_min().z, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f,
+							// 			m->aabb_min().x, m->aabb_min().y, m->aabb_max().z, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f,
+							// 			m->aabb_max().x, m->aabb_min().y, m->aabb_max().z, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f,
+							// 			m->aabb_max().x, m->aabb_max().y, m->aabb_max().z, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f,
+							// 			m->aabb_min().x, m->aabb_max().y, m->aabb_max().z, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f
+							// 		},
+							// 		{
+							// 			0, 1, 2, // front
+							// 			2, 3, 0, // front
+							// 			4, 5, 6, // back
+							// 			6, 7, 4, // back
+							// 			9, 4, 7,
+							// 			7, 3, 0,
+							// 			1, 5, 6,
+							// 			6, 2, 1,
+							// 			2, 6, 7,
+							// 			7, 3, 2,
+							// 			0, 1, 5,
+							// 			5, 4, 0
+							// 		},
+							// 		nle::DEFAULT_SHADER
+							// 	);
+							// 	aabb_meshes.push_back(nm);
+							// 	auto * mmi = nm->create_instance();
+							// 	mmi->set_render_mode(nle::Line);
+							// 	instance->add_child(mmi);
+							// }
 							app.current_scene()->add_child(instance);
 						}
 					}
@@ -420,7 +464,7 @@ int main(int argc, char *argv[])
 					nle::MultiMeshInstance *mi = dynamic_cast<nle::MultiMeshInstance*>(o);
 					if(mi)
 					{
-						mi->set_render_mode(selected_obj == mi ? nle::Line : nle::Fill);
+						// mi->set_render_mode(selected_obj == mi ? nle::Line : nle::Fill);
 						if(selected_obj != mi)
 						{
 							if(ImGui::Button("select"))
@@ -589,6 +633,15 @@ int main(int argc, char *argv[])
 			ImGui::End();
 		}
 
+		for(auto * i : app.current_scene()->render_objects())
+		{
+			auto * mmi = dynamic_cast<nle::MultiMeshInstance*>(i);
+			if(mmi)
+			{
+				mmi->set_render_mode(selected_obj == mmi ? nle::Line : nle::Fill);
+			}
+		}
+
 		// current scene window
 		ImGui::SetNextWindowPos({display_size.x - object_properties_size.x, menubar_size.y + object_properties_size.y});
 		ImGui::SetNextWindowSize({object_properties_size.x, display_size.y - object_properties_size.y - menubar_size.y});
@@ -612,6 +665,11 @@ int main(int argc, char *argv[])
 	for(auto & material: materials)
 	{
 		delete material;
+	}
+
+	for(auto & aabb_mesh: aabb_meshes)
+	{
+		delete aabb_mesh;
 	}
 
 	return (0);

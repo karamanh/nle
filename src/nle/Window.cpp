@@ -32,7 +32,9 @@ namespace nle
 
         glfwSetWindowUserPointer(m_handle, this);
         glfwSetKeyCallback(m_handle, Window::key_handler);
-        glfwSetCursorPosCallback(m_handle, Window::mouse_handler);
+        glfwSetCursorPosCallback(m_handle, Window::mouse_position_handler);
+        glfwSetMouseButtonCallback(m_handle, Window::mouse_button_handler);
+        // GLFWmousebuttonfun
 
         m_input_handler = new InputHandler(m_handle);
     }
@@ -132,13 +134,34 @@ namespace nle
         }
     }
 
-    void Window::mouse_handler(GLFWwindow *window, double mouse_x, double mouse_y)
+    void Window::mouse_position_handler(GLFWwindow *window, double mouse_x, double mouse_y)
     {
         Window *w = static_cast<Window *>(glfwGetWindowUserPointer(window));
         if (!w)
         {
             return;
         }
-        w->m_input_handler->set_mouse_state(mouse_x, mouse_y);
+        w->m_input_handler->set_mouse_position(mouse_x, mouse_y);
+    }
+
+    void Window::mouse_button_handler(GLFWwindow *window, int button, int action, int mods)
+    {
+        Window *w = static_cast<Window *>(glfwGetWindowUserPointer(window));
+        if (!w)
+        {
+            return;
+        }
+        button = (unsigned int)button;
+        if (button >= 0 && button < w->m_input_handler->m_mouse_buttons.size())
+        {
+            if ((action == GLFW_PRESS) || (action == GLFW_REPEAT))
+            {
+                w->m_input_handler->set_mouse_button_state(button, true);
+            }
+            else if (action == GLFW_RELEASE)
+            {
+                w->m_input_handler->set_mouse_button_state(button, false);
+            }
+        }
     }
 } // namespace nle

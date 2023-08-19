@@ -58,7 +58,7 @@ namespace nle
 
     void Nle::initialize()
     {
-        m_window = new nle::Window(1280, 720, "nice little engine");
+        m_window = new nle::Window(1920, 720, "nice little engine");
         m_renderer = new Renderer3D(m_window);
         m_texture_factory = new TextureFactory();
         m_physics_engine = new PhysicsEngine();

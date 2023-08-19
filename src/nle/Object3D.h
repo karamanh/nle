@@ -11,6 +11,8 @@
 #include <vector>
 #include <string>
 
+const glm::vec3 WORLD_UP = {0.f, 1.f, 0.f};
+
 namespace nle
 {
     class Object3D
@@ -27,10 +29,10 @@ namespace nle
         std::string m_id;
         Object3D *m_parent;
         Object3D *m_root;
-        Signal<Object3D*> m_sig_child_added;
+        Signal<Object3D *> m_sig_child_added;
         bool m_physics_enabled = false;
         float m_speed;
-        
+
         void set_root(Object3D *root);
         void update();
 
@@ -48,16 +50,16 @@ namespace nle
         virtual std::vector<Object3D *> children() const;
         virtual void add_child(Object3D *child);
         virtual void delete_child(Object3D *child);
-        virtual void set_id(const std::string& id);
+        virtual void set_id(const std::string &id);
         virtual std::string id() const;
         virtual void set_physics_enabled(bool enabled);
         virtual bool physics_enabled() const;
         virtual void set_parent(Object3D *parent);
         virtual nlohmann::json to_json();
-        virtual void from_json(const nlohmann::json& j);
+        virtual void from_json(const nlohmann::json &j);
         virtual Object3D *parent() const;
         virtual Object3D *root() const;
-        Signal<Object3D*> sig_child_added() const;
+        Signal<Object3D *> sig_child_added() const;
         const std::type_info &type() const;
         virtual void move_forward();
         virtual void move_backwards();

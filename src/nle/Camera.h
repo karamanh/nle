@@ -10,7 +10,9 @@ namespace nle
     private:
         float m_speed;
         float m_turn_speed;
-
+        float m_fov;
+        float m_near;
+        float m_far;
         bool m_locked_to_mouse = false;
         bool m_free_roam = false;
 
@@ -40,6 +42,12 @@ namespace nle
         void set_id(const std::string& id) override;
         nlohmann::json to_json() override;
         void from_json(const nlohmann::json& j) override;
+        void set_fov(float fov);
+        float fov() const;
+        void set_near(float near);
+        float near() const;
+        void set_far(float far);
+        float far() const;
 
         friend class Renderer3D;
         friend class Nle;

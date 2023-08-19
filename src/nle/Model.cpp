@@ -85,8 +85,16 @@ namespace nle
                 }
             }
 
+            glm::vec3 center = glm::vec3(0.f);
+
             for (const auto &v : mesh.Vertices)
             {
+                glm::vec3 point = glm::vec3({v.Position.X, v.Position.Y, v.Position.Z});
+                float distance = glm::distance(point, center);
+                if(distance > m_multimesh->m_bounding_sphere_radius)
+                {
+                    m_multimesh->m_bounding_sphere_radius = distance;
+                }
                 vertices.push_back(v.Position.X);
                 vertices.push_back(v.Position.Y);
                 vertices.push_back(v.Position.Z);
@@ -105,7 +113,8 @@ namespace nle
                 indices.push_back(i);
             }
 
-            m_multimesh->meshes().push_back(new Mesh(vertices, indices, s, t ? t : m_texture));
+            // m_multimesh->meshes().push_back(new Mesh(vertices, indices, s, t ? t : m_texture));
+            m_multimesh->add_mesh(new Mesh(vertices, indices, s, t ? t : m_texture));
         }
         return true;
     }

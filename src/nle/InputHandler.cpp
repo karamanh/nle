@@ -43,7 +43,7 @@ void InputHandler::set_key_state(int key, bool state)
         sig_key_released.emit(key, false);
 }
 
-void InputHandler::set_mouse_state(int x, int y)
+void InputHandler::set_mouse_position(int x, int y)
 {
     if(!m_mouse_moved_once)
     {
@@ -60,6 +60,12 @@ void InputHandler::set_mouse_state(int x, int y)
     m_mouse_last_y = y;
 
     sig_mouse_moved.emit(m_mouse_delta_x, m_mouse_delta_y, false);
+}
+
+void InputHandler::set_mouse_button_state(int button, bool state)
+{
+    m_mouse_buttons[button] = state;
+    sig_mouse_state_changed.emit(button, state, m_mouse_last_x, m_mouse_last_y, false);
 }
 
 const std::array<bool, 1024> &InputHandler::keys()
@@ -85,6 +91,11 @@ Signal<int> &InputHandler::key_released()
 Signal<int, int> &InputHandler::mouse_moved()
 {
     return sig_mouse_moved;
+}
+
+Signal<int, bool, int, int> &InputHandler::mouse_button_state_changed()
+{
+    return sig_mouse_state_changed;
 }
 
 int InputHandler::mouse_x()

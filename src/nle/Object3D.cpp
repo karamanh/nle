@@ -2,20 +2,18 @@
 
 #include <algorithm>
 
-static const glm::vec3 WORLD_UP = {0.f, 1.f, 0.f};
-
 namespace nle
 {
     Object3D::Object3D(const std::string &id)
-        : m_position(0), 
-        m_rotation(0), 
-        m_scale(1.f), 
-        m_velocity(0.f),
-        m_speed(1.f),
-        m_root(this),
-        m_up({0.f, 1.f, 0.f}),
-        m_front({0.f, 0.f, -1.f}),
-        m_right({1.f, 0.f, 0.f})
+        : m_position(0),
+          m_rotation(0),
+          m_scale(1.f),
+          m_velocity(0.f),
+          m_speed(1.f),
+          m_root(this),
+          m_up({0.f, 1.f, 0.f}),
+          m_front({0.f, 0.f, -1.f}),
+          m_right({1.f, 0.f, 0.f})
     {
         m_id = id.empty() ? generate_random_alphanumeric_string() : id;
     }
@@ -31,7 +29,7 @@ namespace nle
     void Object3D::set_position(glm::vec3 pos)
     {
         m_position = pos;
-        for(auto * c : m_children)
+        for (auto *c : m_children)
         {
             c->set_position(pos);
         }
@@ -46,7 +44,7 @@ namespace nle
     void Object3D::set_rotation(glm::vec3 rotation)
     {
         m_rotation = rotation;
-        for(auto * c : m_children)
+        for (auto *c : m_children)
         {
             c->set_rotation(rotation);
         }
@@ -61,7 +59,7 @@ namespace nle
     void Object3D::set_scale(glm::vec3 scale)
     {
         m_scale = scale;
-        for(auto * c : m_children)
+        for (auto *c : m_children)
         {
             c->set_scale(scale);
         }
@@ -93,7 +91,7 @@ namespace nle
         return m_sig_child_added;
     }
 
-    const std::type_info& Object3D::type() const
+    const std::type_info &Object3D::type() const
     {
         return typeid(*this);
     }
@@ -172,7 +170,7 @@ namespace nle
 
     void Object3D::add_child(Object3D *child)
     {
-        if(!child)
+        if (!child)
             prerr("child cannot be null");
 
         if (std::find(m_children.begin(), m_children.end(), child) == m_children.end())
@@ -188,14 +186,14 @@ namespace nle
     void Object3D::delete_child(Object3D *child)
     {
         auto it = std::find(m_children.begin(), m_children.end(), child);
-        if(it != m_children.end())
+        if (it != m_children.end())
         {
             delete *it;
             m_children.erase(it);
         }
     }
 
-    void Object3D::set_id(const std::string& id)
+    void Object3D::set_id(const std::string &id)
     {
         m_id = id;
     }
@@ -224,7 +222,7 @@ namespace nle
     nlohmann::json Object3D::to_json()
     {
         auto ret = nlohmann::json();
-        
+
         ret["type"] = 0;
         ret["id"] = this->id();
         ret["position"]["x"] = this->position().x;
@@ -237,7 +235,7 @@ namespace nle
         ret["scale"]["y"] = this->scale().y;
         ret["scale"]["z"] = this->scale().z;
 
-        for(auto * c : m_children)
+        for (auto *c : m_children)
         {
             ret["children"].push_back(c->to_json());
         }
@@ -261,7 +259,7 @@ namespace nle
     void Object3D::set_root(Object3D *root)
     {
         m_root = root;
-        for(auto * c : m_children)
+        for (auto *c : m_children)
         {
             c->set_root(root);
         }

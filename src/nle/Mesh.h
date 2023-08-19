@@ -15,6 +15,8 @@ namespace nle
     class Mesh
     {
     private:
+        glm::vec3 m_aabb_max;
+        glm::vec3 m_aabb_min;
         unsigned int m_ebo,
             m_vbo,
             m_vao;
@@ -42,18 +44,17 @@ namespace nle
         void set_material(Material *material);
         Material *material();
         MeshInstance *create_instance();
+        glm::vec3 aabb_min() const;
+        glm::vec3 aabb_max() const;
 
         friend class Renderer3D;
+        friend class MultiMesh;
     };
 
     class MeshInstance : public RenderObject3D
     {
     private:
         Mesh *m_mesh;
-
-        // RenderLayer m_render_layer;
-        // int m_render_mode;
-        // bool m_visible;
 
     public:
         MeshInstance(Mesh *mesh);

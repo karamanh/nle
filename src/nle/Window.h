@@ -36,7 +36,8 @@ namespace nle
         bool m_show_cursor;
 
         static void key_handler(GLFWwindow *window, int key, int code, int action, int mode);
-        static void mouse_handler(GLFWwindow *window, double mouse_x, double mouse_y);
+        static void mouse_position_handler(GLFWwindow *window, double mouse_x, double mouse_y);
+        static void mouse_button_handler(GLFWwindow *window, int button, int action, int mods);
 
     public:
         Window(GLuint w, GLuint h, const std::string &title);
