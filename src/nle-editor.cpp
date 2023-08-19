@@ -12,48 +12,49 @@
 #include "FastNoiseLite.h"
 
 #include <fstream>
-#include <typeinfo> 
+#include <typeinfo>
 #include <filesystem>
 
 std::string
-nle_proj_extension = ".nleproj",
-nle_scene_extension = ".nlescn",
-nle_workdir = ".",
-nle_projdir = nle_workdir + "/nle_projdir";
+	nle_proj_extension = ".nleproj",
+	nle_scene_extension = ".nlescn",
+	nle_workdir = ".",
+	nle_projdir = nle_workdir + "/nle_projdir";
 
 // void build_scene(nle::Scene *s, const nlohmann::json& j);
 
-void object_builder(nle::Object3D **o, const nlohmann::json& j, std::map<std::string, nle::Model*>& models);
-void build_scene_from_json(nle::Object3D *o, const nlohmann::json &j, std::map<std::string, nle::Model*>& models);
+void object_builder(nle::Object3D **o, const nlohmann::json &j, std::map<std::string, nle::Model *> &models);
+void build_scene_from_json(nle::Object3D *o, const nlohmann::json &j, std::map<std::string, nle::Model *> &models);
 
 int main(int argc, char *argv[])
 {
 	nle::Nle app;
 
-	std::map<std::string, nle::Scene*> scenes;
-	std::map<std::string, nle::Model*> models;
-	std::vector<nle::Material*> materials;
-	std::vector<nle::Mesh*> aabb_meshes;
+	std::map<std::string, nle::Scene *> scenes;
+	std::map<std::string, nle::Model *> models;
+	std::vector<nle::Material *> materials;
+	std::vector<nle::Mesh *> aabb_meshes;
 	std::vector<std::string> logs;
 	std::size_t max_logs = 100;
 
-	auto push_log = [&](const std::string& msg){
+	auto push_log = [&](const std::string &msg)
+	{
 		prinf("%s", msg.c_str());
 		logs.push_back(msg);
-		if(logs.size() > max_logs)
+		if (logs.size() > max_logs)
 		{
 			logs.erase(logs.begin());
 		}
 	};
 
 	prinf("autoloading assets");
-	for (auto const& dir_entry : std::filesystem::recursive_directory_iterator(std::filesystem::current_path()))
+	for (auto const &dir_entry : std::filesystem::recursive_directory_iterator(std::filesystem::current_path()))
 	{
 		std::string path = dir_entry.path().c_str();
 		std::string name = dir_entry.path().filename();
 		std::size_t n;
 
-		if(dir_entry.path().filename().extension() == ".obj")
+		if (dir_entry.path().filename().extension() == ".obj")
 		{
 			prdbg("loading %s", dir_entry.path().c_str());
 
@@ -71,7 +72,8 @@ int main(int argc, char *argv[])
 	app.current_scene()->light()->set_diffuse_intensity(1.0f);
 	app.current_scene()->light()->set_enabled(true);
 
-	app.renderer()->gui()->set_draw_callback([&](){
+	app.renderer()->gui()->set_draw_callback([&]()
+											 {
 		ImGuiIO& io = ImGui::GetIO();
 		
 		glm::vec3 v3val;
@@ -370,42 +372,6 @@ int main(int argc, char *argv[])
 						auto * instance = it.second->create_instance();
 						if(instance)
 						{
-
-							// for(auto * m : instance->multimesh()->meshes())
-							// {
-								
-							// 	auto * nm = new nle::Mesh(
-							// 		{
-							// 			m->aabb_min().x, m->aabb_min().y, m->aabb_min().z, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f,
-							// 			m->aabb_max().x, m->aabb_min().y, m->aabb_min().z, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f,
-							// 			m->aabb_max().x, m->aabb_max().y, m->aabb_min().z, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f,
-							// 			m->aabb_min().x, m->aabb_max().y, m->aabb_min().z, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f,
-							// 			m->aabb_min().x, m->aabb_min().y, m->aabb_max().z, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f,
-							// 			m->aabb_max().x, m->aabb_min().y, m->aabb_max().z, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f,
-							// 			m->aabb_max().x, m->aabb_max().y, m->aabb_max().z, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f,
-							// 			m->aabb_min().x, m->aabb_max().y, m->aabb_max().z, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f
-							// 		},
-							// 		{
-							// 			0, 1, 2, // front
-							// 			2, 3, 0, // front
-							// 			4, 5, 6, // back
-							// 			6, 7, 4, // back
-							// 			9, 4, 7,
-							// 			7, 3, 0,
-							// 			1, 5, 6,
-							// 			6, 2, 1,
-							// 			2, 6, 7,
-							// 			7, 3, 2,
-							// 			0, 1, 5,
-							// 			5, 4, 0
-							// 		},
-							// 		nle::DEFAULT_SHADER
-							// 	);
-							// 	aabb_meshes.push_back(nm);
-							// 	auto * mmi = nm->create_instance();
-							// 	mmi->set_render_mode(nle::Line);
-							// 	instance->add_child(mmi);
-							// }
 							app.current_scene()->add_child(instance);
 						}
 					}
@@ -425,26 +391,6 @@ int main(int argc, char *argv[])
 
 
 			ImGui::TextWrapped("current scene [%s]", app.current_scene()->id().c_str());
-
-			// for(auto * i : app.current_scene()->children())
-			// {
-			// 	nle::MultiMeshInstance *mi = dynamic_cast<nle::MultiMeshInstance*>(i);
-			// 	if(mi)
-			// 	{
-			// 		if(ImGui::Button(i->id().c_str()))
-			// 		{
-			// 			mi->set_render_mode(mi->render_mode() == nle::Fill ? nle::Line : nle::Fill);
-			// 			if(selected_obj)
-			// 			{
-			// 				selected_obj = nullptr;
-			// 			}
-			// 			else
-			// 			{
-			// 				selected_obj = mi;
-			// 			}
-			// 		}
-			// 	}
-			// }
 
 			std::function<void(nle::Object3D*)> generate_tree = [&](nle::Object3D* o){
 
@@ -493,15 +439,6 @@ int main(int argc, char *argv[])
 
 			generate_tree(app.current_scene());
 
-			// if(ImGui::TreeNode("current scene [%s]", app.current_scene()->id().c_str()))
-			// {
-
-			// }
-
-			// if (ImGui::TreeNode(child->name))
-			// {
-			// 	ImGui::TreePop();
-			// }
 			ImGui::End();
 		}
 
@@ -652,22 +589,21 @@ int main(int argc, char *argv[])
 				ImGui::TextWrapped(it.c_str());
 			}
 			ImGui::End();
-		}
-	});
+		} });
 
 	app.run();
 
-	for(auto & model: models)
+	for (auto &model : models)
 	{
 		delete model.second;
 	}
 
-	for(auto & material: materials)
+	for (auto &material : materials)
 	{
 		delete material;
 	}
 
-	for(auto & aabb_mesh: aabb_meshes)
+	for (auto &aabb_mesh : aabb_meshes)
 	{
 		delete aabb_mesh;
 	}
@@ -675,59 +611,59 @@ int main(int argc, char *argv[])
 	return (0);
 }
 
-void object_builder(nle::Object3D **o, const nlohmann::json& j, std::map<std::string, nle::Model*>& models)
+void object_builder(nle::Object3D **o, const nlohmann::json &j, std::map<std::string, nle::Model *> &models)
 {
 	int type = j["type"];
 	switch (type)
 	{
-		case 1:
+	case 1:
+	{
+		nle::Scene *h = new nle::Scene();
+		h->from_json(j);
+		(*o) = h;
+		break;
+	}
+	case 2:
+	{
+		nle::Camera *h = new nle::Camera();
+		h->from_json(j);
+		(*o) = h;
+		break;
+	}
+	case 3:
+	{
+		nle::Light *h = new nle::Light();
+		h->from_json(j);
+		(*o) = h;
+		break;
+	}
+	case 4:
+	{
+		std::string source = j["source"];
+		if (models.find(source) != models.end())
 		{
-			nle::Scene * h = new nle::Scene();
+			nle::MultiMeshInstance *h = models[source]->create_instance();
 			h->from_json(j);
+			// nle::MultiMeshInstance * h; (h = dynamic_cast<nle::MultiMeshInstance*>(o))->from_json(j);
 			(*o) = h;
-			break;
 		}
-		case 2:
+		else
 		{
-			nle::Camera * h = new nle::Camera();
-			h->from_json(j);
-			(*o) = h;
-			break;
+			prerr("model %s not found", source.c_str());
 		}
-		case 3:
-		{
-			nle::Light * h = new nle::Light();
-			h->from_json(j);
-			(*o) = h;
-			break;
-		}
-		case 4:
-		{
-			std::string source = j["source"];
-			if(models.find(source) != models.end())
-			{
-				nle::MultiMeshInstance *h = models[source]->create_instance();
-				h->from_json(j);
-				// nle::MultiMeshInstance * h; (h = dynamic_cast<nle::MultiMeshInstance*>(o))->from_json(j);
-				(*o) = h;				
-			}
-			else
-			{
-				prerr("model %s not found", source.c_str());
-			}
-			break;
-		}
+		break;
+	}
 	}
 
-	if(*o) // can be null if it's a multimesh instance, and model not found.
+	if (*o) // can be null if it's a multimesh instance, and model not found.
 	{
-		if(j.find("children") != j.end())
+		if (j.find("children") != j.end())
 		{
-			for(const auto& it : j["children"])
+			for (const auto &it : j["children"])
 			{
-				nle::Object3D * c = nullptr;
+				nle::Object3D *c = nullptr;
 				object_builder(&c, it, models);
-				if(c)
+				if (c)
 				{
 					(*o)->add_child(c);
 				}
