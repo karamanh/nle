@@ -1,12 +1,12 @@
-## experimental game + physics engine (opengl)
+## nice little engine
+
+### experimental graphics + physics engine [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
  ![nle-editor](resources/nle-editor.gif)
 
  # todos
   - not so hard.
     - editor (code needs a mass refactor and cleanup)
-      - works, but the code needs to be sorted out
-      - not sure if imgui_glfw class is needed, a whole new editor.cpp would be good
-      - dynamic texture setting
     - gltf & glb loading
     - ~~scene saving and loading~~
     - point light
@@ -19,4 +19,10 @@
   - hard
     - collision system that does not suck
     - skeletal animation system
-    - a game made with nice little engine that works
+    - a game made with *nice little engine* that works
+
+
+
+
+---
+hasan karaman - https://hasankaraman.dev - 2023
