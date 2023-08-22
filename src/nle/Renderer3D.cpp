@@ -203,19 +203,19 @@ namespace nle
 
         mi->mesh()->shader()->use();
 
-        GLuint unf_model = mi->mesh()->shader()->uniform_location("model");
-        GLuint unf_proj = mi->mesh()->shader()->uniform_location("projection");
-        GLuint unf_view = mi->mesh()->shader()->uniform_location("view");
-        GLuint unf_ambient_intensity = mi->mesh()->shader()->uniform_location("directionalLight.ambientIntensity");
-        GLuint unf_ambient_color = mi->mesh()->shader()->uniform_location("directionalLight.color");
-        GLuint unf_diffuse_direction = mi->mesh()->shader()->uniform_location("directionalLight.direction");
-        GLuint unf_diffuse_intensity = mi->mesh()->shader()->uniform_location("directionalLight.diffuseIntensity");
-        GLuint unf_light_enabled = mi->mesh()->shader()->uniform_location("lightingEnabled");
-        GLuint unf_texture_enabled = mi->mesh()->shader()->uniform_location("textureEnabled");
-        GLuint unf_specular_intensity = mi->mesh()->shader()->uniform_location("material.specularIntensity");
-        GLuint unf_shininess = mi->mesh()->shader()->uniform_location("material.shininess");
-        GLuint unf_accept_light = mi->mesh()->shader()->uniform_location("material.acceptLight");
-        GLuint unf_eye_position = mi->mesh()->shader()->uniform_location("eyePosition");
+        GLuint unf_model = mi->mesh()->shader()->uniform_location("u_model");
+        GLuint unf_proj = mi->mesh()->shader()->uniform_location("u_projection");
+        GLuint unf_view = mi->mesh()->shader()->uniform_location("u_view");
+        GLuint unf_ambient_intensity = mi->mesh()->shader()->uniform_location("u_directional_light.ambient_intensity");
+        GLuint unf_ambient_color = mi->mesh()->shader()->uniform_location("u_directional_light.color");
+        GLuint unf_diffuse_direction = mi->mesh()->shader()->uniform_location("u_directional_light.direction");
+        GLuint unf_diffuse_intensity = mi->mesh()->shader()->uniform_location("u_directional_light.diffuse_intensity");
+        GLuint unf_light_enabled = mi->mesh()->shader()->uniform_location("u_lighting_enabled");
+        GLuint unf_texture_enabled = mi->mesh()->shader()->uniform_location("u_texture_enabled");
+        GLuint unf_specular_intensity = mi->mesh()->shader()->uniform_location("u_material.specular_intensity");
+        GLuint unf_shininess = mi->mesh()->shader()->uniform_location("u_material.shininess");
+        GLuint unf_accept_light = mi->mesh()->shader()->uniform_location("u_material.accept_light");
+        GLuint unf_eye_position = mi->mesh()->shader()->uniform_location("u_eye_position");
 
         if (mi->mesh()->texture())
         {
