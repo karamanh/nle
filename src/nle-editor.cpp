@@ -21,10 +21,7 @@ std::string
 	nle_workdir = ".",
 	nle_projdir = nle_workdir + "/nle_projdir";
 
-// void build_scene(nle::Scene *s, const nlohmann::json& j);
-
-void object_builder(nle::Object3D **o, const nlohmann::json &j, std::map<std::string, nle::Model *> &models);
-void build_scene_from_json(nle::Object3D *o, const nlohmann::json &j, std::map<std::string, nle::Model *> &models);
+void scene_builder(nle::Object3D **o, const nlohmann::json &j, std::map<std::string, nle::Model *> &models);
 
 int main(int argc, char *argv[])
 {
@@ -223,7 +220,7 @@ int main(int argc, char *argv[])
 							{
 								auto j = nlohmann::json::parse(ifs);
 								nle::Scene *new_scene;
-								object_builder(reinterpret_cast<nle::Object3D**>(&new_scene), j, models);
+								scene_builder(reinterpret_cast<nle::Object3D**>(&new_scene), j, models);
 
 								if(new_scene)
 								{
@@ -616,7 +613,7 @@ int main(int argc, char *argv[])
 	return (0);
 }
 
-void object_builder(nle::Object3D **o, const nlohmann::json &j, std::map<std::string, nle::Model *> &models)
+void scene_builder(nle::Object3D **o, const nlohmann::json &j, std::map<std::string, nle::Model *> &models)
 {
 	int type = j["type"];
 	switch (type)
@@ -667,7 +664,7 @@ void object_builder(nle::Object3D **o, const nlohmann::json &j, std::map<std::st
 			for (const auto &it : j["children"])
 			{
 				nle::Object3D *c = nullptr;
-				object_builder(&c, it, models);
+				scene_builder(&c, it, models);
 				if (c)
 				{
 					(*o)->add_child(c);
