@@ -13,9 +13,30 @@ namespace nle
         : m_parent_window(render_target),
           m_max_render_distance(10000.f),
           m_time_strict_mode(false),
-          m_imgui(new ImGUI_GLFW(render_target->m_handle))
+          m_imgui(new ImGUI_GLFW(render_target->m_handle)),
+          m_clear_color({1.f, 1.f, 1.f, 1.f})
     {
-        m_grid = new Shader("shader/grid_vert.glsl", "shader/grid_frag.glsl", true);
+        m_grid_shader = new Shader("shader/grid_vert.glsl", "shader/grid_frag.glsl", true);
+        m_grid_material = new Material();
+        m_grid_mesh = new Mesh(
+            {
+                // XZ plane
+                -0.5f, 0.0f, -0.5f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 
+                0.5f, 0.0f, -0.5f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 
+                0.5f, 0.0f,  0.5f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 
+                -0.5f, 0.0f,  0.5f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f
+            },
+            {
+                0, 1, 2,
+                0, 2, 3,
+            },
+            m_grid_shader
+        );
+
+        m_grid = m_grid_mesh->create_instance();
+        m_grid->set_scale(glm::vec3(10.f));
+        m_grid->mesh()->set_material(m_grid_material);
+        m_grid->mesh()->material()->set_accept_light(false);
 
         for (auto &it : m_render_layer_attributes)
         {
@@ -48,8 +69,9 @@ namespace nle
 
     Renderer3D::~Renderer3D()
     {
-        // if (m_thr_input.joinable())
-        //     m_thr_input.join();
+        delete m_grid;
+        delete m_grid_mesh;
+        delete m_grid_shader;
     }
 
     void Renderer3D::render_recursively(Object3D *root)
@@ -87,6 +109,7 @@ namespace nle
 
     void Renderer3D::render_scene(Scene *scene)
     {
+        // render(m_grid); // will be enabled once grid shader is ready
         for (auto *i : scene->m_render_objects)
         {
             if (i)
@@ -106,7 +129,7 @@ namespace nle
         glEnable(GL_TEXTURE_2D);
         glEnable(GL_LIGHTING);
         glDepthFunc(GL_LEQUAL);
-        glClearColor(0.0f, 0.24f, 0.38f, 1.f);
+        glClearColor(m_clear_color.r, m_clear_color.g, m_clear_color.b, m_clear_color.a);
     }
 
     Object3D *Renderer3D::get_mouse_ray_target(int mouse_x, int mouse_y)
@@ -164,14 +187,14 @@ namespace nle
             return;
         }
 
-        if (glm::distance(static_cast<Scene *>(mi->root())->camera()->position(), mi->position()) >
-            m_render_layer_attributes[mi->m_render_layer].render_distance)
+        // Scene *root_scene = m_root_scene;
+        if (!m_root_scene)
         {
             return;
         }
 
-        Scene *s = static_cast<Scene *>(mi->root());
-        if (!s)
+        if (glm::distance(m_root_scene->camera()->position(), mi->position()) >
+            m_render_layer_attributes[mi->m_render_layer].render_distance)
         {
             return;
         }
@@ -191,6 +214,7 @@ namespace nle
         GLuint unf_texture_enabled = mi->mesh()->shader()->uniform_location("textureEnabled");
         GLuint unf_specular_intensity = mi->mesh()->shader()->uniform_location("material.specularIntensity");
         GLuint unf_shininess = mi->mesh()->shader()->uniform_location("material.shininess");
+        GLuint unf_accept_light = mi->mesh()->shader()->uniform_location("material.acceptLight");
         GLuint unf_eye_position = mi->mesh()->shader()->uniform_location("eyePosition");
 
         if (mi->mesh()->texture())
@@ -202,31 +226,31 @@ namespace nle
         {
             glUniform1i(unf_texture_enabled, 0);
         }
+        
+        bool accept_light = true;
 
-        if (s->light()->enabled())
+        if(mi->mesh()->material())
+        {
+            mi->mesh()->material()->use(unf_specular_intensity, unf_shininess);
+            accept_light = mi->mesh()->material()->accept_light();
+        }
+
+        if (accept_light && m_root_scene->light()->enabled())
         {
             glUniform1i(unf_light_enabled, 1);
-            s->light()->use(unf_ambient_intensity, unf_ambient_color, unf_diffuse_intensity, unf_diffuse_direction);
+            m_root_scene->light()->use(unf_ambient_intensity, unf_ambient_color, unf_diffuse_intensity, unf_diffuse_direction);
         }
         else
         {
             glUniform1i(unf_light_enabled, 0);
         }
 
-        if (mi->mesh()->material())
-        {
-            mi->mesh()->material()->use(unf_specular_intensity, unf_shininess);
-        }
-
         glm::mat4 model = glm::mat4(1.f);
         glm::mat4 projection = glm::perspective(
-            s->camera()->fov(),
+            m_root_scene->camera()->fov(),
             (GLfloat)m_parent_window->m_width / (GLfloat)m_parent_window->m_height,
-            s->camera()->near(),
-            s->camera()->far());
-
-        // prdbg("fov: %f, near: %f, far: %f", s->camera()->fov(), s->camera()->near(), s->camera()->far());
-        // glm::mat4 projection = glm::perspective(45.f, (GLfloat)m_parent_window->m_width / (GLfloat)m_parent_window->m_height, 0.1f, m_max_render_distance);
+            m_root_scene->camera()->near(),
+            m_root_scene->camera()->far());
 
         model = glm::translate(model, mi->position());
         model = glm::rotate(model, glm::radians(mi->rotation().x), glm::vec3(1.f, 0.f, 0.f));
@@ -236,8 +260,8 @@ namespace nle
 
         glUniformMatrix4fv(unf_model, 1, GL_FALSE, glm::value_ptr(model));
         glUniformMatrix4fv(unf_proj, 1, GL_FALSE, glm::value_ptr(projection));
-        glUniformMatrix4fv(unf_view, 1, GL_FALSE, glm::value_ptr(s->camera()->get_view_matrix()));
-        glUniform3f(unf_eye_position, s->camera()->position().x, s->camera()->position().y, s->camera()->position().z);
+        glUniformMatrix4fv(unf_view, 1, GL_FALSE, glm::value_ptr(m_root_scene->camera()->get_view_matrix()));
+        glUniform3f(unf_eye_position, m_root_scene->camera()->position().x, m_root_scene->camera()->position().y, m_root_scene->camera()->position().z);
 
         glBindVertexArray(mi->mesh()->m_vao);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mi->mesh()->m_ebo);
@@ -267,6 +291,16 @@ namespace nle
     Scene *Renderer3D::root_scene() const
     {
         return m_root_scene;
+    }
+
+    void Renderer3D::set_clear_color(glm::vec4 color)
+    {
+        m_clear_color = color;
+    }
+
+    glm::vec4 Renderer3D::clear_color() const
+    {
+        return m_clear_color;
     }
 
     void Renderer3D::set_render_layer_attributes(RenderLayer layer, RenderLayerAttributes attributes)

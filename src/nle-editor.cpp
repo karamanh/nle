@@ -526,6 +526,11 @@ int main(int argc, char *argv[])
 							ImGui::InputFloat("shininess", &fval);
 							material->set_shininess(fval);
 							ImGui::PopID();
+							ImGui::PushID("accept_light");
+							bval = material->accept_light();
+							ImGui::Checkbox("accept light", &bval);
+							material->set_accept_light(bval);
+							ImGui::PopID();
 
 							if(ImGui::Button("clear material"))
 							{

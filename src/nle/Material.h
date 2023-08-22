@@ -10,6 +10,7 @@ namespace nle
     private:
         float m_specular_intensity;
         float m_shininess;
+        bool m_accept_light = true;
     public:
         Material();
         Material(float specular_intensity, float shininess);
@@ -19,6 +20,8 @@ namespace nle
         float specular_intensity() const;
         void set_shininess(float shininess); 
         float shininess() const;
+        void set_accept_light(bool accept);
+        bool accept_light() const;
     };
 } // namespace nle
 

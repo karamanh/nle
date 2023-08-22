@@ -25,11 +25,16 @@ namespace nle
         Window *m_parent_window;
         ImGUI_GLFW *m_imgui;
         std::unordered_map<RenderLayer, RenderLayerAttributes> m_render_layer_attributes;
-        Shader *m_grid;
+        Mesh *m_grid_mesh;
+        MeshInstance *m_grid;
+        Shader *m_grid_shader;
+        Material *m_grid_material;
+        Signal <MultiMeshInstance*> sig_object_intersects;
+        glm::vec4 m_clear_color;
+
         float m_max_render_distance;
         bool m_time_strict_mode;
         double m_render_timestamp;
-        Signal <MultiMeshInstance*> sig_object_intersects;
 
         void render_recursively(Object3D *root);
         void render_scene(Scene *scene);
@@ -44,6 +49,8 @@ namespace nle
         void render(MeshInstance *mi);
         void set_root_scene(Scene *root);
         Scene *root_scene() const;
+        void set_clear_color(glm::vec4 color);
+        glm::vec4 clear_color() const;
         void set_render_layer_attributes(RenderLayer layer, RenderLayerAttributes attributes);
         RenderLayerAttributes render_layer_attributes(RenderLayer layer = RenderLayer::_0);
         ImGUI_GLFW * gui() const;

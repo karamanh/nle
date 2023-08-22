@@ -4,7 +4,8 @@ namespace nle
 {
     Material::Material()
         : m_specular_intensity(0.0f),
-        m_shininess(0.0f)
+          m_shininess(0.0f),
+          m_accept_light(true)
     {
     }
 
@@ -42,5 +43,15 @@ namespace nle
     float Material::shininess() const
     {
         return m_shininess;
+    }
+
+    void Material::set_accept_light(bool accept)
+    {
+        m_accept_light = accept;
+    }
+
+    bool Material::accept_light() const
+    {
+        return m_accept_light;
     }
 } // namespace nle
