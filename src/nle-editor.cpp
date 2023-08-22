@@ -81,10 +81,12 @@ int main(int argc, char *argv[])
 		static float bottom_window_h = 300.f;
 		static bool show_load_model = false, 
 					show_load_scene = false,
-					show_about = false;
+					show_about = false,
+					show_settings = false;
 		static char inbuf[512] = {0};
 		static nle::RenderObject3D * selected_obj = nullptr;
-		ImVec2 menubar_size, control_panel_size, assets_size, scene_size, bottom_window_size, object_properties_size = {300.f, 0.f}, display_size = io.DisplaySize;
+		// ImVec2 menubar_size, control_panel_size, assets_size, scene_size, bottom_window_size, object_properties_size = {300.f, 0.f}, display_size = io.DisplaySize;
+		ImVec2 menubar_size, left_window_size, right_window_size = {300.f, 0.f}, display_size = io.DisplaySize;
 
 		app.renderer()->object_intersects().bind_callback([&](nle::MultiMeshInstance*mmi){
 			if(!io.WantCaptureMouse)
@@ -132,9 +134,16 @@ int main(int argc, char *argv[])
                 }
                 ImGui::EndMenu();
             }
-            if(ImGui::BeginMenu("edit"))
+            if(ImGui::BeginMenu("settings"))
             {
-				ImGui::MenuItem("preferences");
+				if(ImGui::BeginMenu("window"))
+				{
+					if(ImGui::MenuItem(app.window()->fullscreen() ? "windowed" : "fullscreen"))
+					{
+						app.window()->set_fullscreen(!app.window()->fullscreen());
+					}
+					ImGui::EndMenu();
+				}
                 ImGui::EndMenu();
             }
             if(ImGui::BeginMenu("help"))
@@ -224,6 +233,7 @@ int main(int argc, char *argv[])
 
 								if(new_scene)
 								{
+									new_scene->set_id(std::filesystem::path(path).filename().filename());
 									scenes[new_scene->id()] = new_scene;
 									app.set_current_scene(new_scene);
 									prinf("loaded scene %s", new_scene->id().c_str());
@@ -264,187 +274,181 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		// left window
-		ImGui::SetNextWindowPos(ImVec2(0.f, menubar_size.y));
-		// ImGui::SetNextWindowPos(ImVec2(0.f, menubar_size.y), ImGuiCond_Always, ImVec2(0.f,0.f));
-		// ImGui::SetNextWindowSize({0.f, io.DisplaySize.y - menubar_size.y});
-        if(ImGui::Begin("general controls", nullptr, ImGuiWindowFlags_NoCollapse))
-        {
-			control_panel_size = ImGui::GetWindowSize();
-			// renderer settings
-            ImGui::TextWrapped("renderer settings");
-			bval = app.window()->fullscreen();
-			ImGui::Checkbox("fullscreen", &bval);
-			app.window()->set_fullscreen(bval);
-			auto rla = app.renderer()->render_layer_attributes();
-			ImGui::SliderInt("render distance", &rla.render_distance, 0, 100000);
-			ImGui::Checkbox("render layer [0] visible", &rla.visible);
-			app.renderer()->set_render_layer_attributes(nle::RenderLayer::_0, rla);
-
-			// light settings
-			ImGui::TextWrapped("light settings:");
-			fval = app.current_scene()->light()->ambient_intensity();
-			ImGui::SliderFloat("ambient intensity", &fval, 0.f, 1.f);
-			app.current_scene()->light()->set_ambient_intensity(fval);
-
-			fval = app.current_scene()->light()->diffuse_intensity();
-			ImGui::SliderFloat("diffuse intensity", &fval, 0.f, 1.f);
-			app.current_scene()->light()->set_diffuse_intensity(fval);
-			
-			ImGui::Separator();
-			
-			// camera settings
-			ImGui::TextWrapped("camera settings:");
-			bval = app.current_scene()->camera()->free_roam();
-			ImGui::Checkbox("free roam [ctrl]", &bval);
-			app.current_scene()->camera()->set_free_roam(bval);
-			fval = app.current_scene()->camera()->speed();
-			ImGui::SliderFloat("speed", &fval, 0.f, 50.f);
-			app.current_scene()->camera()->set_speed(fval);
-
-			fval = app.current_scene()->camera()->turn_speed();
-			ImGui::SliderFloat("turn speed", &fval, 0.f, 50.f);
-			app.current_scene()->camera()->set_turn_speed(fval);
-
-			if(ImGui::CollapsingHeader("camera transform", ImGuiTreeNodeFlags_DefaultOpen))
-			{
-				ImGui::PushID("cam_position");
-				v3val = app.current_scene()->camera()->position();
-				ImGui::SetNextItemWidth(60.f);
-				ImGui::InputFloat("x", &v3val.x);
-				ImGui::SameLine();
-				ImGui::SetNextItemWidth(60.f);
-				ImGui::InputFloat("y", &v3val.y);
-				ImGui::SameLine();
-				ImGui::SetNextItemWidth(60.f);
-				ImGui::InputFloat("z", &v3val.z);
-				app.current_scene()->camera()->set_position(v3val);
-				ImGui::PopID();
-				
-				ImGui::PushID("cam_rotation");
-				v3val = app.current_scene()->camera()->rotation();
-				ImGui::SetNextItemWidth(60.f);
-				ImGui::InputFloat("x", &v3val.x);
-				ImGui::SameLine();
-				ImGui::SetNextItemWidth(60.f);
-				ImGui::InputFloat("y", &v3val.y);
-				ImGui::SameLine();
-				ImGui::SetNextItemWidth(60.f);
-				ImGui::InputFloat("z", &v3val.z);
-				app.current_scene()->camera()->set_rotation(v3val);
-				ImGui::PopID();
-				
-				ImGui::PushID("cam_scale");
-				v3val = app.current_scene()->camera()->scale();
-				ImGui::SetNextItemWidth(60.f);
-				ImGui::InputFloat("x", &v3val.x);
-				ImGui::SameLine();
-				ImGui::SetNextItemWidth(60.f);
-				ImGui::InputFloat("y", &v3val.y);
-				ImGui::SameLine();
-				ImGui::SetNextItemWidth(60.f);
-				ImGui::InputFloat("z", &v3val.z);
-				app.current_scene()->camera()->set_scale(v3val);
-				ImGui::PopID();
-			}
-			
-            ImGui::End();
-        }
-
-		ImGui::SetNextWindowPos({0.f, menubar_size.y + control_panel_size.y});
-		ImGui::SetNextWindowSize({control_panel_size.x, (display_size.y - menubar_size.y - control_panel_size.y) / 2});
-		if(ImGui::Begin("assets", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize))
+		if(show_settings)
 		{
-			scene_size = assets_size = ImGui::GetWindowSize();
-
-			if(ImGui::CollapsingHeader("loaded models", ImGuiTreeNodeFlags_DefaultOpen))
+			ImGui::SetNextWindowPos(ImVec2(display_size.x * 0.5f, display_size.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f,0.5f));
+			if (ImGui::Begin("settings & preferences"))
 			{
-				for(const auto& it : models)
+				if(ImGui::Button(app.window()->fullscreen() ? "windowed" : "fullscreen"))
 				{
-					ImGui::Text(it.second->name().c_str());
-					ImGui::SameLine();
-					ImGui::PushID(it.second->name().c_str());
-					if(ImGui::Button("create instance"))
-					{
-						auto * instance = it.second->create_instance();
-						if(instance)
-						{
-							app.current_scene()->add_child(instance);
-						}
-					}
-					ImGui::PopID();
+					app.window()->set_fullscreen(!app.window()->fullscreen());
 				}
-			}
 
-			ImGui::End();
+				ImGui::End();
+			}
 		}
 
-		// current scene window
-		ImGui::SetNextWindowPos({0.f, menubar_size.y + control_panel_size.y + assets_size.y});
-		ImGui::SetNextWindowSize({control_panel_size.x, scene_size.y});
-		if(ImGui::Begin("current scene", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize))
+		ImGui::SetNextWindowPos({0, menubar_size.y});
+		ImGui::SetNextWindowSize({left_window_size.x, display_size.y - menubar_size.y});
+		if (ImGui::Begin("left_window", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove))
 		{
-			bottom_window_size = ImGui::GetWindowSize();
-
-
-			ImGui::TextWrapped("current scene [%s]", app.current_scene()->id().c_str());
-
-			std::function<void(nle::Object3D*)> generate_tree = [&](nle::Object3D* o){
-
-				if(ImGui::TreeNodeEx(o->id().c_str()))
+			if(ImGui::BeginTabBar("general controls", ImGuiTabBarFlags_Reorderable))
+			{
+				if (ImGui::BeginTabItem(("scene [" + app.current_scene()->id() + "]").c_str()))
 				{
-					for(auto *i : o->children())
-					{
-						nle::MultiMeshInstance *mi = dynamic_cast<nle::MultiMeshInstance*>(i);
-						if(mi)
-						{
-							generate_tree(mi);
+					std::function<void(nle::Object3D*)> generate_tree = [&](nle::Object3D* o){
 
-							// mi->set_render_mode(selected_obj == mi ? nle::Line : nle::Fill);
-						}
-					}
-
-					nle::MultiMeshInstance *mi = dynamic_cast<nle::MultiMeshInstance*>(o);
-					if(mi)
-					{
-						// mi->set_render_mode(selected_obj == mi ? nle::Line : nle::Fill);
-						if(selected_obj != mi)
+						if(ImGui::TreeNodeEx(o->id().c_str()))
 						{
-							if(ImGui::Button("select"))
+							for(auto *i : o->children())
 							{
-								selected_obj = mi;
+								nle::MultiMeshInstance *mi = dynamic_cast<nle::MultiMeshInstance*>(i);
+								if(mi)
+								{
+									generate_tree(mi);
+								}
 							}
-						}
-						else
-						{
-							if(ImGui::Button("deselect"))
-							{
-								selected_obj = nullptr;
-							}
-						}
-						ImGui::SameLine();
-						if(ImGui::Button("delete"))
-						{
-							o->parent()->delete_child(o);
-							selected_obj = nullptr;
-						}
-					}
 
-					ImGui::TreePop();
+							nle::MultiMeshInstance *mi = dynamic_cast<nle::MultiMeshInstance*>(o);
+							if(mi)
+							{
+								if(selected_obj != mi)
+								{
+									if(ImGui::Button("select"))
+									{
+										selected_obj = mi;
+									}
+								}
+								else
+								{
+									if(ImGui::Button("deselect"))
+									{
+										selected_obj = nullptr;
+									}
+								}
+								ImGui::SameLine();
+								if(ImGui::Button("delete"))
+								{
+									o->parent()->delete_child(o);
+									selected_obj = nullptr;
+								}
+							}
+
+							ImGui::TreePop();
+						}
+					};
+
+					generate_tree(app.current_scene());
+					ImGui::EndTabItem();
 				}
-			};
 
-			generate_tree(app.current_scene());
+				if(ImGui::BeginTabItem("loaded models"))
+				{
+					for(const auto& it : models)
+					{
+						ImGui::Text(it.second->name().c_str());
+						ImGui::SameLine();
+						ImGui::PushID(it.second->name().c_str());
+						if(ImGui::Button("create instance"))
+						{
+							auto * instance = it.second->create_instance();
+							if(instance)
+							{
+								app.current_scene()->add_child(instance);
+							}
+						}
+						ImGui::PopID();
+					}
+					ImGui::EndTabItem();
+				}
+
+				if (ImGui::BeginTabItem("renderer settings"))
+				{
+					auto rla = app.renderer()->render_layer_attributes();
+					ImGui::SliderInt("render distance", &rla.render_distance, 0, 100000);
+					ImGui::Checkbox("render layer [0] visible", &rla.visible);
+					app.renderer()->set_render_layer_attributes(nle::RenderLayer::_0, rla);
+
+					// light settings
+					ImGui::TextWrapped("light settings:");
+					fval = app.current_scene()->light()->ambient_intensity();
+					ImGui::SliderFloat("ambient intensity", &fval, 0.f, 1.f);
+					app.current_scene()->light()->set_ambient_intensity(fval);
+
+					fval = app.current_scene()->light()->diffuse_intensity();
+					ImGui::SliderFloat("diffuse intensity", &fval, 0.f, 1.f);
+					app.current_scene()->light()->set_diffuse_intensity(fval);
+					
+					// ImGui::Separator();
+					
+					// camera settings
+					ImGui::TextWrapped("camera settings:");
+					bval = app.current_scene()->camera()->free_roam();
+					ImGui::Checkbox("free roam [ctrl]", &bval);
+					app.current_scene()->camera()->set_free_roam(bval);
+					fval = app.current_scene()->camera()->speed();
+					ImGui::SliderFloat("speed", &fval, 0.f, 50.f);
+					app.current_scene()->camera()->set_speed(fval);
+
+					fval = app.current_scene()->camera()->turn_speed();
+					ImGui::SliderFloat("turn speed", &fval, 0.f, 50.f);
+					app.current_scene()->camera()->set_turn_speed(fval);
+
+					if(ImGui::CollapsingHeader("camera transform"))
+					{
+						ImGui::PushID("cam_position");
+						v3val = app.current_scene()->camera()->position();
+						ImGui::SetNextItemWidth(60.f);
+						ImGui::InputFloat("x", &v3val.x);
+						ImGui::SameLine();
+						ImGui::SetNextItemWidth(60.f);
+						ImGui::InputFloat("y", &v3val.y);
+						ImGui::SameLine();
+						ImGui::SetNextItemWidth(60.f);
+						ImGui::InputFloat("z", &v3val.z);
+						app.current_scene()->camera()->set_position(v3val);
+						ImGui::PopID();
+						
+						ImGui::PushID("cam_rotation");
+						v3val = app.current_scene()->camera()->rotation();
+						ImGui::SetNextItemWidth(60.f);
+						ImGui::InputFloat("x", &v3val.x);
+						ImGui::SameLine();
+						ImGui::SetNextItemWidth(60.f);
+						ImGui::InputFloat("y", &v3val.y);
+						ImGui::SameLine();
+						ImGui::SetNextItemWidth(60.f);
+						ImGui::InputFloat("z", &v3val.z);
+						app.current_scene()->camera()->set_rotation(v3val);
+						ImGui::PopID();
+						
+						ImGui::PushID("cam_scale");
+						v3val = app.current_scene()->camera()->scale();
+						ImGui::SetNextItemWidth(60.f);
+						ImGui::InputFloat("x", &v3val.x);
+						ImGui::SameLine();
+						ImGui::SetNextItemWidth(60.f);
+						ImGui::InputFloat("y", &v3val.y);
+						ImGui::SameLine();
+						ImGui::SetNextItemWidth(60.f);
+						ImGui::InputFloat("z", &v3val.z);
+						app.current_scene()->camera()->set_scale(v3val);
+						ImGui::PopID();
+					}
+					ImGui::EndTabItem();
+				}
+				ImGui::EndTabBar();
+			}
 
 			ImGui::End();
 		}
 
 		// object manager window
-		ImGui::SetNextWindowPos(ImVec2(display_size.x -object_properties_size.x, menubar_size.y));
-		ImGui::SetNextWindowSize(ImVec2(object_properties_size.x, (display_size.y - menubar_size.y)*0.66));
-		if(ImGui::Begin("object properties", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize))
+		ImGui::SetNextWindowPos(ImVec2(display_size.x -right_window_size.x, menubar_size.y));
+		ImGui::SetNextWindowSize(ImVec2(right_window_size.x, (display_size.y - menubar_size.y)*0.66));
+		if(ImGui::Begin("object properties", nullptr, ImGuiWindowFlags_NoMove))
 		{
-			object_properties_size = ImGui::GetWindowSize();
+			right_window_size = ImGui::GetWindowSize();
 
 			if(selected_obj)
 			{
@@ -582,8 +586,8 @@ int main(int argc, char *argv[])
 		}
 
 		// current scene window
-		ImGui::SetNextWindowPos({display_size.x - object_properties_size.x, menubar_size.y + object_properties_size.y});
-		ImGui::SetNextWindowSize({object_properties_size.x, display_size.y - object_properties_size.y - menubar_size.y});
+		ImGui::SetNextWindowPos({display_size.x - right_window_size.x, menubar_size.y + right_window_size.y});
+		ImGui::SetNextWindowSize({right_window_size.x, display_size.y - right_window_size.y - menubar_size.y});
 		if(ImGui::Begin("logs", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize))
 		{
 			for(auto & it: logs)
