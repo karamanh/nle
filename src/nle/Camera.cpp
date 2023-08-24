@@ -8,10 +8,6 @@ namespace nle
     Camera::Camera()
         : m_fov(45.f), m_near(0.1f), m_far(10000.f)
     {
-        // m_up = glm::vec3(0.f, 1.f, 0.f);
-        // m_front = glm::vec3(0.f, 0.f, -1.f);
-        // m_right = glm::vec3(1.f, 0.f, 0.f);
-        // m_up_world = glm::vec3(0.f, 1.f, 0.f);
         set_speed(1.f);
         set_turn_speed(1.f);
     }
@@ -21,10 +17,6 @@ namespace nle
     {
         set_position(position);
         set_rotation(glm::vec3(0.f));
-        // m_up = glm::vec3(0.f, 1.f, 0.f);
-        // m_front = glm::vec3(0.f, 0.f, -1.f);
-        // m_right = glm::vec3(1.f, 0.f, 0.f);
-        // m_up_world = glm::vec3(0.f, 1.f, 0.f);
         set_speed(1.f);
         set_turn_speed(1.f);
     }
@@ -32,16 +24,6 @@ namespace nle
     Camera::~Camera()
     {
     }
-
-    // void Camera::set_speed(float speed)
-    // {
-    //     m_speed = speed;
-    // }
-
-    // float Camera::speed() const
-    // {
-    //     return m_speed;
-    // }
 
     void Camera::set_turn_speed(float turnSpeed)
     {
@@ -60,18 +42,7 @@ namespace nle
 
     void Camera::look_at(glm::vec3 position)
     {
-        glm::vec3 dir = glm::normalize(position - this->position());
-        // // glm::
-        glm::vec3 rot = {
-            atan2(dir.x, 1.f),
-            atan2(dir.y, 1.f),
-            atan2(dir.z, -1.f),
-        };
-
-        this->set_rotation(glm::degrees(rot));
-        ;
-        // glm::euler(glm::lookAt(this->position(), this->position() + dir, m_up_world));
-        // glm::euler<mat4>(glm::lookAt(this->position(), this->position() + dir, m_up_world));
+        //
     }
 
     void Camera::set_free_roam(bool free_roam)
@@ -143,17 +114,6 @@ namespace nle
     {
         return m_far;
     }
-
-    // void Camera::update()
-    // {
-    //     m_front.x = cos(glm::radians(rotation().y)) * cos(glm::radians(rotation().x));
-    //     m_front.y = sin(glm::radians(rotation().x));
-    //     m_front.z = sin(glm::radians(rotation().y)) * cos(glm::radians(rotation().x));
-    //     m_front = glm::normalize(m_front);
-
-    //     m_right = glm::normalize(glm::cross(m_front, m_up_world));
-    //     m_up = glm::normalize(glm::cross(m_right, m_front));
-    // }
 
     glm::mat4 Camera::get_view_matrix()
     {

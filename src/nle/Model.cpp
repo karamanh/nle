@@ -121,37 +121,7 @@ namespace nle
 
     bool Model::load_gltf(const std::string &path)
     {
-        // tinygltf::Model model;
-        // tinygltf::TinyGLTF loader;
-        // std::string err, warn;
-
-        // bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, path.c_str());
-        // if(!warn.empty())
-        // {
-        //     prwar("%s",warn.c_str());
-        // }
-        // if(!err.empty())
-        // {
-        //     prerr("%s",err.c_str());
-        //     return ret;
-        // }
-
-        // m_multimesh = new MultiMesh();
-        // for(const auto& it : model.meshes)
-        // {
-        //     std::vector<float> vertices;
-        //     std::vector<unsigned int> indices;
-
-        //     for(const auto& it1 : it.primitives)
-        //     {
-        //         for(const auto& it2 : it1.targets)
-        //     }
-
-        //     Shader *s = m_shader ? m_shader : DEFAULT_SHADER;
-        //     m_multimesh->meshes().push_back(new Mesh(vertices, indices, s, m_texture));
-        // }
-
-        // return ret;
+        // not implemented yet
         return path.empty();
     }
 

@@ -16,11 +16,6 @@ namespace nle
         bool m_locked_to_mouse = false;
         bool m_free_roam = false;
 
-        // glm::vec3 m_front;
-        // glm::vec3 m_up;
-        // glm::vec3 m_right;
-        // glm::vec3 m_up_world;
-
         glm::mat4 get_view_matrix();
         void on_mouse_motion(int dx, int dy);
         void on_key_pressed(int key);
@@ -29,9 +24,6 @@ namespace nle
         Camera();
         Camera(glm::vec3 position);
         virtual ~Camera();
-        // void update();
-        // void set_speed(float speed);
-        // float speed() const;
         void set_turn_speed(float turnSpeed);
         float turn_speed() const;
         bool free_roam() const;

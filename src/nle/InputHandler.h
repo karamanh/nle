@@ -33,9 +33,6 @@ private:
     void set_mouse_position(int x, int y);
     void set_mouse_button_state(int button, bool state);
 
-    // static void key_handler(GLFWwindow *window, int key, int code, int action, int mode);
-    // static void mouse_handler(GLFWwindow *window, double mouse_x, double mouse_y);
-
 public:
     InputHandler(GLFWwindow *handle);
     virtual ~InputHandler();

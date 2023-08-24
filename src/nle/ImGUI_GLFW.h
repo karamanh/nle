@@ -10,26 +10,23 @@
 
 namespace nle
 {
-    namespace imgui
+    class ImGUI_GLFW
     {
-    }
+    private:
+        GLFWwindow *m_handle;
+        std::function<void()> m_draw_callback;
+        bool m_visible = true;
 
-class ImGUI_GLFW
-{
-private:
-    GLFWwindow *m_handle;
-    std::function<void()> m_draw_callback;
-    bool m_visible = true;
-public:
-    ImGUI_GLFW(GLFWwindow *handle, unsigned int glsl_version = 330);
-    ~ImGUI_GLFW();
-    void render();
+    public:
+        ImGUI_GLFW(GLFWwindow *handle, unsigned int glsl_version = 330);
+        ~ImGUI_GLFW();
+        void render();
 
-    const std::function<void()>& draw_callback() const;
-    void set_draw_callback(std::function<void()> draw_callback);
+        const std::function<void()> &draw_callback() const;
+        void set_draw_callback(std::function<void()> draw_callback);
 
-    bool visible() const;
-    void set_visible(bool visible);
-};
+        bool visible() const;
+        void set_visible(bool visible);
+    };
 
 } // namespace nle

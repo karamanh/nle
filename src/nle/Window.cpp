@@ -34,7 +34,6 @@ namespace nle
         glfwSetKeyCallback(m_handle, Window::key_handler);
         glfwSetCursorPosCallback(m_handle, Window::mouse_position_handler);
         glfwSetMouseButtonCallback(m_handle, Window::mouse_button_handler);
-        // GLFWmousebuttonfun
 
         m_input_handler = new InputHandler(m_handle);
     }

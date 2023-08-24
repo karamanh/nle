@@ -8,29 +8,10 @@ namespace nle
 InputHandler::InputHandler(GLFWwindow *handle)
     : m_handle(handle)
 {
-    // m_input_timestamp = get_time_sec();
-    // m_thr_input = std::thread(
-    //     [this]()
-    //     {
-    //         while (!this->m_window->closed())
-    //         {
-    //             // this->process_keyboard_input();
-    //             // this->process_mouse_input(this->m_parent_window->m_mouse_delta.x, this->m_parent_window->m_mouse_delta.y);
-    //             // this->m_parent_window->m_mouse_delta = glm::vec2(0.f);
-
-    //             std::this_thread::sleep_for(std::chrono::nanoseconds(NLE_INPUT_PROCESS_SLEEP_TIME_NS));
-    //         }
-    //     });
-
-    // m_thr_input = std::thread(std::bind(&InputHandler::runner, this));
 }
 
 InputHandler::~InputHandler()
 {
-    // if(m_thr_input.joinable())
-    // {
-    //     m_thr_input.join();
-    // }
 }
 
 void InputHandler::set_key_state(int key, bool state)

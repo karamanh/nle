@@ -47,12 +47,6 @@ namespace nle
 
     void Nle::set_current_scene(Scene *s)
     {
-        // m_window->input_handler()->mouse_moved().unbind_all();
-        // m_renderer->set_root_scene(s);
-        // m_window->input_handler()->mouse_moved().bind_callback(
-        //     std::bind(&Camera::on_mouse_motion, s->camera())
-        // );
-
         m_renderer->set_root_scene(s);
     }
 
