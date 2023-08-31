@@ -2,7 +2,7 @@
 
 ### experimental graphics + physics engine [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
- ![nle-editor](resources/nle-editor.gif)
+ ![nle-editor](resources/nle-editor-2.gif)
 
  # todos
   - not so hard.
