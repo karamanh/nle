@@ -91,11 +91,6 @@ namespace nle
         return m_sig_child_added;
     }
 
-    const std::type_info &Object3D::type() const
-    {
-        return typeid(*this);
-    }
-
     void Object3D::move_forward()
     {
         glm::vec3 dpos = m_front * m_speed;
@@ -147,6 +142,11 @@ namespace nle
         return m_up;
     }
 
+    ObjectType Object3D::type() const
+    {
+        return m_type;
+    }
+
     void Object3D::set_speed(float speed)
     {
         m_speed = speed;
@@ -183,12 +183,15 @@ namespace nle
             prerr("child already added");
     }
 
-    void Object3D::delete_child(Object3D *child)
+    void Object3D::delete_child(Object3D *child, bool destroy)
     {
         auto it = std::find(m_children.begin(), m_children.end(), child);
         if (it != m_children.end())
         {
-            delete *it;
+            if(destroy)
+            {
+                delete *it;
+            }
             m_children.erase(it);
         }
     }
@@ -203,15 +206,15 @@ namespace nle
         return m_id;
     }
 
-    void Object3D::set_physics_enabled(bool enabled)
-    {
-        m_physics_enabled = enabled;
-    }
+    // void Object3D::set_physics_enabled(bool enabled)
+    // {
+    //     m_physics_enabled = enabled;
+    // }
 
-    bool Object3D::physics_enabled() const
-    {
-        return m_physics_enabled;
-    }
+    // bool Object3D::physics_enabled() const
+    // {
+    //     return m_physics_enabled;
+    // }
 
     void Object3D::set_parent(Object3D *parent)
     {
@@ -223,7 +226,7 @@ namespace nle
     {
         auto ret = nlohmann::json();
 
-        ret["type"] = 0;
+        ret["type"] = static_cast<int>(this->m_type);
         ret["id"] = this->id();
         ret["position"]["x"] = this->position().x;
         ret["position"]["y"] = this->position().y;
@@ -245,6 +248,7 @@ namespace nle
 
     void Object3D::from_json(const nlohmann::json &j)
     {
+        this->m_type = static_cast<ObjectType>(j["type"]);
         this->set_id(j["id"]);
         this->set_position({j["position"]["x"], j["position"]["y"], j["position"]["z"]});
         this->set_rotation({j["rotation"]["x"], j["rotation"]["y"], j["rotation"]["z"]});

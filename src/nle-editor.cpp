@@ -68,6 +68,9 @@ int main(int argc, char *argv[])
 	app.current_scene()->light()->set_ambient_intensity(0.5f);
 	app.current_scene()->light()->set_diffuse_intensity(1.0f);
 	app.current_scene()->light()->set_enabled(true);
+	// app.physics_engine()->collision().bind_callback([](nle::Object3D*o1, nle::Object3D*o2){
+	// 	prdbg("%s collides with %s", o1->id().c_str(), o2->id().c_str());
+	// });
 
 	app.renderer()->gui()->set_draw_callback([&]()
 											 {
@@ -302,11 +305,12 @@ int main(int argc, char *argv[])
 						{
 							for(auto *i : o->children())
 							{
-								nle::MultiMeshInstance *mi = dynamic_cast<nle::MultiMeshInstance*>(i);
-								if(mi)
-								{
-									generate_tree(mi);
-								}
+								// nle::MultiMeshInstance *mi = dynamic_cast<nle::MultiMeshInstance*>(i);
+								// if(mi)
+								// {
+								// 	generate_tree(mi);
+								// }
+								generate_tree(i);
 							}
 
 							nle::MultiMeshInstance *mi = dynamic_cast<nle::MultiMeshInstance*>(o);
@@ -459,6 +463,10 @@ int main(int argc, char *argv[])
 					if(strlen(idbuf) > 0)
 						selected_obj->set_id(idbuf);
 				}
+
+				bval = selected_obj->mouse_pickable();
+				ImGui::Checkbox("mouse pickable", &bval);
+				selected_obj->set_mouse_pickable(bval);
 				
 				ImGui::Separator();
 
@@ -511,11 +519,11 @@ int main(int argc, char *argv[])
 
 				if(ImGui::CollapsingHeader("material", ImGuiTreeNodeFlags_DefaultOpen))
 				{
-					nle::MultiMeshInstance *instance;
-					if((instance = dynamic_cast<nle::MultiMeshInstance*>(selected_obj)))
+					nle::MultiMeshInstance *mmi;
+					if((mmi = dynamic_cast<nle::MultiMeshInstance*>(selected_obj)))
 					{
 						nle::Material *material;
-						if((material = instance->material()))
+						if((material = mmi->material()))
 						{
 							ImGui::PushID("specular_intensity");
 							fval = material->specular_intensity();
@@ -535,7 +543,7 @@ int main(int argc, char *argv[])
 
 							if(ImGui::Button("clear material"))
 							{
-								instance->set_material(nullptr);
+								mmi->set_material(nullptr);
 							}
 						}
 						else
@@ -544,7 +552,7 @@ int main(int argc, char *argv[])
 							{
 								material = new nle::Material(1.f, 32.f);
 								materials.push_back(material);
-								instance->set_material(material);
+								mmi->set_material(material);
 							}
 						}
 					}
@@ -552,17 +560,44 @@ int main(int argc, char *argv[])
 				
 				ImGui::Separator();
 
-				if(ImGui::Button(selected_obj->physics_enabled() ? "disable_physics" : "enable physics"))
+				auto * po = dynamic_cast<nle::PhysicsObject3D*>(selected_obj->parent());
+				if(po)
 				{
-					if(selected_obj->physics_enabled())
+					if(ImGui::CollapsingHeader("physics settings", ImGuiTreeNodeFlags_DefaultOpen))
 					{
-						push_log("enabled physics for " + selected_obj->id());
-						app.physics_engine()->detach_physics_body(selected_obj);
+						if(ImGui::Button(po->physics_enabled() ? "disable physics" : "enable physics"))
+						{
+							if(po->physics_enabled())
+							{
+								push_log("disabled physics for " + selected_obj->id());
+								app.physics_engine()->detach_physics_body(po);
+							}
+							else
+							{
+								push_log("enabled physics for " + selected_obj->id());
+								app.physics_engine()->attach_physics_body(po);
+							}
+						}
+
+						bval = po->rigid();
+						ImGui::Checkbox("rigid", &bval);
+						po->set_rigid(bval);
 					}
-					else
+
+					po->set_position(selected_obj->position());
+					po->set_rotation(selected_obj->rotation());
+					po->set_scale(selected_obj->scale());
+				}
+				else
+				{
+					if(ImGui::Button("wrap by 3d physics object"))
 					{
-						push_log("disabled physics for " + selected_obj->id());
-						app.physics_engine()->attach_physics_body(selected_obj);
+						app.current_scene()->delete_child(selected_obj, false);
+						auto * po = new nle::PhysicsObject3D();
+
+						po->add_child(selected_obj);
+						app.current_scene()->add_child(po);
+						app.current_scene()->register_render_object(selected_obj);
 					}
 				}
 
@@ -578,6 +613,7 @@ int main(int argc, char *argv[])
 
 		for(auto * i : app.current_scene()->render_objects())
 		{
+			// i->set_render_mode(selected_obj == i ? nle::Line : nle::Fill);
 			auto * mmi = dynamic_cast<nle::MultiMeshInstance*>(i);
 			if(mmi)
 			{
@@ -622,41 +658,47 @@ void scene_builder(nle::Object3D **o, const nlohmann::json &j, std::map<std::str
 	int type = j["type"];
 	switch (type)
 	{
-	case 1:
+	case static_cast<int>(nle::ObjectType::Scene):
 	{
 		nle::Scene *h = new nle::Scene();
 		h->from_json(j);
 		(*o) = h;
 		break;
 	}
-	case 2:
+	case static_cast<int>(nle::ObjectType::Camera):
 	{
 		nle::Camera *h = new nle::Camera();
 		h->from_json(j);
 		(*o) = h;
 		break;
 	}
-	case 3:
+	case static_cast<int>(nle::ObjectType::Light):
 	{
 		nle::Light *h = new nle::Light();
 		h->from_json(j);
 		(*o) = h;
 		break;
 	}
-	case 4:
+	case static_cast<int>(nle::ObjectType::MultiMeshInstance):
 	{
 		std::string source = j["source"];
 		if (models.find(source) != models.end())
 		{
 			nle::MultiMeshInstance *h = models[source]->create_instance();
 			h->from_json(j);
-			// nle::MultiMeshInstance * h; (h = dynamic_cast<nle::MultiMeshInstance*>(o))->from_json(j);
 			(*o) = h;
 		}
 		else
 		{
 			prerr("model %s not found", source.c_str());
 		}
+		break;
+	}
+	case static_cast<int>(nle::ObjectType::PhysicsObject3D):
+	{
+		nle::PhysicsObject3D *h = new nle::PhysicsObject3D();
+		h->from_json(j);
+		(*o) = h;
 		break;
 	}
 	}

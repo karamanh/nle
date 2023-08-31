@@ -1,4 +1,5 @@
 #include "Renderer3D.h"
+#include "PhysicsObject3D.h"
 
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -19,19 +20,20 @@ namespace nle
         m_grid_shader = new Shader("shader/grid_vert.glsl", "shader/grid_frag.glsl", true);
         m_grid_material = new Material();
         m_grid_mesh = new Mesh(
+            {// XZ plane
+             -0.5f, 0.0f, -0.5f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f,
+             0.5f, 0.0f, -0.5f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f,
+             0.5f, 0.0f, 0.5f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f,
+             -0.5f, 0.0f, 0.5f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f},
             {
-                // XZ plane
-                -0.5f, 0.0f, -0.5f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 
-                0.5f, 0.0f, -0.5f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 
-                0.5f, 0.0f,  0.5f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 
-                -0.5f, 0.0f,  0.5f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f
+                0,
+                1,
+                2,
+                0,
+                2,
+                3,
             },
-            {
-                0, 1, 2,
-                0, 2, 3,
-            },
-            m_grid_shader
-        );
+            m_grid_shader);
 
         m_grid = m_grid_mesh->create_instance();
         m_grid->set_scale(glm::vec3(10.f));
@@ -115,6 +117,8 @@ namespace nle
             if (i)
             {
                 MeshInstance *mi;
+                PhysicsObject3D *po;
+
                 if ((mi = dynamic_cast<MeshInstance *>(i)))
                 {
                     render(mi);
@@ -132,9 +136,9 @@ namespace nle
         glClearColor(m_clear_color.r, m_clear_color.g, m_clear_color.b, m_clear_color.a);
     }
 
-    Object3D *Renderer3D::get_mouse_ray_target(int mouse_x, int mouse_y)
+    RenderObject3D *Renderer3D::get_mouse_ray_target(int mouse_x, int mouse_y)
     {
-        Object3D *target = nullptr;
+        RenderObject3D *target = nullptr;
 
         float aspect = (float)m_parent_window->m_width / (float)m_parent_window->m_height;
         glm::mat4 proj = glm::perspective(m_root_scene->camera()->fov(), aspect, m_root_scene->camera()->near(), m_root_scene->camera()->far());
@@ -148,10 +152,10 @@ namespace nle
         for (auto *o : m_root_scene->render_objects())
         {
             auto *mmi = dynamic_cast<MultiMeshInstance *>(o);
-            if (mmi)
+            if (mmi && mmi->mouse_pickable())
             {
                 float tmp_distance = distance;
-                if (test_ray_obb_inersection(cam_pos, ray_world, mmi->aabb_min(), mmi->aabb_max(), mmi->model_matrix(), tmp_distance))
+                if (test_ray_obb_inersection(cam_pos, ray_world, mmi->multimesh()->aabb().min(), mmi->multimesh()->aabb().max(), mmi->model_matrix(), tmp_distance))
                 {
                     if (tmp_distance < distance)
                     {
@@ -226,10 +230,10 @@ namespace nle
         {
             glUniform1i(unf_texture_enabled, 0);
         }
-        
+
         bool accept_light = true;
 
-        if(mi->mesh()->material())
+        if (mi->mesh()->material())
         {
             mi->mesh()->material()->use(unf_specular_intensity, unf_shininess);
             accept_light = mi->mesh()->material()->accept_light();

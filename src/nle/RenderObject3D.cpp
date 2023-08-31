@@ -40,4 +40,14 @@ RenderLayer RenderObject3D::render_layer() const
     return m_render_layer;
 }
 
+bool RenderObject3D::mouse_pickable() const
+{
+    return m_mouse_pickable;
+}
+
+void RenderObject3D::set_mouse_pickable(bool mouse_pickable)
+{
+    m_mouse_pickable = mouse_pickable;
+}
+
 } // namespace nle

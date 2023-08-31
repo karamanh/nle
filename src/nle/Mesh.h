@@ -7,6 +7,7 @@
 #include "RenderObject3D.h"
 #include "Texture.h"
 #include "Material.h"
+#include "AABB.h"
 
 namespace nle
 {
@@ -15,8 +16,9 @@ namespace nle
     class Mesh
     {
     private:
-        glm::vec3 m_aabb_max;
-        glm::vec3 m_aabb_min;
+        // glm::vec3 m_aabb_max;
+        // glm::vec3 m_aabb_min;
+        AABB m_aabb;
         unsigned int m_ebo,
             m_vbo,
             m_vao;
@@ -44,8 +46,7 @@ namespace nle
         void set_material(Material *material);
         Material *material();
         MeshInstance *create_instance();
-        glm::vec3 aabb_min() const;
-        glm::vec3 aabb_max() const;
+        AABB aabb() const;
 
         friend class Renderer3D;
         friend class MultiMesh;

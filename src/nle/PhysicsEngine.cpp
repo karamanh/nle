@@ -1,4 +1,5 @@
 #include "PhysicsEngine.h"
+#include "MultiMesh.h"
 
 #define NLE_PHYSICS_PROCESS_SLEEP_TIME 16666
 
@@ -9,107 +10,139 @@ namespace nle
         : m_realm(new PhysicsRealm)
     {
         m_physics_timeval = get_time_sec();
-        m_thr_physics = std::thread(&PhysicsEngine::runner, this);
+        m_thr_physics = std::thread(std::bind(&PhysicsEngine::runner, this));
     }
 
     PhysicsEngine::~PhysicsEngine()
     {
         m_killed = true;
-        
-        if(m_thr_physics.joinable())
+        m_realm->bodies.clear();
+
+        if (m_thr_physics.joinable())
             m_thr_physics.join();
 
         delete m_realm;
     }
 
-    void PhysicsEngine::attach_physics_body(Object3D *body)
+    void PhysicsEngine::attach_physics_body(PhysicsObject3D *body)
     {
-        m_realm->bodies.push_back(body);
-        for(auto * c : body->children())
-        {
-            attach_physics_body(c);
-        }
-        body->set_physics_enabled(true);
+        std::lock_guard<std::mutex> lck(m_mtx_realm);
+        attach_physics_body_thread_safe(body);
     }
 
-    void PhysicsEngine::detach_physics_body(Object3D *body)
+    void PhysicsEngine::detach_physics_body(PhysicsObject3D *body)
     {
-        auto it = std::find(m_realm->bodies.begin(), m_realm->bodies.end(), body);
-        if(it != m_realm->bodies.end())
-        {
-            for(auto *c : body->children())
-            {
-                detach_physics_body(c);
-            }
-            m_realm->bodies.erase(it);
-        }
-        body->set_physics_enabled(false);
-        body->set_velocity(glm::vec3(0.f));
+        std::lock_guard<std::mutex> lck(m_mtx_realm);
+        detach_physics_body_thread_safe(body);
     }
 
-    void PhysicsEngine::bind_physics_process_callback(std::function<void(Object3D * object, double delta)> callback)
+    void PhysicsEngine::bind_physics_process_callback(std::function<void(Object3D *object, double delta)> callback)
     {
-        m_on_physics_process.bind_callback(callback);
+        sig_physics_process.bind_callback(callback);
     }
 
     void PhysicsEngine::bind_physics_tick_callback(std::function<void(double)> callback)
     {
-        m_on_physics_tick.bind_callback(callback);
+        sig_physics_tick.bind_callback(callback);
     }
 
-    void PhysicsEngine::process(Object3D *body, double delta_time)
+    Signal<Object3D *, Object3D *> &PhysicsEngine::collision()
     {
-        glm::vec3 d = m_realm->gravity * m_realm->gravityVector * (float)delta_time;
-        body->set_velocity(body->velocity() + d);
-
-        // @TODO: check for collisions and move if there's no obstacle
-
-        body->set_position(body->position() + body->velocity());
-        
-        // fake collision
-        auto pos = body->position();
-        if(pos.y < 0.f)
-        {
-            pos.y = 0.f;
-            auto vel = body->velocity();
-            vel.y = 0.0;
-            body->set_velocity(vel);
-        }
-        body->set_position(pos);
-        // fake collision
-
-        m_on_physics_process.emit(body, delta_time);
+        return sig_collision;
     }
 
-    void PhysicsEngine::process_recursively(Object3D *root, double delta_time)
+    void PhysicsEngine::process_collisions(const std::list<PhysicsObject3D *> &bodies)
     {
-        process(root, delta_time);
-
-        for(auto * c : root->children())
+        for(auto it1 = bodies.begin(); it1 != bodies.end(); ++it1)
         {
-            process_recursively(c, delta_time);
-        }
-    }
-
-    void PhysicsEngine::runner(void *_this)
-    {
-        PhysicsEngine *p = static_cast<PhysicsEngine*>(_this);
-        if(p)
-        {
-
-            while(!p->m_killed)
+            for(auto it2 = std::next(it1); it2 != bodies.end(); ++it2)
             {
-                double dtime = get_time_sec() - p->m_physics_timeval;
-                for(auto * i : p->m_realm->bodies)
-                {
-                    p->process_recursively(i, dtime);
-                }
+                auto * mmi1 = dynamic_cast<MultiMeshInstance*>(*it1);
+                auto * mmi2 = dynamic_cast<MultiMeshInstance*>(*it2);
 
-                p->m_on_physics_tick.emit(dtime);
-                p->m_physics_timeval = get_time_sec();
-                // 60 hertz constant physics processing.
-                std::this_thread::sleep_for(std::chrono::microseconds(NLE_PHYSICS_PROCESS_SLEEP_TIME));
+                if(mmi1 && mmi2)
+                {
+                    if(mmi1->aabb().collides_with(mmi2->aabb()))
+                    {
+                        sig_collision.emit(mmi1, mmi2);
+                        // auto tmp = mmi2->velocity();
+                        auto a = mmi1->velocity() + mmi2->velocity();
+                        mmi2->set_velocity(a);
+                        mmi1->set_velocity(a);
+                    }
+                }
             }
         }
+    }
+
+    void PhysicsEngine::runner()
+    {
+        while(!m_killed)
+        {
+            double tsnow = get_time_sec();
+            double tsdelta = tsnow - m_physics_timeval;
+
+            for(auto it1 = m_realm->bodies.begin(); it1 != m_realm->bodies.end(); ++it1)
+            {
+                /** process collisions */ 
+                {
+                    std::lock_guard<std::mutex> lck(m_mtx_realm);
+
+                    for(auto it2 = std::next(it1); it2 != m_realm->bodies.end(); ++it2)
+                    {
+                        auto * mmi1 = dynamic_cast<MultiMeshInstance*>((*it1)->render_object());
+                        auto * mmi2 = dynamic_cast<MultiMeshInstance*>((*it2)->render_object());
+                        // prdbg("%f %f %f - %f %f %f", mmi1->aabb().min().x, mmi1->aabb().min().y, mmi1->aabb().min().z, mmi1->aabb().max().x, mmi1->aabb().max().y, mmi1->aabb().max().z);
+
+                        if(mmi1 && mmi2)
+                        {
+                            if(mmi1->aabb().collides_with(mmi2->aabb()))
+                            {
+                                sig_collision.emit(mmi1, mmi2);
+                                // we have simulated a little vertical bounce
+                                // i'm going to implement further.
+                                (*it1)->set_velocity(-(*it1)->velocity());
+                                (*it2)->set_velocity(-(*it2)->velocity());
+                            }
+                        }
+                    }
+                }
+
+                if(!(*it1)->rigid())
+                {
+                    glm::vec3 dgrav = m_realm->gravity * m_realm->gravity_vector * (float)tsdelta;
+                    /** apply gravity */ 
+                    (*it1)->set_velocity((*it1)->velocity() + dgrav);
+
+                    /** move body */
+                    (*it1)->set_position((*it1)->position() + (*it1)->velocity() * (float)tsdelta);
+                }
+            }
+
+            sig_physics_tick.emit(tsdelta);
+            m_physics_timeval = get_time_sec();
+            std::this_thread::sleep_for(std::chrono::microseconds(NLE_PHYSICS_PROCESS_SLEEP_TIME));
+        }
+    }
+
+    void PhysicsEngine::attach_physics_body_thread_safe(PhysicsObject3D *body)
+    {
+        auto it = std::find(m_realm->bodies.begin(), m_realm->bodies.end(), body);
+        if(it == m_realm->bodies.end())
+        {
+            m_realm->bodies.push_back(body);
+        }
+        body->set_physics_enabled(true);
+    }
+
+    void PhysicsEngine::detach_physics_body_thread_safe(PhysicsObject3D *body)
+    {
+        auto it = std::find(m_realm->bodies.begin(), m_realm->bodies.end(), body);
+        if (it != m_realm->bodies.end())
+        {
+            m_realm->bodies.erase(it);
+        }
+        body->set_physics_enabled(false);
+        body->set_velocity(glm::vec3(0.f));
     }
 } // namespace nle

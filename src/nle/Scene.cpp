@@ -5,19 +5,21 @@ namespace nle
 {
 
     Scene::Scene()
-        : m_camera(new Camera(glm::vec3(0.f, 0.f, 0.f))), m_light(new Light(1.f, 1.f, 1.f, 1.f, 1.f))
+        : m_default_camera(new Camera(glm::vec3(0.f, 0.f, 0.f))), m_light(new Light(1.f, 1.f, 1.f, 1.f, 1.f))
     {
+        m_type = ObjectType::Scene;
+        m_camera = m_default_camera;
     }
 
     Scene::~Scene()
     {
         delete m_light;
-        delete m_camera;
+        delete m_default_camera;
     }
 
     Camera *Scene::camera()
     {
-        return m_camera;
+        return m_camera ? m_camera : m_default_camera;
     }
 
     void Scene::set_camera(Camera *c)
@@ -30,7 +32,7 @@ namespace nle
         return m_light;
     }
 
-    void Scene::register_render_object(Object3D *object)
+    void Scene::register_render_object(RenderObject3D *object)
     {
         auto it = std::find(m_render_objects.begin(), m_render_objects.end(), object);
         if(it == m_render_objects.end())
@@ -38,25 +40,33 @@ namespace nle
             m_render_objects.push_back(object);
             for(auto * c : object->children())
             {
-                register_render_object(c);
+                auto *ro = dynamic_cast<RenderObject3D*>(c);
+                if(ro)
+                {
+                    register_render_object(ro);
+                }
             }
         }
     }
 
-    void Scene::delete_render_object(Object3D *object)
+    void Scene::delete_render_object(RenderObject3D *object)
     {
         auto it = std::find(m_render_objects.begin(), m_render_objects.end(), object);
         if(it != m_render_objects.end())
         {
             for(auto * c : object->children())
             {
-                delete_render_object(c);
+                auto *ro = dynamic_cast<RenderObject3D*>(c);
+                if(ro)
+                {
+                    delete_render_object(ro);
+                }
             }
             m_render_objects.erase(it);
         }
     }
 
-    std::vector<Object3D *> Scene::render_objects()
+    std::vector<RenderObject3D *> Scene::render_objects()
     {
         return m_render_objects;
     }
@@ -64,13 +74,22 @@ namespace nle
     void Scene::add_child(Object3D *child)
     {
         Object3D::add_child(child);
-        register_render_object(child);
+
+        auto * ro = dynamic_cast<RenderObject3D*>(child);
+        if(ro)
+        {
+            register_render_object(ro);
+        }
     }
 
-    void Scene::delete_child(Object3D *child)
+    void Scene::delete_child(Object3D *child, bool destroy)
     {
-        delete_render_object(child);
-        Object3D::delete_child(child);
+        auto * ro = dynamic_cast<RenderObject3D*>(child);
+        if(ro)
+        {
+            delete_render_object(ro);
+        }
+        Object3D::delete_child(child, destroy);
     }
 
     void Scene::set_id(const std::string &id)
@@ -85,7 +104,6 @@ namespace nle
     nlohmann::json Scene::to_json()
     {
         auto ret = Object3D::to_json();
-        ret["type"] = 1;
         ret["camera"] = m_camera->to_json();
         ret["light"] = m_light->to_json();
         return ret;

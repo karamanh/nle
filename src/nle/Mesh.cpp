@@ -11,8 +11,7 @@ namespace nle
         unsigned int block_size = 11U; // 3 vertices, 3 normals, 2 texture coords
         unsigned int range = vertices.size() / block_size;
 
-        m_aabb_max = glm::vec3(std::numeric_limits<float>::min());
-        m_aabb_min = glm::vec3(std::numeric_limits<float>::max());
+        m_aabb = AABB(glm::vec3(std::numeric_limits<float>::max()), glm::vec3(std::numeric_limits<float>::min()));
 
         for (unsigned int i = 0; i < range; i++)
         {
@@ -20,29 +19,41 @@ namespace nle
             float &vy = m_vertices[block_size * i + 1];
             float &vz = m_vertices[block_size * i + 2];
 
-            if (vx < m_aabb_min.x)
+            if (vx < m_aabb.min().x)
             {
-                m_aabb_min.x = vx;
+                auto tmp = m_aabb.min();
+                tmp.x = vx;
+                m_aabb.set_min(tmp);
             }
-            else if (vx > m_aabb_max.x)
+            else if (vx > m_aabb.max().x)
             {
-                m_aabb_max.x = vx;
+                auto tmp = m_aabb.max();
+                tmp.x = vx;
+                m_aabb.set_max(tmp);
             }
-            if (vy < m_aabb_min.y)
+            if (vy < m_aabb.min().y)
             {
-                m_aabb_min.y = vy;
+                auto tmp = m_aabb.min();
+                tmp.y = vy;
+                m_aabb.set_min(tmp);
             }
-            else if (vy > m_aabb_max.y)
+            else if (vy > m_aabb.max().y)
             {
-                m_aabb_max.y = vy;
+                auto tmp = m_aabb.max();
+                tmp.y = vy;
+                m_aabb.set_max(tmp);
             }
-            if (vz < m_aabb_min.z)
+            if (vz < m_aabb.min().z)
             {
-                m_aabb_min.z = vz;
+                auto tmp = m_aabb.min();
+                tmp.z = vz;
+                m_aabb.set_min(tmp);
             }
-            else if (vz > m_aabb_max.z)
+            else if (vz > m_aabb.max().z)
             {
-                m_aabb_max.z = vz;
+                auto tmp = m_aabb.max();
+                tmp.z = vz;
+                m_aabb.set_max(tmp);
             }
         }
 
@@ -136,14 +147,9 @@ namespace nle
         return mi;
     }
 
-    glm::vec3 Mesh::aabb_min() const
+    AABB Mesh::aabb() const
     {
-        return m_aabb_min;
-    }
-
-    glm::vec3 Mesh::aabb_max() const
-    {
-        return m_aabb_max;
+        return m_aabb;
     }
 
     MeshInstance::MeshInstance(Mesh *mesh)

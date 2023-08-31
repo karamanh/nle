@@ -5,6 +5,7 @@ namespace nle
     Light::Light()
         : m_color(glm::vec3(1.f)), m_ambient_intensity(1.f), m_diffuse_intensity(1.f)
     {
+        m_type = ObjectType::Light;
     }
 
     Light::Light(GLfloat red, GLfloat green, GLfloat blue, GLfloat ambient_intensity,
@@ -76,7 +77,6 @@ namespace nle
     nlohmann::json Light::to_json()
     {
         auto ret = Object3D::to_json();
-        ret["type"] = 3;
         ret["color"]["r"] = m_color.r;
         ret["color"]["g"] = m_color.g;
         ret["color"]["b"] = m_color.b;

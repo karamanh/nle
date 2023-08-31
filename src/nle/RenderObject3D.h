@@ -31,6 +31,7 @@ protected:
     RenderLayer m_render_layer = RenderLayer::_0;
     RenderMode m_render_mode = RenderMode::Fill;
     bool m_visible = true;
+    bool m_mouse_pickable = true;
 public:
     RenderObject3D() = default;
 
@@ -42,6 +43,9 @@ public:
 
     void set_render_layer(RenderLayer layer);
     RenderLayer render_layer() const;
+
+    void set_mouse_pickable(bool mouse_pickable);
+    bool mouse_pickable() const;
 };
 
 } // namespace nle
