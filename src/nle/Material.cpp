@@ -25,6 +25,36 @@ namespace nle
         glUniform1f(shininess_location, m_shininess);
     }
 
+    void Material::set_ambient(glm::vec3 ambient)
+    {
+        m_ambient = ambient;
+    }
+
+    glm::vec3 Material::ambient() const
+    {
+        return m_ambient;
+    }
+
+    void Material::set_diffuse(glm::vec3 diffuse)
+    {
+        m_diffuse = diffuse;
+    }
+
+    glm::vec3 Material::diffuse() const
+    {
+        return m_diffuse;
+    }
+
+    void Material::set_specular(glm::vec3 specular)
+    {
+        m_specular = specular;
+    }
+
+    glm::vec3 Material::specular() const
+    {
+        return m_specular;
+    }
+
     void Material::set_specular_intensity(float specular_intensity)
     {
         m_specular_intensity = specular_intensity;

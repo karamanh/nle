@@ -7,7 +7,6 @@ namespace nle::globals
 {
     extern Shader*      DEFAULT_SHADER;
     extern Material*    DEFAULT_MATERIAL;
-    
 
     void init();
     void cleanup();
