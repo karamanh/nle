@@ -38,7 +38,6 @@ namespace nle
         AABB m_aabb;
         void set_material_for_meshes(Material *material);
         void update() override;
-        AABB transform_aabb(AABB aabb, glm::mat4 m);
 
     public:
         MultiMeshInstance(MultiMesh *mm);

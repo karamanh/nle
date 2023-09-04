@@ -94,42 +94,7 @@ namespace nle
         m_model_matrix = glm::rotate(m_model_matrix, glm::radians(this->rotation().y), glm::vec3(0.f, 1.f, 0.f));
         m_model_matrix = glm::rotate(m_model_matrix, glm::radians(this->rotation().z), glm::vec3(0.f, 0.f, 1.f));
         m_model_matrix = glm::scale(m_model_matrix, this->scale());
-        m_aabb = transform_aabb(m_multimesh->aabb(), m_model_matrix);
-    }
-
-    AABB MultiMeshInstance::transform_aabb(AABB aabb, glm::mat4 m)
-    {
-        AABB res;
-        glm::vec3 corners[8];
-
-        corners[0] = aabb.min();
-        corners[1] = glm::vec3(aabb.min().x, aabb.max().y, aabb.min().z);
-        corners[2] = glm::vec3(aabb.min().x, aabb.max().y, aabb.max().z);
-        corners[3] = glm::vec3(aabb.min().x, aabb.min().y, aabb.max().z);
-        corners[4] = glm::vec3(aabb.max().x, aabb.min().y, aabb.min().z);
-        corners[5] = glm::vec3(aabb.max().x, aabb.max().y, aabb.min().z);
-        corners[6] = aabb.max();
-        corners[7] = glm::vec3(aabb.max().x, aabb.min().y, aabb.max().z);
-
-
-        glm::vec4 tmp  = (m * glm::vec4(corners[0],1.0));
-        glm::vec3 tmin = glm::vec3(tmp.x, tmp.y, tmp.z);
-        glm::vec3 tmax = tmin;
-
-        // transform the other 7 corners and compute the result AABB
-        for(int i = 1; i < 8; i++)
-        {
-            tmp = (m * glm::vec4(corners[i],1.0));
-            glm::vec3 point = glm::vec3(tmp.x, tmp.y, tmp.z);
-
-            tmin = glm::min(tmin, point);
-            tmax = glm::max(tmax, point);
-        }        
-        
-        res.set_min(tmin);
-        res.set_max(tmax);
-        
-        return res;
+        m_aabb = m_multimesh->aabb().get_transformed(m_model_matrix);
     }
 
     void MultiMeshInstance::set_material(Material *material)
