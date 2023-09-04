@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
 		{
 			prdbg("loading %s", dir_entry.path().c_str());
 
-			models[name] = new nle::Model(path, nle::DEFAULT_SHADER);
+			models[name] = new nle::Model(path, nle::globals::DEFAULT_SHADER);
 		}
 	}
 	prinf("%lu models loaded", models.size());
@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
 					{
 						if(std::filesystem::exists(path))
 						{
-							auto * m = new nle::Model(path, nle::DEFAULT_SHADER);
+							auto * m = new nle::Model(path, nle::globals::DEFAULT_SHADER);
 							if(m->name().empty())
 							{
 								prerr("model name missing");

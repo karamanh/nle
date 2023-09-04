@@ -5,11 +5,10 @@
 #include "Renderer3D.h"
 #include "PhysicsEngine.h"
 #include "TextureFactory.h"
+#include "Globals.h"
 
 namespace nle
-{
-    extern Shader *DEFAULT_SHADER;
-    
+{   
     class Nle
     {
     private:

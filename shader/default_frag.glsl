@@ -29,6 +29,10 @@ uniform DirectionalLight u_directional_light;
 uniform Material u_material;
 uniform vec3 u_eye_position;
 
+float map(float value, float min1, float max1, float min2, float max2) {
+  return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
+}
+
 void main() {
 
     vec4 light_factor = vec4(1.f);
@@ -64,4 +68,19 @@ void main() {
     {
         io_color = io_vertex_color * light_factor;
     }
+
+    float dist = length(u_eye_position - io_frag_position); 
+
+    float fog_factor = 0.25f;
+    float fog_inner = 5.f;
+    float fog_outer = 10000.f;
+
+    if(dist >= fog_inner && dist <= fog_outer)
+    {
+        float mapped = map(dist, fog_inner, fog_outer, 0.0f, 1.0f);
+        vec4 fog = vec4(mapped);
+        fog.a = 0.f;
+        io_color += fog;
+    }
+    // io_color += (clamp(dist, fog_inner, fog_outer));
 }

@@ -58,7 +58,7 @@ namespace nle
             std::vector<float> vertices;
             std::vector<unsigned int> indices;
 
-            Shader *s = m_shader ? m_shader : nle::DEFAULT_SHADER;
+            Shader *s = m_shader ? m_shader : nle::globals::DEFAULT_SHADER;
             Texture *t = nullptr;
 
             if (!mesh.MeshMaterial.map_Kd.empty())

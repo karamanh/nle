@@ -3,7 +3,6 @@
 
 namespace nle
 {
-    Shader *DEFAULT_SHADER;
 
     Nle::Nle()
     {
@@ -62,17 +61,16 @@ namespace nle
         RenderLayerAttributes rla;
         rla.render_distance = 10000;
         m_renderer->set_render_layer_attributes(nle::RenderLayer::_0, rla);
-
-        // initialize defaults
-        DEFAULT_SHADER = new Shader("shader/default_vert.glsl", "shader/default_frag.glsl", true);
+        
+        globals::init();
     }
 
     void Nle::cleanup()
     {
-        delete DEFAULT_SHADER;
         delete m_physics_engine;
         delete m_texture_factory;
         delete m_renderer;
+        globals::cleanup();
         delete m_window;
     }
 
