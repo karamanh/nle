@@ -16,8 +16,6 @@ namespace nle
     class Mesh
     {
     private:
-        // glm::vec3 m_aabb_max;
-        // glm::vec3 m_aabb_min;
         AABB m_aabb;
         unsigned int m_ebo,
             m_vbo,
@@ -35,7 +33,7 @@ namespace nle
         void load();
 
     public:
-        Mesh(std::vector<float> vertices, std::vector<unsigned int> indices, Shader *shader, Texture *texture = nullptr);
+        Mesh(std::vector<float> vertices, std::vector<unsigned int> indices, Shader *shader, Texture *texture = nullptr, Material *material = nullptr);
         virtual ~Mesh();
         std::vector<float> *vertices();
         std::vector<unsigned int> *indices();

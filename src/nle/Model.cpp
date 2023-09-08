@@ -113,9 +113,9 @@ namespace nle
                 indices.push_back(i);
             }
 
-            // m_multimesh->meshes().push_back(new Mesh(vertices, indices, s, t ? t : m_texture));
             m_multimesh->add_mesh(new Mesh(vertices, indices, s, t ? t : m_texture));
         }
+
         return true;
     }
 

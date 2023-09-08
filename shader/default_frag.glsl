@@ -17,8 +17,10 @@ struct DirectionalLight
 
 struct Material
 {
-    float specular_intensity;
     float shininess;
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
 };
 
 uniform int u_lighting_enabled = 1;
@@ -39,25 +41,19 @@ void main() {
 
     if(u_lighting_enabled == 1)
     {
-        vec4 ambient_color = vec4(u_directional_light.color, 1.f) * u_directional_light.ambient_intensity;
-        float diffuse_factor = max(dot(normalize(io_normal), normalize(u_directional_light.direction)), 0.f);
-        vec4 diffuse_color = vec4(u_directional_light.color, 1.f) * u_directional_light.diffuse_intensity * diffuse_factor * 1.f;
-        light_factor = ambient_color + diffuse_color;
-
-        vec4 specular_color = vec4(0.0f);
-        if(diffuse_factor > 0.0f)
-        {
-            vec3 frag_to_eye = normalize(u_eye_position -  io_frag_position);
-            vec3 reflected_vertex = normalize(reflect(u_directional_light.direction, normalize(io_normal)));
-            float specular_factor = dot(frag_to_eye, reflected_vertex);
-            
-            if(specular_factor > 0.0f)
-            {
-                specular_factor = pow(specular_factor, u_material.shininess);
-                specular_color = vec4(u_directional_light.color * u_material.specular_intensity * specular_factor, 1.0f);
-                light_factor += specular_color;
-            }
-        }
+        vec3 norm = normalize(io_normal);
+        // ambient
+        vec3 ambient = u_directional_light.color * u_material.ambient;
+        // diffuse
+        float diffuse_factor = max(dot(norm, u_directional_light.direction), 0.0f);
+        vec3 diffuse = u_directional_light.color * (diffuse_factor * u_material.diffuse);
+        // specular
+        vec3 view_direction = normalize(u_eye_position - io_frag_position);
+        vec3 reflect_direction = reflect(-u_directional_light.direction, norm);
+        float specular_factor = pow(max(dot(view_direction, reflect_direction), 0.0f), u_material.shininess);
+        vec3 specular = u_directional_light.color * (specular_factor * u_material.specular);
+        
+        light_factor = vec4((ambient + diffuse + specular), 1.0f);
     }
 
     if(u_texture_enabled == 1)
@@ -68,19 +64,4 @@ void main() {
     {
         io_color = io_vertex_color * light_factor;
     }
-
-    float dist = length(u_eye_position - io_frag_position); 
-
-    float fog_factor = 0.25f;
-    float fog_inner = 5.f;
-    float fog_outer = 10000.f;
-
-    if(dist >= fog_inner && dist <= fog_outer)
-    {
-        float mapped = map(dist, fog_inner, fog_outer, 0.0f, 1.0f);
-        vec4 fog = vec4(mapped);
-        fog.a = 0.f;
-        io_color += fog;
-    }
-    // io_color += (clamp(dist, fog_inner, fog_outer));
 }

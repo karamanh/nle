@@ -4,8 +4,8 @@
 
 namespace nle
 {
-    Mesh::Mesh(std::vector<float> vertices, std::vector<unsigned int> indices, Shader *shader, Texture *texture)
-        : m_vertices(vertices), m_indices(indices), m_shader(shader), m_texture(texture)
+    Mesh::Mesh(std::vector<float> vertices, std::vector<unsigned int> indices, Shader *shader, Texture *texture, Material *material)
+        : m_vertices(vertices), m_indices(indices), m_shader(shader), m_texture(texture), m_material(material)
     {
         // compute aabb here.
         unsigned int block_size = 11U; // 3 vertices, 3 normals, 2 texture coords

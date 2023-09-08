@@ -525,11 +525,48 @@ int main(int argc, char *argv[])
 						nle::Material *material;
 						if((material = mmi->material()))
 						{
-							ImGui::PushID("specular_intensity");
-							fval = material->specular_intensity();
-							ImGui::InputFloat("specular intensity", &fval);
-							material->set_specular_intensity(fval);
+							ImGui::Text("ambient");
+							ImGui::PushID("ambient_intensity");
+							v3val = material->ambient();
+							ImGui::SetNextItemWidth(60.f);
+							ImGui::InputFloat("x", &v3val.x);
+							ImGui::SameLine();
+							ImGui::SetNextItemWidth(60.f);
+							ImGui::InputFloat("y", &v3val.y);
+							ImGui::SameLine();
+							ImGui::SetNextItemWidth(60.f);
+							ImGui::InputFloat("z", &v3val.z);
+							material->set_ambient(v3val);
 							ImGui::PopID();
+
+							ImGui::Text("diffuse");
+							ImGui::PushID("diffuse_intensity");
+							v3val = material->diffuse();
+							ImGui::SetNextItemWidth(60.f);
+							ImGui::InputFloat("x", &v3val.x);
+							ImGui::SameLine();
+							ImGui::SetNextItemWidth(60.f);
+							ImGui::InputFloat("y", &v3val.y);
+							ImGui::SameLine();
+							ImGui::SetNextItemWidth(60.f);
+							ImGui::InputFloat("z", &v3val.z);
+							material->set_diffuse(v3val);
+							ImGui::PopID();
+
+							ImGui::Text("specular");
+							ImGui::PushID("specular_intensity");
+							v3val = material->specular();
+							ImGui::SetNextItemWidth(60.f);
+							ImGui::InputFloat("x", &v3val.x);
+							ImGui::SameLine();
+							ImGui::SetNextItemWidth(60.f);
+							ImGui::InputFloat("y", &v3val.y);
+							ImGui::SameLine();
+							ImGui::SetNextItemWidth(60.f);
+							ImGui::InputFloat("z", &v3val.z);
+							material->set_specular(v3val);
+							ImGui::PopID();
+
 							ImGui::PushID("shininess");
 							fval = material->shininess();
 							ImGui::InputFloat("shininess", &fval);
@@ -550,7 +587,7 @@ int main(int argc, char *argv[])
 						{
 							if(ImGui::Button("new material"))
 							{
-								material = new nle::Material(1.f, 32.f);
+								material = new nle::Material();
 								materials.push_back(material);
 								mmi->set_material(material);
 							}

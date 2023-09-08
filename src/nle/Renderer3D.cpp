@@ -216,10 +216,14 @@ namespace nle
         GLuint unf_diffuse_intensity = mi->mesh()->shader()->uniform_location("u_directional_light.diffuse_intensity");
         GLuint unf_light_enabled = mi->mesh()->shader()->uniform_location("u_lighting_enabled");
         GLuint unf_texture_enabled = mi->mesh()->shader()->uniform_location("u_texture_enabled");
+        GLuint unf_eye_position = mi->mesh()->shader()->uniform_location("u_eye_position");
+        // material
         GLuint unf_specular_intensity = mi->mesh()->shader()->uniform_location("u_material.specular_intensity");
         GLuint unf_shininess = mi->mesh()->shader()->uniform_location("u_material.shininess");
         GLuint unf_accept_light = mi->mesh()->shader()->uniform_location("u_material.accept_light");
-        GLuint unf_eye_position = mi->mesh()->shader()->uniform_location("u_eye_position");
+        GLuint unf_ambient = mi->mesh()->shader()->uniform_location("u_material.ambient");
+        GLuint unf_diffuse = mi->mesh()->shader()->uniform_location("u_material.diffuse");
+        GLuint unf_specular = mi->mesh()->shader()->uniform_location("u_material.specular");
 
         if (mi->mesh()->texture())
         {
@@ -235,7 +239,11 @@ namespace nle
 
         if (mi->mesh()->material())
         {
-            mi->mesh()->material()->use(unf_specular_intensity, unf_shininess);
+            // mi->mesh()->material()->use(unf_specular_intensity, unf_shininess);
+            glUniform3f(unf_ambient, mi->mesh()->material()->ambient().x, mi->mesh()->material()->ambient().y, mi->mesh()->material()->ambient().z);
+            glUniform3f(unf_diffuse, mi->mesh()->material()->diffuse().x, mi->mesh()->material()->diffuse().y, mi->mesh()->material()->diffuse().z);
+            glUniform3f(unf_specular, mi->mesh()->material()->specular().x, mi->mesh()->material()->specular().y, mi->mesh()->material()->specular().z);
+            glUniform1f(unf_shininess, mi->mesh()->material()->shininess());
             accept_light = mi->mesh()->material()->accept_light();
         }
 

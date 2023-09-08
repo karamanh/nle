@@ -18,9 +18,8 @@ namespace nle
         float m_shininess;
     public:
         Material();
-        Material(float specular_intensity, float shininess);
+        Material(glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular, float shininess);
         ~Material();
-        void use(float specular_intensity_location, float shininess_location);
 
         void set_ambient(glm::vec3 ambient); 
         glm::vec3 ambient() const;
@@ -30,9 +29,6 @@ namespace nle
 
         void set_specular(glm::vec3 specular); 
         glm::vec3 specular() const;
-
-        void set_specular_intensity(float specular_intensity); 
-        float specular_intensity() const;
 
         void set_shininess(float shininess); 
         float shininess() const;

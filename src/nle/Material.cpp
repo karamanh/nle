@@ -4,25 +4,21 @@ namespace nle
 {
     Material::Material()
         : m_specular_intensity(0.0f),
-          m_shininess(0.0f),
-          m_accept_light(true)
+          m_shininess(32.0f),
+          m_accept_light(true),
+          m_ambient({1.f, 1.f, 1.f}),
+          m_diffuse({1.f, 1.f, 1.f}),
+          m_specular({1.f, 1.f, 1.f})
     {
     }
 
-    Material::Material(float specular_intensity, float shininess)
+    Material::Material(glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular, float shininess)
+        : m_ambient(ambient), m_diffuse(diffuse), m_specular(specular), m_shininess(shininess)
     {
-        m_specular_intensity = specular_intensity;
-        m_shininess = shininess;
     }
 
     Material::~Material()
     {
-    }
-
-    void Material::use(float specular_intensity_location, float shininess_location)
-    {
-        glUniform1f(specular_intensity_location, m_specular_intensity);
-        glUniform1f(shininess_location, m_shininess);
     }
 
     void Material::set_ambient(glm::vec3 ambient)
@@ -53,16 +49,6 @@ namespace nle
     glm::vec3 Material::specular() const
     {
         return m_specular;
-    }
-
-    void Material::set_specular_intensity(float specular_intensity)
-    {
-        m_specular_intensity = specular_intensity;
-    }
-
-    float Material::specular_intensity() const
-    {
-        return m_specular_intensity;
     }
 
     void Material::set_shininess(float shininess)
