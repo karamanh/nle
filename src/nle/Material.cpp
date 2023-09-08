@@ -8,7 +8,8 @@ namespace nle
           m_accept_light(true),
           m_ambient({1.f, 1.f, 1.f}),
           m_diffuse({1.f, 1.f, 1.f}),
-          m_specular({1.f, 1.f, 1.f})
+          m_specular({1.f, 1.f, 1.f}),
+          m_dissolve(1.f)
     {
     }
 
@@ -59,6 +60,16 @@ namespace nle
     float Material::shininess() const
     {
         return m_shininess;
+    }
+
+    float Material::dissolve() const
+    {
+        return m_dissolve;
+    }
+
+    void Material::set_dissolve(float dissolve)
+    {
+        m_dissolve = dissolve;
     }
 
     void Material::set_accept_light(bool accept)

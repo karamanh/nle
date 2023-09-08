@@ -112,6 +112,7 @@ namespace nle
             material->set_diffuse({mesh.MeshMaterial.Kd.X, mesh.MeshMaterial.Kd.Y, mesh.MeshMaterial.Kd.Z});
             material->set_specular({mesh.MeshMaterial.Ks.X, mesh.MeshMaterial.Ks.Y, mesh.MeshMaterial.Ks.Z});
             material->set_shininess(mesh.MeshMaterial.Ns);
+            material->set_dissolve(mesh.MeshMaterial.d);
 
             m_multimesh->add_mesh(new Mesh(vertices, indices, s, t ? t : m_texture, material));
         }

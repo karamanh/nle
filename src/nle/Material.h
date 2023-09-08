@@ -16,6 +16,7 @@ namespace nle
         glm::vec3 m_specular;
         float m_specular_intensity;
         float m_shininess;
+        float m_dissolve;
     public:
         Material();
         Material(glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular, float shininess);
@@ -32,6 +33,9 @@ namespace nle
 
         void set_shininess(float shininess); 
         float shininess() const;
+
+        void set_dissolve(float dissolve);
+        float dissolve() const;
 
         void set_accept_light(bool accept);
         bool accept_light() const;
