@@ -13,7 +13,6 @@ namespace nle
     {
     private:
         std::vector<Mesh *> m_meshes;
-        float m_bounding_sphere_radius;
         AABB m_aabb;
 
     public:
@@ -47,7 +46,6 @@ namespace nle
         Material *material() const;
         nlohmann::json to_json() override;
         void from_json(const nlohmann::json &j) override;
-        float scaled_radius() const;
         AABB aabb() const;
         glm::mat4 model_matrix() const;
 

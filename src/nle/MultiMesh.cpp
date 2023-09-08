@@ -21,12 +21,6 @@ namespace nle
     void MultiMesh::add_mesh(Mesh *m)
     {
         m_meshes.push_back(m);
-        // m_aabb_max.x = std::max(m_aabb_max.x, m->m_aabb_max.x);
-        // m_aabb_max.y = std::max(m_aabb_max.y, m->m_aabb_max.y);
-        // m_aabb_max.z = std::max(m_aabb_max.z, m->m_aabb_max.z);
-        // m_aabb_min.x = std::min(m_aabb_min.x, m->m_aabb_min.x);
-        // m_aabb_min.y = std::min(m_aabb_min.y, m->m_aabb_min.y);
-        // m_aabb_min.z = std::min(m_aabb_min.z, m->m_aabb_min.z);
 
         m_aabb = AABB(
             {
@@ -45,11 +39,6 @@ namespace nle
     MultiMeshInstance *MultiMesh::create_instance()
     {
         return new MultiMeshInstance(this);
-    }
-
-    float MultiMesh::bounding_sphere_radius() const
-    {
-        return m_bounding_sphere_radius;
     }
 
     AABB MultiMesh::aabb() const
@@ -122,12 +111,6 @@ namespace nle
     {
         Object3D::from_json(j);
         m_source = j["source"];
-    }
-
-    float MultiMeshInstance::scaled_radius() const
-    {
-        float max = fmaxf(scale().x, fmaxf(scale().y, scale().z));
-        return m_multimesh->bounding_sphere_radius() * max;
     }
 
     AABB MultiMeshInstance::aabb() const
