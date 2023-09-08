@@ -74,6 +74,8 @@ namespace nle
         {
             glDeleteBuffers(1, &m_vao);
         }
+
+        delete m_default_material;
     }
 
     void Mesh::load()

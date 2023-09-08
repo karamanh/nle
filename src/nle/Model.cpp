@@ -107,7 +107,13 @@ namespace nle
                 indices.push_back(i);
             }
 
-            m_multimesh->add_mesh(new Mesh(vertices, indices, s, t ? t : m_texture));
+            Material * material = new Material();
+            material->set_ambient({mesh.MeshMaterial.Ka.X, mesh.MeshMaterial.Ka.Y, mesh.MeshMaterial.Ka.Z});
+            material->set_diffuse({mesh.MeshMaterial.Kd.X, mesh.MeshMaterial.Kd.Y, mesh.MeshMaterial.Kd.Z});
+            material->set_specular({mesh.MeshMaterial.Ks.X, mesh.MeshMaterial.Ks.Y, mesh.MeshMaterial.Ks.Z});
+            material->set_shininess(mesh.MeshMaterial.Ns);
+
+            m_multimesh->add_mesh(new Mesh(vertices, indices, s, t ? t : m_texture, material));
         }
 
         return true;
