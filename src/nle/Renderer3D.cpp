@@ -59,14 +59,13 @@ namespace nle
         m_parent_window->input_handler()->mouse_button_state_changed().bind_callback([this](int button, bool state, int x, int y)
                                                                                      {
             auto * o = this->get_mouse_ray_target(x, y);
-            if(o)
+            if(state)
             {
-                if(state)
-                {
-                    auto *mmi = dynamic_cast<MultiMeshInstance*>(o);
-                    this->sig_object_intersects.emit(mmi, false);
-                }
-            } });
+                auto *mmi = dynamic_cast<MultiMeshInstance*>(o); // we can safely call dynamic cast even if 'o' is a nullptr
+                this->sig_object_intersects.emit(mmi, false);
+            } 
+            
+            });
     }
 
     Renderer3D::~Renderer3D()

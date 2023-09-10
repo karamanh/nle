@@ -300,11 +300,6 @@ int main(int argc, char *argv[])
 						{
 							for(auto *i : o->children())
 							{
-								// nle::MultiMeshInstance *mi = dynamic_cast<nle::MultiMeshInstance*>(i);
-								// if(mi)
-								// {
-								// 	generate_tree(mi);
-								// }
 								generate_tree(i);
 							}
 
