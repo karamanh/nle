@@ -10,9 +10,10 @@ out vec4 io_color;
 struct DirectionalLight
 {
     vec3 color;
-    float ambient_intensity;
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
     vec3 direction;
-    float diffuse_intensity;
 };
 
 struct Material
@@ -46,13 +47,14 @@ void main() {
         vec3 ambient = u_directional_light.color * u_material.ambient;
         // diffuse
         float diffuse_factor = max(dot(norm, u_directional_light.direction), 0.0f);
-        vec3 diffuse = u_directional_light.color * (diffuse_factor * u_material.diffuse);
+        vec3 diffuse = u_material.diffuse * u_directional_light.diffuse * diffuse_factor;
         // specular
         vec3 view_direction = normalize(u_eye_position - io_frag_position);
         vec3 reflect_direction = reflect(-u_directional_light.direction, norm);
         float specular_factor = pow(max(dot(view_direction, reflect_direction), 0.0f), u_material.shininess);
-        vec3 specular = u_directional_light.color * (specular_factor * u_material.specular);
+        vec3 specular = u_material.specular * u_directional_light.specular * specular_factor;
         
+
         light_factor = vec4((ambient + diffuse + specular), 1.0f);
     }
 

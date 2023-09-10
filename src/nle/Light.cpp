@@ -3,60 +3,18 @@
 namespace nle
 {
     Light::Light()
-        : m_color(glm::vec3(1.f)), m_ambient_intensity(1.f), m_diffuse_intensity(1.f)
+        : m_color(glm::vec3(1.f)), m_ambient(glm::vec3(1.f)), m_diffuse(glm::vec3(1.f)), m_specular(glm::vec3(1.f))
     {
         m_type = ObjectType::Light;
     }
 
-    Light::Light(GLfloat red, GLfloat green, GLfloat blue, GLfloat ambient_intensity,
-                 GLfloat diffuse_intensity)
+    Light::Light(glm::vec3 color, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular)
+        : m_color(color), m_ambient(ambient), m_diffuse(diffuse), m_specular(specular)
     {
-        m_color = glm::vec3(red, green, blue);
-        m_ambient_intensity = ambient_intensity;
-        m_diffuse_intensity = diffuse_intensity;
     }
 
     Light::~Light()
     {
-    }
-
-    void Light::use(GLfloat ambient_intensity_location, GLfloat ambient_color_location,
-                    GLfloat diffuse_intensity_location, GLfloat diffuse_direction_location)
-    {
-        glUniform3f(ambient_color_location, m_color.x, m_color.y, m_color.z);
-        glUniform1f(ambient_intensity_location, m_ambient_intensity);
-        glUniform3f(diffuse_direction_location, glm::radians(this->rotation().x), glm::radians(this->rotation().y), glm::radians(this->rotation().z));
-        glUniform1f(diffuse_intensity_location, m_diffuse_intensity);
-    }
-
-    void Light::set_ambient_intensity(GLfloat intensity)
-    {
-        m_ambient_intensity = intensity;
-    }
-
-    float Light::ambient_intensity()
-    {
-        return m_ambient_intensity;
-    }
-
-    void Light::set_diffuse_intensity(GLfloat intensity)
-    {
-        m_diffuse_intensity = intensity;
-    }
-
-    float Light::diffuse_intensity()
-    {
-        return m_diffuse_intensity;
-    }
-
-    void Light::set_specular_intensity(GLfloat intensity)
-    {
-        m_specular_intensity = intensity;
-    }
-
-    float Light::specular_intensity()
-    {
-        return m_specular_intensity;
     }
 
     void Light::set_enabled(bool enabled)
@@ -80,8 +38,19 @@ namespace nle
         ret["color"]["r"] = m_color.r;
         ret["color"]["g"] = m_color.g;
         ret["color"]["b"] = m_color.b;
-        ret["ambient_intensity"] = m_ambient_intensity;
-        ret["diffuse_intensity"] = m_diffuse_intensity;
+        
+        ret["ambient"]["x"] = m_ambient.x;
+        ret["ambient"]["y"] = m_ambient.y;
+        ret["ambient"]["z"] = m_ambient.z;
+
+        ret["diffuse"]["x"] = m_diffuse.x;
+        ret["diffuse"]["y"] = m_diffuse.y;
+        ret["diffuse"]["z"] = m_diffuse.z;
+
+        ret["specular"]["x"] = m_specular.x;
+        ret["specular"]["y"] = m_specular.y;
+        ret["specular"]["z"] = m_specular.z;
+
         ret["enabled"] = m_enabled;
         return ret;
     }
@@ -92,8 +61,19 @@ namespace nle
         m_color.r = j["color"]["r"];
         m_color.g = j["color"]["g"];
         m_color.b = j["color"]["b"];
-        m_ambient_intensity = j["ambient_intensity"];
-        m_diffuse_intensity = j["diffuse_intensity"];
+
+        m_ambient.x = j["ambient"]["x"];
+        m_ambient.y = j["ambient"]["y"];
+        m_ambient.z = j["ambient"]["z"];
+
+        m_diffuse.x = j["diffuse"]["x"];
+        m_diffuse.y = j["diffuse"]["y"];
+        m_diffuse.z = j["diffuse"]["z"];
+
+        m_specular.x = j["specular"]["x"];
+        m_specular.y = j["specular"]["y"];
+        m_specular.z = j["specular"]["z"];
+
         m_enabled = j["enabled"];
     }
 
@@ -107,6 +87,36 @@ namespace nle
     glm::vec3 Light::color()
     {
         return m_color;
+    }
+
+    void Light::set_ambient(glm::vec3 ambient)
+    {
+        m_ambient = ambient;
+    }
+
+    glm::vec3 Light::ambient() const
+    {
+        return m_ambient;
+    }
+
+    void Light::set_diffuse(glm::vec3 diffuse)
+    {
+        m_diffuse = diffuse;
+    }
+
+    glm::vec3 Light::diffuse() const
+    {
+        return m_diffuse;
+    }
+
+    void Light::set_specular(glm::vec3 specular)
+    {
+        m_specular = specular;
+    }
+
+    glm::vec3 Light::specular() const
+    {
+        return m_specular;
     }
 
 } // namespace nle

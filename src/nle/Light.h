@@ -12,27 +12,29 @@ namespace nle
     {
     private:
         glm::vec3 m_color;
-        GLfloat m_ambient_intensity;
-        GLfloat m_diffuse_intensity;
-        GLfloat m_specular_intensity;
+        glm::vec3 m_ambient;
+        glm::vec3 m_diffuse;
+        glm::vec3 m_specular;
         
         bool m_enabled = false;
 
     public:
         Light();
-        Light(GLfloat red, GLfloat green, GLfloat blue, GLfloat ambientIntensity,
-              GLfloat diffuseIntensity);
+        Light(glm::vec3 color, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular);
         ~Light();
-        void use(GLfloat ambient_intensity_location, GLfloat ambient_color_location,
-                 GLfloat diffuse_intensity_location, GLfloat diffuse_direction_location);
+        
         void set_color(GLfloat red, GLfloat green, GLfloat blue);
         glm::vec3 color();
-        void set_ambient_intensity(GLfloat intensity);
-        float ambient_intensity();
-        void set_diffuse_intensity(GLfloat intensity);
-        float diffuse_intensity();
-        void set_specular_intensity(GLfloat intensity);
-        float specular_intensity();
+
+        void set_ambient (glm::vec3 ambient);
+        glm::vec3 ambient () const;
+
+        void set_diffuse (glm::vec3 diffuse);
+        glm::vec3 diffuse () const;
+
+        void set_specular (glm::vec3 specular);
+        glm::vec3 specular () const;
+
         void set_enabled(bool enabled);
         bool enabled();
         void set_id(const std::string& id) override;

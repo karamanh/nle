@@ -65,12 +65,7 @@ int main(int argc, char *argv[])
 	app.current_scene()->camera()->set_position({5.f, 5.f, -5.f});
 	app.current_scene()->light()->set_position(glm::vec3(0.f, 100.f, 0.f));
 	app.current_scene()->light()->set_rotation({180.f, 0.f, 0.f});
-	app.current_scene()->light()->set_ambient_intensity(0.5f);
-	app.current_scene()->light()->set_diffuse_intensity(1.0f);
 	app.current_scene()->light()->set_enabled(true);
-	// app.physics_engine()->collision().bind_callback([](nle::Object3D*o1, nle::Object3D*o2){
-	// 	prdbg("%s collides with %s", o1->id().c_str(), o2->id().c_str());
-	// });
 
 	app.renderer()->gui()->set_draw_callback([&]()
 											 {
@@ -374,14 +369,47 @@ int main(int argc, char *argv[])
 					app.renderer()->set_render_layer_attributes(nle::RenderLayer::_0, rla);
 
 					// light settings
-					ImGui::TextWrapped("light settings:");
-					fval = app.current_scene()->light()->ambient_intensity();
-					ImGui::SliderFloat("ambient intensity", &fval, 0.f, 1.f);
-					app.current_scene()->light()->set_ambient_intensity(fval);
+					ImGui::Text("ambient");
+					ImGui::PushID("ambient_intensity");
+					v3val = app.current_scene()->light()->ambient();
+					ImGui::SetNextItemWidth(60.f);
+					ImGui::InputFloat("x", &v3val.x);
+					ImGui::SameLine();
+					ImGui::SetNextItemWidth(60.f);
+					ImGui::InputFloat("y", &v3val.y);
+					ImGui::SameLine();
+					ImGui::SetNextItemWidth(60.f);
+					ImGui::InputFloat("z", &v3val.z);
+					app.current_scene()->light()->set_ambient(v3val);
+					ImGui::PopID();
 
-					fval = app.current_scene()->light()->diffuse_intensity();
-					ImGui::SliderFloat("diffuse intensity", &fval, 0.f, 1.f);
-					app.current_scene()->light()->set_diffuse_intensity(fval);
+					ImGui::Text("diffuse");
+					ImGui::PushID("diffuse_intensity");
+					v3val = app.current_scene()->light()->diffuse();
+					ImGui::SetNextItemWidth(60.f);
+					ImGui::InputFloat("x", &v3val.x);
+					ImGui::SameLine();
+					ImGui::SetNextItemWidth(60.f);
+					ImGui::InputFloat("y", &v3val.y);
+					ImGui::SameLine();
+					ImGui::SetNextItemWidth(60.f);
+					ImGui::InputFloat("z", &v3val.z);
+					app.current_scene()->light()->set_diffuse(v3val);
+					ImGui::PopID();
+
+					ImGui::Text("specular");
+					ImGui::PushID("specular_intensity");
+					v3val = app.current_scene()->light()->specular();
+					ImGui::SetNextItemWidth(60.f);
+					ImGui::InputFloat("x", &v3val.x);
+					ImGui::SameLine();
+					ImGui::SetNextItemWidth(60.f);
+					ImGui::InputFloat("y", &v3val.y);
+					ImGui::SameLine();
+					ImGui::SetNextItemWidth(60.f);
+					ImGui::InputFloat("z", &v3val.z);
+					app.current_scene()->light()->set_specular(v3val);
+					ImGui::PopID();
 					
 					// ImGui::Separator();
 					

@@ -207,23 +207,27 @@ namespace nle
 
         mi->mesh()->shader()->use();
 
+        // matrices and stuff
         GLuint unf_model = mi->mesh()->shader()->uniform_location("u_model");
         GLuint unf_proj = mi->mesh()->shader()->uniform_location("u_projection");
         GLuint unf_view = mi->mesh()->shader()->uniform_location("u_view");
-        GLuint unf_ambient_intensity = mi->mesh()->shader()->uniform_location("u_directional_light.ambient_intensity");
-        GLuint unf_ambient_color = mi->mesh()->shader()->uniform_location("u_directional_light.color");
-        GLuint unf_diffuse_direction = mi->mesh()->shader()->uniform_location("u_directional_light.direction");
-        GLuint unf_diffuse_intensity = mi->mesh()->shader()->uniform_location("u_directional_light.diffuse_intensity");
-        GLuint unf_light_enabled = mi->mesh()->shader()->uniform_location("u_lighting_enabled");
-        GLuint unf_texture_enabled = mi->mesh()->shader()->uniform_location("u_texture_enabled");
         GLuint unf_eye_position = mi->mesh()->shader()->uniform_location("u_eye_position");
+
+        // light
+        GLuint unf_light_color = mi->mesh()->shader()->uniform_location("u_directional_light.color");
+        GLuint unf_light_ambient = mi->mesh()->shader()->uniform_location("u_directional_light.ambient");
+        GLuint unf_light_diffuse = mi->mesh()->shader()->uniform_location("u_directional_light.diffuse");
+        GLuint unf_light_specular = mi->mesh()->shader()->uniform_location("u_directional_light.specular");
+        GLuint unf_light_direction = mi->mesh()->shader()->uniform_location("u_directional_light.direction");
+        GLuint unf_light_enabled = mi->mesh()->shader()->uniform_location("u_lighting_enabled");
         // material
-        GLuint unf_specular_intensity = mi->mesh()->shader()->uniform_location("u_material.specular_intensity");
-        GLuint unf_shininess = mi->mesh()->shader()->uniform_location("u_material.shininess");
-        GLuint unf_accept_light = mi->mesh()->shader()->uniform_location("u_material.accept_light");
-        GLuint unf_ambient = mi->mesh()->shader()->uniform_location("u_material.ambient");
-        GLuint unf_diffuse = mi->mesh()->shader()->uniform_location("u_material.diffuse");
-        GLuint unf_specular = mi->mesh()->shader()->uniform_location("u_material.specular");
+        GLuint unf_material_shininess = mi->mesh()->shader()->uniform_location("u_material.shininess");
+        GLuint unf_material_accept_light = mi->mesh()->shader()->uniform_location("u_material.accept_light");
+        GLuint unf_material_ambient = mi->mesh()->shader()->uniform_location("u_material.ambient");
+        GLuint unf_material_diffuse = mi->mesh()->shader()->uniform_location("u_material.diffuse");
+        GLuint unf_material_specular = mi->mesh()->shader()->uniform_location("u_material.specular");
+        // other
+        GLuint unf_texture_enabled = mi->mesh()->shader()->uniform_location("u_texture_enabled");
 
         if (mi->mesh()->texture())
         {
@@ -239,18 +243,21 @@ namespace nle
 
         if (mi->mesh()->material())
         {
-            // mi->mesh()->material()->use(unf_specular_intensity, unf_shininess);
-            glUniform3f(unf_ambient, mi->mesh()->material()->ambient().x, mi->mesh()->material()->ambient().y, mi->mesh()->material()->ambient().z);
-            glUniform3f(unf_diffuse, mi->mesh()->material()->diffuse().x, mi->mesh()->material()->diffuse().y, mi->mesh()->material()->diffuse().z);
-            glUniform3f(unf_specular, mi->mesh()->material()->specular().x, mi->mesh()->material()->specular().y, mi->mesh()->material()->specular().z);
-            glUniform1f(unf_shininess, mi->mesh()->material()->shininess());
+            glUniform3f(unf_material_ambient, mi->mesh()->material()->ambient().x, mi->mesh()->material()->ambient().y, mi->mesh()->material()->ambient().z);
+            glUniform3f(unf_material_diffuse, mi->mesh()->material()->diffuse().x, mi->mesh()->material()->diffuse().y, mi->mesh()->material()->diffuse().z);
+            glUniform3f(unf_material_specular, mi->mesh()->material()->specular().x, mi->mesh()->material()->specular().y, mi->mesh()->material()->specular().z);
+            glUniform1f(unf_material_shininess, mi->mesh()->material()->shininess());
             accept_light = mi->mesh()->material()->accept_light();
         }
 
         if (accept_light && m_root_scene->light()->enabled())
         {
             glUniform1i(unf_light_enabled, 1);
-            m_root_scene->light()->use(unf_ambient_intensity, unf_ambient_color, unf_diffuse_intensity, unf_diffuse_direction);
+            glUniform3f(unf_light_color, m_root_scene->light()->color().x, m_root_scene->light()->color().y, m_root_scene->light()->color().z);
+            glUniform3f(unf_light_ambient, m_root_scene->light()->ambient().x, m_root_scene->light()->ambient().y, m_root_scene->light()->ambient().z);
+            glUniform3f(unf_light_diffuse, m_root_scene->light()->diffuse().x, m_root_scene->light()->diffuse().y, m_root_scene->light()->diffuse().z);
+            glUniform3f(unf_light_specular, m_root_scene->light()->specular().x, m_root_scene->light()->specular().y, m_root_scene->light()->specular().z);
+            glUniform3f(unf_light_direction, glm::radians(m_root_scene->light()->rotation().x), glm::radians(m_root_scene->light()->rotation().y), glm::radians(m_root_scene->light()->rotation().z));
         }
         else
         {
