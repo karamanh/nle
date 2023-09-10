@@ -55,6 +55,8 @@ namespace nle
         {
             add_child(c->create_instance());
         }
+
+        update();
     }
 
     MultiMeshInstance::~MultiMeshInstance()
