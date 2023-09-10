@@ -587,9 +587,8 @@ int main(int argc, char *argv[])
 						{
 							if(ImGui::Button("new material"))
 							{
-								material = new nle::Material();
-								materials.push_back(material);
-								mmi->set_material(material);
+								materials.push_back(new nle::Material());
+								mmi->set_material(materials.back());
 							}
 						}
 					}

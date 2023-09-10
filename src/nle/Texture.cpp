@@ -23,18 +23,14 @@ namespace nle
         
         stbi_set_flip_vertically_on_load(true);
 
-        unsigned char *data = stbi_load(m_file_path.c_str(), &m_width, &m_height, &m_bitDepth, 0);
+        unsigned char *data = stbi_load(m_file_path.c_str(), &m_width, &m_height, &m_bitDepth, STBI_rgb_alpha);
         if (!data)
         {
             prerr("Texture::load_from_file(): nothing here %s", m_file_path.c_str());
             return;
         }
-
-        int internal_format = GL_RGB;
-        if((file_path.find(".png") != std::string::npos) || (file_path.find(".tga") != std::string::npos))
-        {
-            internal_format = GL_RGBA;
-        }
+        
+        int internal_format = GL_RGBA;
 
         glGenTextures(1, &m_texture_id);
         glBindTexture(GL_TEXTURE_2D, m_texture_id);

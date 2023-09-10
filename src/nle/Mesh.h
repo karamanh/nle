@@ -28,8 +28,9 @@ namespace nle
 
         Shader *m_shader = nullptr;
         Texture *m_texture = nullptr;
+        Texture *m_texture_override = nullptr;
         Material *m_material = nullptr;
-        Material *m_default_material = nullptr;
+        Material *m_material_override = nullptr;
 
         void load();
 

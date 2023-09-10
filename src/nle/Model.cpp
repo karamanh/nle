@@ -58,8 +58,8 @@ namespace nle
             std::vector<float> vertices;
             std::vector<unsigned int> indices;
 
-            Shader *s = m_shader ? m_shader : nle::globals::DEFAULT_SHADER;
-            Texture *t = nullptr;
+            Shader *shader = m_shader ? m_shader : nle::globals::DEFAULT_SHADER;
+            Texture *texture = nullptr;
 
             if (!mesh.MeshMaterial.map_Kd.empty())
             {
@@ -70,7 +70,7 @@ namespace nle
                 {
                     if (std::filesystem::exists(texpath))
                     {
-                        t = new Texture(texpath);
+                        texture = new Texture(texpath);
                     }
                 }
                 else if (texpath.is_relative())
@@ -79,7 +79,7 @@ namespace nle
                     {
                         if (dir_entry.path().filename() == texpath.filename())
                         {
-                            t = new Texture(dir_entry.path());
+                            texture = new Texture(dir_entry.path());
                         }
                     }
                 }
@@ -114,7 +114,7 @@ namespace nle
             material->set_shininess(mesh.MeshMaterial.Ns);
             material->set_dissolve(mesh.MeshMaterial.d);
 
-            m_multimesh->add_mesh(new Mesh(vertices, indices, s, t ? t : m_texture, material));
+            m_multimesh->add_mesh(new Mesh(vertices, indices, shader, texture ? texture : m_texture, material));
         }
 
         return true;
