@@ -81,4 +81,14 @@ namespace nle
     {
         return m_accept_light;
     }
+
+    void Material::set_name(const std::string &name)
+    {
+        m_name = name;
+    }
+
+    std::string Material::name() const
+    {
+        return m_name;
+    }
 } // namespace nle
