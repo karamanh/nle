@@ -5,7 +5,7 @@ namespace nle
 {
 
     Scene::Scene()
-        : m_default_camera(new Camera(glm::vec3(0.f, 0.f, 0.f))), m_light(new Light(glm::vec3(1.f), glm::vec3(1.f), glm::vec3(1.f), glm::vec3(1.f)))
+        : m_default_camera(new Camera(glm::vec3(0.f, 0.f, 0.f))), m_light(new Light())
     {
         m_type = ObjectType::Scene;
         m_camera = m_default_camera;
