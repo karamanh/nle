@@ -5,8 +5,11 @@ namespace nle
 {
 
     Scene::Scene()
-        : m_default_camera(new Camera(glm::vec3(0.f, 0.f, 0.f))), m_light(new Light())
+        : m_default_camera(new Camera(glm::vec3(0.f, 0.f, 0.f))),
+        m_light(new Light()),
+        m_default_sky(new Sky())
     {
+        m_default_sky->set_scale(glm::vec3(10000.0f));
         m_type = ObjectType::Scene;
         m_camera = m_default_camera;
     }
@@ -15,6 +18,7 @@ namespace nle
     {
         delete m_light;
         delete m_default_camera;
+        delete m_default_sky;
     }
 
     Camera *Scene::camera()
@@ -30,6 +34,16 @@ namespace nle
     Light *Scene::light()
     {
         return m_light;
+    }
+
+    Sky *Scene::sky()
+    {
+        return m_sky ? m_sky : m_default_sky;
+    }
+
+    void Scene::set_sky(Sky *sky)
+    {
+        m_sky = sky;
     }
 
     void Scene::register_render_object(RenderObject3D *object)

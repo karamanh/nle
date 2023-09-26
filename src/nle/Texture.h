@@ -16,14 +16,19 @@ namespace nle
         GLint m_bitDepth;
         std::string m_file_path;
 
+        void load_from_file(const std::string &file_path, bool flip);
+        void load_from_memory(const unsigned char *blob, size_t size, bool flip);
+
     public:
-        Texture(const std::string &file_path);
+        Texture(const std::string &file_path, bool flip = true);
+        Texture(const unsigned char *blob, size_t size, bool flip = true);
         ~Texture();
-        void load_from_file(const std::string &file_path);
         void use();
         void unuse();
         void clear();
         unsigned int id();
+
+        friend class TextureFactory;
     };
 } // namespace nle
 

@@ -24,7 +24,6 @@ namespace nle
         }
 
         Texture *t = new Texture(path);
-        t->load_from_file(path);
         if (t->id() > 0)
         {
             m_textures[id] = t;

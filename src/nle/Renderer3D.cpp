@@ -111,6 +111,8 @@ namespace nle
     void Renderer3D::render_scene(Scene *scene)
     {
         // render(m_grid); // will be enabled once grid shader is ready
+        scene->sky()->set_position(scene->camera()->position());
+        render(scene->sky());
         for (auto *i : scene->m_render_objects)
         {
             if (i)

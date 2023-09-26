@@ -5,10 +5,16 @@
 
 namespace nle
 {
-    Texture::Texture(const std::string &file_path)
+    Texture::Texture(const std::string &file_path, bool flip)
     {
         clear();
-        load_from_file((m_file_path = file_path));
+        load_from_file((m_file_path = file_path), flip);
+    }
+
+    Texture::Texture(const unsigned char *blob, size_t size, bool flip)
+    {
+        clear();
+        load_from_memory(blob, size, flip);
     }
 
     Texture::~Texture()
@@ -16,12 +22,12 @@ namespace nle
         clear();
     }
 
-    void Texture::load_from_file(const std::string &file_path)
+    void Texture::load_from_file(const std::string &file_path, bool flip)
     {
         if(m_texture_id != 0)
             return;
         
-        stbi_set_flip_vertically_on_load(true);
+        stbi_set_flip_vertically_on_load(flip);
 
         unsigned char *data = stbi_load(m_file_path.c_str(), &m_width, &m_height, &m_bitDepth, STBI_rgb_alpha);
         if (!data)
@@ -46,6 +52,49 @@ namespace nle
 
         glBindTexture(GL_TEXTURE_2D, 0);
         stbi_image_free(data);
+    }
+
+    void Texture::load_from_memory(const unsigned char *blob, size_t size, bool flip)
+    {
+        if(m_texture_id != 0 || blob == nullptr || size == 0)
+        {
+            return;
+        }
+
+        stbi_set_flip_vertically_on_load(flip);
+
+        unsigned char *data = stbi_load_from_memory(blob, size, &m_width, &m_height, &m_bitDepth, STBI_rgb_alpha);
+        if(!data)
+        {
+            prerr("Texture::load_from_memory(): error loading from memory");
+            return;
+        }
+        
+        int internal_format = GL_RGBA;
+
+        glGenTextures(1, &m_texture_id);
+        glBindTexture(GL_TEXTURE_2D, m_texture_id);
+        
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, internal_format, m_width, m_height, 0, internal_format, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+        stbi_image_free(data);
+
+        // for(unsigned int i = 0; i < textures_faces.size(); i++)
+        // {
+        //     data = stbi_load(textures_faces[i].c_str(), &width, &height, &nrChannels, 0);
+        //     glTexImage2D(
+        //         GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 
+        //         0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+        //     );
+        // }
     }
 
     void Texture::use()
