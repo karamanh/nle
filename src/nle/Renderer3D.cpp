@@ -112,7 +112,9 @@ namespace nle
     {
         // render(m_grid); // will be enabled once grid shader is ready
         scene->sky()->set_position(scene->camera()->position());
+        glDepthMask(GL_FALSE);
         render(scene->sky());
+        glDepthMask(GL_TRUE);
         for (auto *i : scene->m_render_objects)
         {
             if (i)

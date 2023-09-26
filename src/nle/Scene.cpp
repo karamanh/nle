@@ -9,7 +9,6 @@ namespace nle
         m_light(new Light()),
         m_default_sky(new Sky())
     {
-        m_default_sky->set_scale(glm::vec3(10000.0f));
         m_type = ObjectType::Scene;
         m_camera = m_default_camera;
     }
