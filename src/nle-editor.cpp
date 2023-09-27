@@ -63,8 +63,8 @@ int main(int argc, char *argv[])
 	app.current_scene()->set_id("root");
 	app.current_scene()->camera()->set_rotation({-30.f, 135.f, 0.f});
 	app.current_scene()->camera()->set_position({5.f, 5.f, -5.f});
-	app.current_scene()->light()->set_position(glm::vec3(0.f, 100.f, 0.f));
-	app.current_scene()->light()->set_rotation({180.f, 0.f, 0.f});
+	// app.current_scene()->light()->set_position(glm::vec3(0.f, 100.f, 0.f));
+	// app.current_scene()->light()->set_rotation({180.f, 0.f, 0.f});
 	app.current_scene()->light()->set_enabled(true);
 
 	app.renderer()->gui()->set_draw_callback([&]()
@@ -294,6 +294,151 @@ int main(int argc, char *argv[])
 			{
 				if (ImGui::BeginTabItem(("scene [" + app.current_scene()->id() + "]").c_str()))
 				{
+					// camera settings
+					ImGui::TextWrapped("camera settings:");
+					bval = app.current_scene()->camera()->free_roam();
+					ImGui::Checkbox("free roam [ctrl]", &bval);
+					app.current_scene()->camera()->set_free_roam(bval);
+					fval = app.current_scene()->camera()->speed();
+					ImGui::SliderFloat("speed", &fval, 0.f, 50.f);
+					app.current_scene()->camera()->set_speed(fval);
+
+					fval = app.current_scene()->camera()->turn_speed();
+					ImGui::SliderFloat("turn speed", &fval, 0.f, 50.f);
+					app.current_scene()->camera()->set_turn_speed(fval);
+
+					if(ImGui::CollapsingHeader("camera transform"))
+					{
+						ImGui::PushID("cam_position");
+						v3val = app.current_scene()->camera()->position();
+						ImGui::SetNextItemWidth(60.f);
+						ImGui::InputFloat("x", &v3val.x);
+						ImGui::SameLine();
+						ImGui::SetNextItemWidth(60.f);
+						ImGui::InputFloat("y", &v3val.y);
+						ImGui::SameLine();
+						ImGui::SetNextItemWidth(60.f);
+						ImGui::InputFloat("z", &v3val.z);
+						app.current_scene()->camera()->set_position(v3val);
+						ImGui::PopID();
+						
+						ImGui::PushID("cam_rotation");
+						v3val = app.current_scene()->camera()->rotation();
+						ImGui::SetNextItemWidth(60.f);
+						ImGui::InputFloat("x", &v3val.x);
+						ImGui::SameLine();
+						ImGui::SetNextItemWidth(60.f);
+						ImGui::InputFloat("y", &v3val.y);
+						ImGui::SameLine();
+						ImGui::SetNextItemWidth(60.f);
+						ImGui::InputFloat("z", &v3val.z);
+						app.current_scene()->camera()->set_rotation(v3val);
+						ImGui::PopID();
+						
+						ImGui::PushID("cam_scale");
+						v3val = app.current_scene()->camera()->scale();
+						ImGui::SetNextItemWidth(60.f);
+						ImGui::InputFloat("x", &v3val.x);
+						ImGui::SameLine();
+						ImGui::SetNextItemWidth(60.f);
+						ImGui::InputFloat("y", &v3val.y);
+						ImGui::SameLine();
+						ImGui::SetNextItemWidth(60.f);
+						ImGui::InputFloat("z", &v3val.z);
+						app.current_scene()->camera()->set_scale(v3val);
+						ImGui::PopID();
+					}
+
+					ImGui::Separator();
+
+					// light settings
+					ImGui::TextWrapped("light settings:");
+					ImGui::Text("ambient");
+					ImGui::PushID("ambient_intensity");
+					v3val = app.current_scene()->light()->ambient();
+					ImGui::SetNextItemWidth(60.f);
+					ImGui::InputFloat("x", &v3val.x);
+					ImGui::SameLine();
+					ImGui::SetNextItemWidth(60.f);
+					ImGui::InputFloat("y", &v3val.y);
+					ImGui::SameLine();
+					ImGui::SetNextItemWidth(60.f);
+					ImGui::InputFloat("z", &v3val.z);
+					app.current_scene()->light()->set_ambient(v3val);
+					ImGui::PopID();
+
+					ImGui::Text("diffuse");
+					ImGui::PushID("diffuse_intensity");
+					v3val = app.current_scene()->light()->diffuse();
+					ImGui::SetNextItemWidth(60.f);
+					ImGui::InputFloat("x", &v3val.x);
+					ImGui::SameLine();
+					ImGui::SetNextItemWidth(60.f);
+					ImGui::InputFloat("y", &v3val.y);
+					ImGui::SameLine();
+					ImGui::SetNextItemWidth(60.f);
+					ImGui::InputFloat("z", &v3val.z);
+					app.current_scene()->light()->set_diffuse(v3val);
+					ImGui::PopID();
+
+					ImGui::Text("specular");
+					ImGui::PushID("specular_intensity");
+					v3val = app.current_scene()->light()->specular();
+					ImGui::SetNextItemWidth(60.f);
+					ImGui::InputFloat("x", &v3val.x);
+					ImGui::SameLine();
+					ImGui::SetNextItemWidth(60.f);
+					ImGui::InputFloat("y", &v3val.y);
+					ImGui::SameLine();
+					ImGui::SetNextItemWidth(60.f);
+					ImGui::InputFloat("z", &v3val.z);
+					app.current_scene()->light()->set_specular(v3val);
+					ImGui::PopID();
+
+					if(ImGui::CollapsingHeader("light transform"))
+					{
+						ImGui::PushID("light_position");
+						v3val = app.current_scene()->light()->position();
+						ImGui::SetNextItemWidth(60.f);
+						ImGui::InputFloat("x", &v3val.x);
+						ImGui::SameLine();
+						ImGui::SetNextItemWidth(60.f);
+						ImGui::InputFloat("y", &v3val.y);
+						ImGui::SameLine();
+						ImGui::SetNextItemWidth(60.f);
+						ImGui::InputFloat("z", &v3val.z);
+						app.current_scene()->light()->set_position(v3val);
+						ImGui::PopID();
+						
+						ImGui::PushID("light_rotation");
+						v3val = app.current_scene()->light()->rotation();
+						ImGui::SetNextItemWidth(60.f);
+						ImGui::InputFloat("x", &v3val.x);
+						ImGui::SameLine();
+						ImGui::SetNextItemWidth(60.f);
+						ImGui::InputFloat("y", &v3val.y);
+						ImGui::SameLine();
+						ImGui::SetNextItemWidth(60.f);
+						ImGui::InputFloat("z", &v3val.z);
+						app.current_scene()->light()->set_rotation(v3val);
+						ImGui::PopID();
+						
+						ImGui::PushID("light_scale");
+						v3val = app.current_scene()->light()->scale();
+						ImGui::SetNextItemWidth(60.f);
+						ImGui::InputFloat("x", &v3val.x);
+						ImGui::SameLine();
+						ImGui::SetNextItemWidth(60.f);
+						ImGui::InputFloat("y", &v3val.y);
+						ImGui::SameLine();
+						ImGui::SetNextItemWidth(60.f);
+						ImGui::InputFloat("z", &v3val.z);
+						app.current_scene()->light()->set_scale(v3val);
+						ImGui::PopID();
+					}
+
+					ImGui::Separator();
+
 					std::function<void(nle::Object3D*)> generate_tree = [&](nle::Object3D* o){
 
 						if(ImGui::TreeNodeEx(o->id().c_str()))
@@ -362,106 +507,9 @@ int main(int argc, char *argv[])
 					ImGui::SliderInt("render distance", &rla.render_distance, 0, 100000);
 					ImGui::Checkbox("render layer [0] visible", &rla.visible);
 					app.renderer()->set_render_layer_attributes(nle::RenderLayer::_0, rla);
-
-					// light settings
-					ImGui::Text("ambient");
-					ImGui::PushID("ambient_intensity");
-					v3val = app.current_scene()->light()->ambient();
-					ImGui::SetNextItemWidth(60.f);
-					ImGui::InputFloat("x", &v3val.x);
-					ImGui::SameLine();
-					ImGui::SetNextItemWidth(60.f);
-					ImGui::InputFloat("y", &v3val.y);
-					ImGui::SameLine();
-					ImGui::SetNextItemWidth(60.f);
-					ImGui::InputFloat("z", &v3val.z);
-					app.current_scene()->light()->set_ambient(v3val);
-					ImGui::PopID();
-
-					ImGui::Text("diffuse");
-					ImGui::PushID("diffuse_intensity");
-					v3val = app.current_scene()->light()->diffuse();
-					ImGui::SetNextItemWidth(60.f);
-					ImGui::InputFloat("x", &v3val.x);
-					ImGui::SameLine();
-					ImGui::SetNextItemWidth(60.f);
-					ImGui::InputFloat("y", &v3val.y);
-					ImGui::SameLine();
-					ImGui::SetNextItemWidth(60.f);
-					ImGui::InputFloat("z", &v3val.z);
-					app.current_scene()->light()->set_diffuse(v3val);
-					ImGui::PopID();
-
-					ImGui::Text("specular");
-					ImGui::PushID("specular_intensity");
-					v3val = app.current_scene()->light()->specular();
-					ImGui::SetNextItemWidth(60.f);
-					ImGui::InputFloat("x", &v3val.x);
-					ImGui::SameLine();
-					ImGui::SetNextItemWidth(60.f);
-					ImGui::InputFloat("y", &v3val.y);
-					ImGui::SameLine();
-					ImGui::SetNextItemWidth(60.f);
-					ImGui::InputFloat("z", &v3val.z);
-					app.current_scene()->light()->set_specular(v3val);
-					ImGui::PopID();
 					
 					// ImGui::Separator();
 					
-					// camera settings
-					ImGui::TextWrapped("camera settings:");
-					bval = app.current_scene()->camera()->free_roam();
-					ImGui::Checkbox("free roam [ctrl]", &bval);
-					app.current_scene()->camera()->set_free_roam(bval);
-					fval = app.current_scene()->camera()->speed();
-					ImGui::SliderFloat("speed", &fval, 0.f, 50.f);
-					app.current_scene()->camera()->set_speed(fval);
-
-					fval = app.current_scene()->camera()->turn_speed();
-					ImGui::SliderFloat("turn speed", &fval, 0.f, 50.f);
-					app.current_scene()->camera()->set_turn_speed(fval);
-
-					if(ImGui::CollapsingHeader("camera transform"))
-					{
-						ImGui::PushID("cam_position");
-						v3val = app.current_scene()->camera()->position();
-						ImGui::SetNextItemWidth(60.f);
-						ImGui::InputFloat("x", &v3val.x);
-						ImGui::SameLine();
-						ImGui::SetNextItemWidth(60.f);
-						ImGui::InputFloat("y", &v3val.y);
-						ImGui::SameLine();
-						ImGui::SetNextItemWidth(60.f);
-						ImGui::InputFloat("z", &v3val.z);
-						app.current_scene()->camera()->set_position(v3val);
-						ImGui::PopID();
-						
-						ImGui::PushID("cam_rotation");
-						v3val = app.current_scene()->camera()->rotation();
-						ImGui::SetNextItemWidth(60.f);
-						ImGui::InputFloat("x", &v3val.x);
-						ImGui::SameLine();
-						ImGui::SetNextItemWidth(60.f);
-						ImGui::InputFloat("y", &v3val.y);
-						ImGui::SameLine();
-						ImGui::SetNextItemWidth(60.f);
-						ImGui::InputFloat("z", &v3val.z);
-						app.current_scene()->camera()->set_rotation(v3val);
-						ImGui::PopID();
-						
-						ImGui::PushID("cam_scale");
-						v3val = app.current_scene()->camera()->scale();
-						ImGui::SetNextItemWidth(60.f);
-						ImGui::InputFloat("x", &v3val.x);
-						ImGui::SameLine();
-						ImGui::SetNextItemWidth(60.f);
-						ImGui::InputFloat("y", &v3val.y);
-						ImGui::SameLine();
-						ImGui::SetNextItemWidth(60.f);
-						ImGui::InputFloat("z", &v3val.z);
-						app.current_scene()->camera()->set_scale(v3val);
-						ImGui::PopID();
-					}
 					ImGui::EndTabItem();
 				}
 				ImGui::EndTabBar();
