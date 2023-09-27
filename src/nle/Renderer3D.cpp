@@ -242,6 +242,8 @@ namespace nle
             glUniform1i(unf_texture_enabled, 0);
         }
 
+        m_root_scene->sky()->mesh()->texture()->use(1);
+
         bool accept_light = true;
 
         if (mi->mesh()->material())
@@ -292,6 +294,8 @@ namespace nle
         glBindVertexArray(0);
 
         glUseProgram(0);
+
+        m_root_scene->sky()->mesh()->texture()->unuse(1);
 
         if (mi->mesh()->texture())
             mi->mesh()->texture()->unuse();

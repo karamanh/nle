@@ -23,8 +23,8 @@ namespace nle
         Texture(const std::string &file_path, bool flip = true);
         Texture(const unsigned char *blob, size_t size, bool flip = true);
         ~Texture();
-        void use();
-        void unuse();
+        void use(unsigned char unit = 0);
+        void unuse(unsigned char unit = 0);
         void clear();
         unsigned int id();
 

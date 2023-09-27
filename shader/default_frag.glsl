@@ -39,6 +39,9 @@ float map(float value, float min1, float max1, float min2, float max2) {
 void main() {
 
     vec4 light_factor = vec4(1.f);
+    vec3 view_direction = normalize(u_eye_position - io_frag_position);
+    vec3 refl = reflect(view_direction, normalize(io_normal));
+    // io_color = vec4(texture(u_sky_sampler, refl).rgb, 1.0);
 
     if(u_lighting_enabled == 1)
     {
@@ -49,7 +52,6 @@ void main() {
         float diffuse_factor = max(dot(norm, u_directional_light.direction), 0.0f);
         vec3 diffuse = u_material.diffuse * u_directional_light.diffuse * diffuse_factor;
         // specular
-        vec3 view_direction = normalize(u_eye_position - io_frag_position);
         vec3 reflect_direction = reflect(-u_directional_light.direction, norm);
         float specular_factor = pow(max(dot(view_direction, reflect_direction), 0.0f), u_material.shininess);
         vec3 specular = u_material.specular * u_directional_light.specular * specular_factor;

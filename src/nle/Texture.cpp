@@ -86,26 +86,17 @@ namespace nle
 
         glBindTexture(GL_TEXTURE_2D, 0);
         stbi_image_free(data);
-
-        // for(unsigned int i = 0; i < textures_faces.size(); i++)
-        // {
-        //     data = stbi_load(textures_faces[i].c_str(), &width, &height, &nrChannels, 0);
-        //     glTexImage2D(
-        //         GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 
-        //         0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
-        //     );
-        // }
     }
 
-    void Texture::use()
+    void Texture::use(unsigned char unit)
     {
-        glActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE0 + unit);
         glBindTexture(GL_TEXTURE_2D, m_texture_id);
     }
 
-    void Texture::unuse()
+    void Texture::unuse(unsigned char unit)
     {
-        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindTexture(GL_TEXTURE_2D + unit, 0);
     }
 
     void Texture::clear()
