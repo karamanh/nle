@@ -136,6 +136,8 @@ namespace nle
         glEnable(GL_TEXTURE_2D);
         glEnable(GL_LIGHTING);
         glDepthFunc(GL_LEQUAL);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glClearColor(m_clear_color.r, m_clear_color.g, m_clear_color.b, m_clear_color.a);
     }
 

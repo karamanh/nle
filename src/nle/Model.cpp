@@ -25,6 +25,18 @@ namespace nle
         }
     }
 
+    Model::~Model()
+    {
+        for(auto * i : m_materials)
+        {
+            delete i;
+        }
+        for(auto * i : m_textures)
+        {
+            delete i;
+        }
+    }
+
     void Model::set_name(const std::string &name)
     {
         m_name = name;
@@ -116,6 +128,7 @@ namespace nle
             material->set_name(mesh.MeshMaterial.name);
 
             m_multimesh->add_mesh(new Mesh(vertices, indices, shader, texture ? texture : m_texture, material));
+            m_materials.push_back(material);
         }
 
         return true;

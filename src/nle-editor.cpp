@@ -77,6 +77,7 @@ int main(int argc, char *argv[])
 	{
 		auto * tree = models["Tree1.obj"]->create_instance();
 		tree->set_position(glm::sphericalRand<float>(512.0f) - terrain_offset);
+		tree->set_rotation(glm::vec3(0.0f, glm::circularRand(512.0f).y, 0.0f));
 		terrain_instance->add_child(tree);
 	}
 
@@ -87,19 +88,6 @@ int main(int argc, char *argv[])
 		terrain_instance->add_child(tree);
 	}
 
-	for(int i = 0; i < 512; i++)
-	{
-		auto * tree = models["Grass2.obj"]->create_instance();
-		tree->set_position(glm::sphericalRand<float>(512.0f) - terrain_offset);
-		terrain_instance->add_child(tree);
-	}
-
-	for(int i = 0; i < 512; i++)
-	{
-		auto * tree = models["Grass3.obj"]->create_instance();
-		tree->set_position(glm::sphericalRand<float>(512.0f) - terrain_offset);
-		terrain_instance->add_child(tree);
-	}
 	app.current_scene()->add_child(terrain_instance);
 
 	app.renderer()->gui()->set_draw_callback([&]()

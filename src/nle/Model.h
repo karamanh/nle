@@ -20,9 +20,11 @@ namespace nle
         Shader *m_shader = nullptr;
         Texture *m_texture = nullptr;
         std::vector<Texture*> m_textures;
+        std::vector<Material*> m_materials;
 
     public:
         Model(const std::string& path, Shader *shader, Texture *texture = nullptr);
+        ~Model();
         void set_name(const std::string& name);
         const std::string& name() const;
         MultiMeshInstance *create_instance();
