@@ -70,7 +70,36 @@ int main(int argc, char *argv[])
 
 	nle::Terrain terrain(1024, 1024);
 	auto * terrain_instance = terrain.create_instance();
-	terrain_instance->set_position({-512.0f, 0.0f, -512.0f});
+	auto terrain_offset = glm::vec3(-512.0f, 0.0f, -512.0f);
+	terrain_instance->set_position(terrain_offset);
+
+	for(int i = 0; i < 512; i++)
+	{
+		auto * tree = models["Tree1.obj"]->create_instance();
+		tree->set_position(glm::sphericalRand<float>(512.0f) - terrain_offset);
+		terrain_instance->add_child(tree);
+	}
+
+	for(int i = 0; i < 512; i++)
+	{
+		auto * tree = models["Grass1.obj"]->create_instance();
+		tree->set_position(glm::sphericalRand<float>(512.0f) - terrain_offset);
+		terrain_instance->add_child(tree);
+	}
+
+	for(int i = 0; i < 512; i++)
+	{
+		auto * tree = models["Grass2.obj"]->create_instance();
+		tree->set_position(glm::sphericalRand<float>(512.0f) - terrain_offset);
+		terrain_instance->add_child(tree);
+	}
+
+	for(int i = 0; i < 512; i++)
+	{
+		auto * tree = models["Grass3.obj"]->create_instance();
+		tree->set_position(glm::sphericalRand<float>(512.0f) - terrain_offset);
+		terrain_instance->add_child(tree);
+	}
 	app.current_scene()->add_child(terrain_instance);
 
 	app.renderer()->gui()->set_draw_callback([&]()

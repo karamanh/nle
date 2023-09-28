@@ -4,6 +4,8 @@
 
 namespace nle
 {
+    class TerrainInstance;
+
     class Terrain
     {
     private:
@@ -19,7 +21,19 @@ namespace nle
     public:
         Terrain(unsigned int width, unsigned int height);
         ~Terrain();
-        MeshInstance *create_instance();
+        TerrainInstance *create_instance();
         float get_height_at(unsigned int x, unsigned int y);
+        float get_height_at(float x, float z);
+
+        friend class TerrainInstance;
+    };
+
+    class TerrainInstance : public MeshInstance
+    {
+    private:
+        Terrain *m_terrain;
+    public:
+        TerrainInstance(Terrain * terrain);
+        void add_child(Object3D *child) override;
     };
 } // namespace nle
