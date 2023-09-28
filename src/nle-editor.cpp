@@ -15,6 +15,8 @@
 #include <typeinfo>
 #include <filesystem>
 
+#include "Terrain.h"
+
 std::string
 	nle_proj_extension = ".nleproj",
 	nle_scene_extension = ".nlescn",
@@ -63,9 +65,13 @@ int main(int argc, char *argv[])
 	app.current_scene()->set_id("root");
 	app.current_scene()->camera()->set_rotation({-30.f, 135.f, 0.f});
 	app.current_scene()->camera()->set_position({5.f, 5.f, -5.f});
-	// app.current_scene()->light()->set_position(glm::vec3(0.f, 100.f, 0.f));
-	// app.current_scene()->light()->set_rotation({180.f, 0.f, 0.f});
+	app.current_scene()->light()->set_rotation({180.f, 0.f, 0.f});
 	app.current_scene()->light()->set_enabled(true);
+
+	nle::Terrain terrain(1024, 1024);
+	auto * terrain_instance = terrain.create_instance();
+	terrain_instance->set_position({-512.0f, 0.0f, -512.0f});
+	app.current_scene()->add_child(terrain_instance);
 
 	app.renderer()->gui()->set_draw_callback([&]()
 											 {
