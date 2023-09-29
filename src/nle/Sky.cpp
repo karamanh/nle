@@ -1,8 +1,8 @@
 #include "Sky.h"
 #include "Globals.h"
-#include "resources/default_sky.h"
-#include "resources/default_vert.h"
-#include "resources/default_frag.h"
+#include "resources/default_sky.hpp"
+#include "resources/default_vert.hpp"
+#include "resources/default_frag.hpp"
 
 namespace nle
 {
