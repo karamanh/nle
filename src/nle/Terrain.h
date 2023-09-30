@@ -5,6 +5,7 @@
 namespace nle
 {
     class TerrainInstance;
+    class TerrainFeatureLayer;
 
     class Terrain
     {
@@ -13,6 +14,7 @@ namespace nle
 
         unsigned int m_width;
         unsigned int m_height;
+        float m_height_multiplier = 1.0f;
 
         std::vector<float> m_heightmap;
 
@@ -24,6 +26,7 @@ namespace nle
         TerrainInstance *create_instance();
         float get_height_at(unsigned int x, unsigned int y);
         float get_height_at(float x, float z);
+        glm::vec3 get_normal_at(float x, float z);
 
         friend class TerrainInstance;
     };

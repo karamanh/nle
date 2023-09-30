@@ -34,8 +34,6 @@ namespace nle
         std::mutex m_mtx_realm;
 
         void process_collisions(const std::list<PhysicsObject3D*>& bodies);
-        void apply_gravity(double delta);
-        // static void runner(void *_this);
         void runner();
         void attach_physics_body_thread_safe(PhysicsObject3D *body);
         void detach_physics_body_thread_safe(PhysicsObject3D *body);

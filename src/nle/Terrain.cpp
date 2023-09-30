@@ -20,7 +20,7 @@ namespace nle
 {
 
    Terrain::Terrain(unsigned int width, unsigned int height)
-        : m_width(width), m_height(height)
+        : m_width(width), m_height(height), m_height_multiplier(10.0f)
     {
         m_heightmap.resize(width * height);
 
@@ -31,7 +31,7 @@ namespace nle
         {
             for (int x = 0; x < m_width; x++)
             {
-                m_heightmap[index++] = noise.GetNoise((float)x, (float)y);
+                m_heightmap[index++] = noise.GetNoise((float)x, (float)y) * m_height_multiplier;
             }
         }
 
@@ -85,6 +85,27 @@ namespace nle
         return interpolated_height;
     }
 
+    glm::vec3 Terrain::get_normal_at(float x, float z)
+    {
+        if (x < 0 || z < 0 || x >= m_height - 1 || z >= m_width - 1) {
+            return glm::vec3(0.0f, 1.0f, 0.0f);
+        }
+
+        int i00 = static_cast<int>(z) * m_width + static_cast<int>(x);
+        int i10 = static_cast<int>(z) * m_width + static_cast<int>(x+1);
+        int i01 = static_cast<int>(z + 1) * m_width + static_cast<int>(x);
+
+        float height00 = m_heightmap[i00];
+        float height10 = m_heightmap[i10];
+        float height01 = m_heightmap[i01];
+
+        float dx = height10 - height00;
+        float dy = height01 - height00;
+
+        glm::vec3 normal(-dx, -dy, 1.0f);
+        return glm::normalize(normal);
+    }
+
     void Terrain::generate_terrain(std::vector<float> &vertices, std::vector<unsigned int> &indices)
     {
         unsigned int nvertices = m_width * m_height;
@@ -104,23 +125,7 @@ namespace nle
                 float height = get_height_at(j, i);
                 map_value_to_color(height, 0.0f, 1.0f, r, g, b);
 
-                // Calculate the normal vector for this vertex
-                glm::vec3 normal(0.0f, 1.0f, 0.0f); // Initialize with an "up" direction
-
-                if (j > 0 && j < m_width - 1 && i > 0 && i < m_height - 1) {
-                    // Calculate the normal based on neighboring vertices
-                    glm::vec3 v1(vertices[index - vert_chunk_size], vertices[index - (vert_chunk_size -1)], vertices[index - (vert_chunk_size - 2)]);
-                    glm::vec3 v2(vertices[index + vert_chunk_size], vertices[index + (vert_chunk_size + 1)], vertices[index + (vert_chunk_size + 2)]);
-                    glm::vec3 v3(vertices[index - m_width * vert_chunk_size], vertices[index - m_width * vert_chunk_size + 1], vertices[index - m_width * vert_chunk_size + 2]);
-                    glm::vec3 v4(vertices[index + m_width * vert_chunk_size], vertices[index + m_width * vert_chunk_size + 1], vertices[index + m_width * vert_chunk_size + 2]);
-
-                    // Calculate the cross product of two triangle edges to find the normal
-                    glm::vec3 normal1 = glm::cross(v2 - v1, v3 - v1);
-                    glm::vec3 normal2 = glm::cross(v4 - v1, v2 - v1);
-
-                    // Average the two normals to get the vertex normal
-                    normal = glm::normalize((normal1 + normal2) / 2.0f);
-                }
+                glm::vec3 normal = get_normal_at(j, i);
 
                 vertices[index] = static_cast<float>(j);
                 vertices[index+1] = height;
@@ -166,7 +171,7 @@ namespace nle
     {
         Object3D::add_child(child);
         auto cpos = child->position();
-        child->set_position(this->position() + glm::vec3(cpos.x, this->position().y + m_terrain->get_height_at(cpos.x, cpos.z), cpos.z));
+        child->set_position(this->position() + glm::vec3(cpos.x, m_terrain->get_height_at(cpos.x, cpos.z), cpos.z));
     }
 
 } // namespace nle
