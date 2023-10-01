@@ -3,6 +3,7 @@
 ### Experimental graphics and physics engine [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
  ![nle-editor](resources/screenshot_00.png)
+_A heightmap terrain and procedurally positioned terrain features_
 
 Summary:
 
