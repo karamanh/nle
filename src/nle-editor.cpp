@@ -7,8 +7,6 @@
 #include "nle/Model.h"
 #include "nle/Nle.h"
 
-#include <glm/gtc/random.hpp>
-
 #include "FastNoiseLite.h"
 
 #include <fstream>
@@ -68,25 +66,57 @@ int main(int argc, char *argv[])
 	app.current_scene()->light()->set_rotation({180.f, 0.f, 0.f});
 	app.current_scene()->light()->set_enabled(true);
 
-	nle::Terrain terrain(1024, 1024);
+	nle::Terrain terrain("nle_projdir/heightmap03.png", 40.0f);
 	auto * terrain_instance = terrain.create_instance();
-	auto terrain_offset = glm::vec3(-512.0f, 0.0f, -512.0f);
-	terrain_instance->set_position(terrain_offset);
 
-	for(int i = 0; i < 512; i++)
+	for(int i = 0; i < 500; i++)
 	{
-		auto * tree = models["Tree1.obj"]->create_instance();
-		tree->set_position(glm::sphericalRand<float>(512.0f) - terrain_offset);
-		tree->set_rotation(glm::vec3(0.0f, glm::circularRand(512.0f).y, 0.0f));
-		terrain_instance->add_child(tree);
+		auto * t1 = models["Tree1.obj"]->create_instance();
+		terrain_instance->add_child(t1);
+		auto * t2 = models["Tree2.obj"]->create_instance();
+		terrain_instance->add_child(t2);
+		auto * t3 = models["Tree3.obj"]->create_instance();
+		terrain_instance->add_child(t3);
+		auto * t4 = models["Tree4.obj"]->create_instance();
+		terrain_instance->add_child(t4);
+		auto * b1 = models["Bush1.obj"]->create_instance();
+		terrain_instance->add_child(b1);
+		auto * b2 = models["Bush2.obj"]->create_instance();
+		terrain_instance->add_child(b2);
+		auto * b3 = models["Bush3.obj"]->create_instance();
+		terrain_instance->add_child(b3);
+		auto * r1 = models["Rock1.obj"]->create_instance();
+		terrain_instance->add_child(r1);
+		auto * r2 = models["Rock2.obj"]->create_instance();
+		terrain_instance->add_child(r2);
+		auto * r3 = models["Rock3.obj"]->create_instance();
+		terrain_instance->add_child(r3);
 	}
 
-	for(int i = 0; i < 512; i++)
-	{
-		auto * tree = models["Grass1.obj"]->create_instance();
-		tree->set_position(glm::sphericalRand<float>(512.0f) - terrain_offset);
-		terrain_instance->add_child(tree);
-	}
+	// for(int i = 0; i < 500; i++)
+	// {
+	// 	auto * tree = models["Tree2.obj"]->create_instance();
+	// 	terrain_instance->add_child(tree);
+	// }
+
+	// for(int i = 0; i < 500; i++)
+	// {
+	// 	auto * tree = models["Tree1.obj"]->create_instance();
+	// 	terrain_instance->add_child(tree);
+	// }
+
+	// for(int i = 0; i < 500; i++)
+	// {
+	// 	auto * tree = models["Tree1.obj"]->create_instance();
+	// 	terrain_instance->add_child(tree);
+	// }
+
+	// for(int i = 0; i < 512; i++)
+	// {
+	// 	auto * tree = models["Grass1.obj"]->create_instance();
+	// 	tree->set_position(glm::sphericalRand<float>(512.0f));
+	// 	terrain_instance->add_child(tree);
+	// }
 
 	app.current_scene()->add_child(terrain_instance);
 
@@ -617,7 +647,7 @@ int main(int argc, char *argv[])
 					if((mmi = dynamic_cast<nle::MultiMeshInstance*>(selected_obj)))
 					{
 						nle::Material *material;
-						if((material = mmi->material()))
+						if((material = mmi->material()) != nullptr)
 						{
 							ImGui::Text("ambient");
 							ImGui::PushID("ambient_intensity");

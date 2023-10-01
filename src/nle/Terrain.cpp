@@ -2,25 +2,56 @@
 #include "Globals.h"
 
 #include "vendor/FastNoiseLite.h"
+#include "stb_image.h"
+#include <glm/gtc/random.hpp>
+
+// static void map_value_to_color(float value, float min_value, float max_value, float& red, float& green, float& blue) {
+//     if (value < min_value) value = min_value;
+//     if (value > max_value) value = max_value;
+
+//     // Calculate the normalized position of the value within the green range (80%)
+//     float t = (value - min_value) / (0.8f * (max_value - min_value));
+
+//     // Map the value to an RGB color within the specified range
+//     red = 0.6f + 0.4f * t;  // Red component (from 0.6 to 1.0)
+//     green = 0.8f;           // Green component (fixed at 0.8 for green)
+//     blue = 0.2f;    
+// }
 
 static void map_value_to_color(float value, float min_value, float max_value, float& red, float& green, float& blue) {
     if (value < min_value) value = min_value;
     if (value > max_value) value = max_value;
 
-    // Calculate the normalized position of the value within the green range (80%)
-    float t = (value - min_value) / (0.8f * (max_value - min_value));
+    float range = max_value - min_value;
+    float value_normalized = value - min_value;
 
-    // Map the value to an RGB color within the specified range
-    red = 0.6f + 0.4f * t;  // Red component (from 0.6 to 1.0)
-    green = 0.8f;           // Green component (fixed at 0.8 for green)
-    blue = 0.2f;    
+    if(value_normalized <= range * 0.1)
+    {
+        red = 0.290f; green = 0.290f; blue = 0.290f;
+    }
+    else if(value_normalized <= range * 0.9)
+    {
+        red = 0.0f; green = 0.478f; blue = 0.105f;
+    }
+    else
+    {
+        red = 0.478f; green = 0.352f; blue = 0.0f;
+    }
+
+    // // Calculate the normalized position of the value within the green range (80%)
+    // float t = (value - min_value) / (0.8f * (max_value - min_value));
+
+    // // Map the value to an RGB color within the specified range
+    // red = 0.6f + 0.4f * t;  // Red component (from 0.6 to 1.0)
+    // green = 0.8f;           // Green component (fixed at 0.8 for green)
+    // blue = 0.2f;    
 }
 
 namespace nle
 {
 
-   Terrain::Terrain(unsigned int width, unsigned int height)
-        : m_width(width), m_height(height), m_height_multiplier(10.0f)
+   Terrain::Terrain(int width, int height, float height_multiplier)
+        : m_width(width), m_height(height), m_height_multiplier(height_multiplier)
     {
         m_heightmap.resize(width * height);
 
@@ -34,23 +65,46 @@ namespace nle
                 m_heightmap[index++] = noise.GetNoise((float)x, (float)y) * m_height_multiplier;
             }
         }
+        generate_terrain_mesh();
+    }
 
-        std::vector<float> vert;
-        std::vector<unsigned int> ind;
-        generate_terrain(vert, ind);
-        m_mesh = new Mesh(vert, ind, globals::DEFAULT_SHADER, nullptr, new Material(*globals::DEFAULT_MATERIAL));
-        m_mesh->material()->set_specular({0.0f, 0.0f, 0.0f});
+    Terrain::Terrain(int width, int height, const std::vector<float> &heightmap, float height_multiplier)
+        : m_width(width), m_height(height), m_height_multiplier(height_multiplier)
+    {
+        generate_terrain_mesh();
+    }
+
+    Terrain::Terrain(const std::string &image_path, float height_multiplier)
+        : m_height_multiplier(height_multiplier)
+    {
+        int bit_depth;
+        unsigned char *data = stbi_load(image_path.c_str(), &m_width, &m_height, &bit_depth, STBI_rgb_alpha);
+        if (!data)
+        {
+            prerr("Terrain(): nothing here %s", image_path.c_str());
+            return;
+        }
+
+        for(int i = 0; i < m_width * m_height; i++)
+        {
+            m_heightmap.push_back(static_cast<float>(data[i*4]) / 255 * m_height_multiplier); 
+        }
+
+        stbi_image_free(data);
+        generate_terrain_mesh();
     }
 
     Terrain::~Terrain()
     {
-        delete m_mesh->material();
+        delete m_mesh->shader();
+        delete m_mesh;
     }
 
     TerrainInstance *Terrain::create_instance()
     {
-        // return m_mesh->create_instance();
-        return new TerrainInstance(this);
+        auto * ti = new TerrainInstance(this);
+        ti->set_position({-static_cast<float>(m_width)/2, 0.0f, -static_cast<float>(m_height)/2});
+        return ti;
     }
 
     float Terrain::get_height_at(unsigned int x, unsigned int y)
@@ -106,6 +160,11 @@ namespace nle
         return glm::normalize(normal);
     }
 
+    glm::vec3 Terrain::get_random_position() const
+    {
+        return glm::vec3();
+    }
+
     void Terrain::generate_terrain(std::vector<float> &vertices, std::vector<unsigned int> &indices)
     {
         unsigned int nvertices = m_width * m_height;
@@ -123,7 +182,7 @@ namespace nle
 
                 float r, g, b;
                 float height = get_height_at(j, i);
-                map_value_to_color(height, 0.0f, 1.0f, r, g, b);
+                map_value_to_color(height, 0.0f, m_height_multiplier, r, g, b);
 
                 glm::vec3 normal = get_normal_at(j, i);
 
@@ -162,6 +221,17 @@ namespace nle
         }
     }
 
+    void Terrain::generate_terrain_mesh()
+    {
+        std::vector<float> vert;
+        std::vector<unsigned int> ind;
+
+        generate_terrain(vert, ind);
+
+        m_mesh = new Mesh(vert, ind, new Shader("shader/default_vert.glsl", "shader/default_frag.glsl", true), nullptr, new Material(*globals::DEFAULT_MATERIAL));
+        m_mesh->material()->set_specular({0.0f, 0.0f, 0.0f});
+    }
+
     TerrainInstance::TerrainInstance(Terrain * terrain)
         : MeshInstance(terrain->m_mesh), m_terrain(terrain)
     {
@@ -170,8 +240,31 @@ namespace nle
     void TerrainInstance::add_child(Object3D *child)
     {
         Object3D::add_child(child);
-        auto cpos = child->position();
-        child->set_position(this->position() + glm::vec3(cpos.x, m_terrain->get_height_at(cpos.x, cpos.z), cpos.z));
+        add_terrain_feature(child, 7.0f, 20.f);
+    }
+
+    void TerrainInstance::add_terrain_feature(Object3D *child, float from_height, float to_height)
+    {
+        glm::vec2 bounds_min = {this->position().x, this->position().z};
+
+        glm::vec2 bounds_max = {
+            bounds_min.x + static_cast<float>(m_terrain->m_width),
+            bounds_min.y + static_cast<float>(m_terrain->m_height)
+        };
+
+        // auto pos = glm::circularRand(static_cast<float>(m_terrain->m_width));
+        auto pos = glm::linearRand(bounds_min, bounds_max);
+        auto pos_no_offset = pos - bounds_min;
+        float height = m_terrain->get_height_at(pos_no_offset.x, pos_no_offset.y);
+        
+        if(height >= from_height && height <= to_height)
+        {
+            child->set_position(glm::vec3(pos.x, height, pos.y));
+        }
+        else
+        {
+            add_terrain_feature(child, from_height, to_height);
+        }
     }
 
 } // namespace nle
