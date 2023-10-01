@@ -99,7 +99,8 @@ namespace nle
 
     Material *MultiMeshInstance::material() const
     {
-        return m_material;
+        // return m_material;
+        return m_multimesh->meshes().size() == 1 ? m_multimesh->meshes()[0]->material() : m_material;
     }
 
     nlohmann::json MultiMeshInstance::to_json()

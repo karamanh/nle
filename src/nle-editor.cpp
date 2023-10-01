@@ -65,6 +65,9 @@ int main(int argc, char *argv[])
 	app.current_scene()->camera()->set_position({5.f, 5.f, -5.f});
 	app.current_scene()->light()->set_rotation({180.f, 0.f, 0.f});
 	app.current_scene()->light()->set_enabled(true);
+	app.current_scene()->sky()->set_distance_fog_enabled(true);
+	app.current_scene()->sky()->set_distance_fog_min(5.f);
+	app.current_scene()->sky()->set_distance_fog_max(200.f);
 
 	nle::Terrain terrain("nle_projdir/heightmap03.png", 40.0f);
 	auto * terrain_instance = terrain.create_instance();
@@ -79,44 +82,28 @@ int main(int argc, char *argv[])
 		terrain_instance->add_child(t3);
 		auto * t4 = models["Tree4.obj"]->create_instance();
 		terrain_instance->add_child(t4);
-		auto * b1 = models["Bush1.obj"]->create_instance();
-		terrain_instance->add_child(b1);
-		auto * b2 = models["Bush2.obj"]->create_instance();
-		terrain_instance->add_child(b2);
-		auto * b3 = models["Bush3.obj"]->create_instance();
-		terrain_instance->add_child(b3);
-		auto * r1 = models["Rock1.obj"]->create_instance();
-		terrain_instance->add_child(r1);
-		auto * r2 = models["Rock2.obj"]->create_instance();
-		terrain_instance->add_child(r2);
-		auto * r3 = models["Rock3.obj"]->create_instance();
-		terrain_instance->add_child(r3);
+		if(i%10 == 0)
+		{
+			auto * r1 = models["Rock1.obj"]->create_instance();
+			terrain_instance->add_child(r1);
+			auto * b2 = models["Bush2.obj"]->create_instance();
+			terrain_instance->add_child(b2);
+		}
+		if(i%11 == 0)
+		{
+			auto * r2 = models["Rock2.obj"]->create_instance();
+			terrain_instance->add_child(r2);
+			auto * b1 = models["Bush1.obj"]->create_instance();
+			terrain_instance->add_child(b1);
+		}
+		if(i%12 == 0)
+		{
+			auto * r3 = models["Rock3.obj"]->create_instance();
+			terrain_instance->add_child(r3);
+			auto * b3 = models["Bush3.obj"]->create_instance();
+			terrain_instance->add_child(b3);
+		}
 	}
-
-	// for(int i = 0; i < 500; i++)
-	// {
-	// 	auto * tree = models["Tree2.obj"]->create_instance();
-	// 	terrain_instance->add_child(tree);
-	// }
-
-	// for(int i = 0; i < 500; i++)
-	// {
-	// 	auto * tree = models["Tree1.obj"]->create_instance();
-	// 	terrain_instance->add_child(tree);
-	// }
-
-	// for(int i = 0; i < 500; i++)
-	// {
-	// 	auto * tree = models["Tree1.obj"]->create_instance();
-	// 	terrain_instance->add_child(tree);
-	// }
-
-	// for(int i = 0; i < 512; i++)
-	// {
-	// 	auto * tree = models["Grass1.obj"]->create_instance();
-	// 	tree->set_position(glm::sphericalRand<float>(512.0f));
-	// 	terrain_instance->add_child(tree);
-	// }
 
 	app.current_scene()->add_child(terrain_instance);
 

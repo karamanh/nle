@@ -231,9 +231,12 @@ namespace nle
         GLuint unf_material_ambient = mi->mesh()->shader()->uniform_location("u_material.ambient");
         GLuint unf_material_diffuse = mi->mesh()->shader()->uniform_location("u_material.diffuse");
         GLuint unf_material_specular = mi->mesh()->shader()->uniform_location("u_material.specular");
+        GLuint unf_material_dissolve = mi->mesh()->shader()->uniform_location("u_material.dissolve");
         // other
         GLuint unf_texture_enabled = mi->mesh()->shader()->uniform_location("u_texture_enabled");
-
+        GLuint unf_sky_distance_fog_enabled = mi->mesh()->shader()->uniform_location("u_sky.distance_fog_enabled");
+        GLuint unf_sky_distance_fog_near = mi->mesh()->shader()->uniform_location("u_sky.distance_fog_near");
+        GLuint unf_sky_distance_fog_far = mi->mesh()->shader()->uniform_location("u_sky.distance_fog_far");
         if (mi->mesh()->texture())
         {
             mi->mesh()->texture()->use();
@@ -245,6 +248,12 @@ namespace nle
         }
 
         m_root_scene->sky()->mesh()->texture()->use(1);
+        if(m_root_scene->sky()->distance_fog_enabled())
+        {
+            glUniform1i(unf_sky_distance_fog_enabled, 1);
+            glUniform1f(unf_sky_distance_fog_near, m_root_scene->sky()->distance_fog_min());
+            glUniform1f(unf_sky_distance_fog_far, m_root_scene->sky()->distance_fog_max());
+        }
 
         bool accept_light = true;
 
@@ -254,6 +263,7 @@ namespace nle
             glUniform3f(unf_material_diffuse, mi->mesh()->material()->diffuse().x, mi->mesh()->material()->diffuse().y, mi->mesh()->material()->diffuse().z);
             glUniform3f(unf_material_specular, mi->mesh()->material()->specular().x, mi->mesh()->material()->specular().y, mi->mesh()->material()->specular().z);
             glUniform1f(unf_material_shininess, mi->mesh()->material()->shininess());
+            glUniform1f(unf_material_dissolve, mi->mesh()->material()->dissolve());
             accept_light = mi->mesh()->material()->accept_light();
         }
 

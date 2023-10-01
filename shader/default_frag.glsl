@@ -19,9 +19,17 @@ struct DirectionalLight
 struct Material
 {
     float shininess;
+    float dissolve;
     vec3 ambient;
     vec3 diffuse;
     vec3 specular;
+};
+
+struct Sky
+{
+    int distance_fog_enabled;
+    float distance_fog_near;
+    float distance_fog_far;
 };
 
 uniform int u_lighting_enabled = 1;
@@ -30,10 +38,18 @@ uniform int u_fog_enabled = 1;
 uniform sampler2D u_texture_0;
 uniform DirectionalLight u_directional_light;
 uniform Material u_material;
+uniform Sky u_sky;
 uniform vec3 u_eye_position;
 
 float map(float value, float min1, float max1, float min2, float max2) {
   return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
+}
+
+vec4 fog_factor() {
+    vec3 dist = u_eye_position - io_frag_position;
+    float fog_factor = (distance(u_eye_position, io_frag_position) - u_sky.distance_fog_near) / (u_sky.distance_fog_far - u_sky.distance_fog_near);
+    fog_factor = clamp(fog_factor, 0.0, 1.0);
+    return vec4(fog_factor);
 }
 
 void main() {
@@ -67,5 +83,12 @@ void main() {
     else
     {
         io_color = io_vertex_color * light_factor;
+    }
+
+    // io_color = gl_FragColor * (1.0 - u_material.dissolve) + io_color * (u_material.dissolve);
+    if(u_sky.distance_fog_enabled == 1)
+    {
+        io_color.a = u_material.dissolve;
+        io_color += fog_factor();
     }
 }
