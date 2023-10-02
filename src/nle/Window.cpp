@@ -122,13 +122,20 @@ namespace nle
         key = (unsigned int)key;
         if (key >= 0 && key < w->m_input_handler->keys().size())
         {
-            if ((action == GLFW_PRESS) || (action == GLFW_REPEAT))
+            if (action == GLFW_PRESS)
             {
-                w->m_input_handler->set_key_state(key, true);
+                // if(!w->input_handler()->key_state(key))
+                // {
+                //     w->input_handler()->set_key_state(key, true);
+                //     w->input_handler()->sig_key_released.emit(key, false);
+                // }
+                w->input_handler()->set_key_state(key, true);
+                w->input_handler()->sig_key_just_pressed.emit(key, false);
             }
             else if (action == GLFW_RELEASE)
             {
-                w->m_input_handler->set_key_state(key, false);
+                w->input_handler()->set_key_state(key, false);
+                w->input_handler()->sig_key_released.emit(key, false);
             }
         }
     }

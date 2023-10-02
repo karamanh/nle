@@ -1,6 +1,6 @@
 #include "InputHandler.h"
 
-#define NLE_INPUT_PROCESS_SLEEP_TIME_NS     1
+#define NLE_INPUT_PROCESS_SLEEP_TIME_MS     16666
 
 namespace nle
 {
@@ -8,6 +8,20 @@ namespace nle
 InputHandler::InputHandler(GLFWwindow *handle)
     : m_handle(handle)
 {
+    m_thr_input = std::thread([this](){
+        while (!glfwWindowShouldClose(m_handle))
+        {
+            for(int i = 0; i < m_keys.size(); i++)
+            {
+                if(m_keys[i])
+                {
+                    sig_key_pressed.emit(i, false);
+                }
+            }
+
+            std::this_thread::sleep_for(std::chrono::microseconds(NLE_INPUT_PROCESS_SLEEP_TIME_MS));
+        }
+    });
 }
 
 InputHandler::~InputHandler()
@@ -18,10 +32,10 @@ void InputHandler::set_key_state(int key, bool state)
 {
     m_keys[key] = state;
     
-    if(state) // pressed
-        sig_key_pressed.emit(key, false);
-    else    // released
-        sig_key_released.emit(key, false);
+    // if(state) // pressed
+    //     sig_key_pressed.emit(key, false);
+    // else    // released
+    //     sig_key_released.emit(key, false);
 }
 
 void InputHandler::set_mouse_position(int x, int y)
@@ -62,6 +76,11 @@ bool InputHandler::key_state(int key)
 Signal<int> &InputHandler::key_pressed()
 {
     return sig_key_pressed;
+}
+
+Signal<int> &InputHandler::key_just_pressed()
+{
+    return sig_key_just_pressed;
 }
 
 Signal<int> &InputHandler::key_released()

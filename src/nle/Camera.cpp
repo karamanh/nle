@@ -149,11 +149,6 @@ namespace nle
 
     void Camera::on_key_pressed(int key)
     {
-        if (key == GLFW_KEY_LEFT_CONTROL)
-        {
-            m_free_roam = !m_free_roam;
-        }
-        
         if(m_free_roam)
         {
             if (key == GLFW_KEY_W)

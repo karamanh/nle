@@ -321,9 +321,15 @@ namespace nle
         m_parent_window->input_handler()->key_pressed().unbind_all();
 
         m_parent_window->input_handler()->mouse_moved().bind_callback(
-            std::bind(&Camera::on_mouse_motion, root->camera(), std::placeholders::_1, std::placeholders::_2));
+            std::bind(&Camera::on_mouse_motion, m_root_scene->camera(), std::placeholders::_1, std::placeholders::_2));
         m_parent_window->input_handler()->key_pressed().bind_callback(
-            std::bind(&Camera::on_key_pressed, root->camera(), std::placeholders::_1));
+            std::bind(&Camera::on_key_pressed, m_root_scene->camera(), std::placeholders::_1));
+        m_parent_window->input_handler()->key_just_pressed().bind_callback([this](int key){  
+            if (key == GLFW_KEY_LEFT_CONTROL)
+            {
+                m_root_scene->camera()->set_free_roam(!m_root_scene->camera()->free_roam());
+            }
+        });
     }
 
     Scene *Renderer3D::root_scene() const

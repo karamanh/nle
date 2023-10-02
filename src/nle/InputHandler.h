@@ -25,6 +25,7 @@ private:
     std::array<bool, 1024> m_keys;
     std::array<bool, 8> m_mouse_buttons;
     Signal<int> sig_key_pressed;
+    Signal<int> sig_key_just_pressed;
     Signal<int> sig_key_released;
     Signal<int, int> sig_mouse_moved;
     Signal<int, bool, int, int> sig_mouse_state_changed;
@@ -40,6 +41,7 @@ public:
     const std::array<bool, 1024>& keys();
     bool key_state(int key);
     Signal<int>& key_pressed();
+    Signal<int>& key_just_pressed();
     Signal<int>& key_released();
     Signal<int,int>& mouse_moved();
     Signal<int, bool, int, int>& mouse_button_state_changed();
