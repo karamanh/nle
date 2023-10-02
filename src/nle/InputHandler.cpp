@@ -31,11 +31,6 @@ InputHandler::~InputHandler()
 void InputHandler::set_key_state(int key, bool state)
 {
     m_keys[key] = state;
-    
-    // if(state) // pressed
-    //     sig_key_pressed.emit(key, false);
-    // else    // released
-    //     sig_key_released.emit(key, false);
 }
 
 void InputHandler::set_mouse_position(int x, int y)
