@@ -480,6 +480,23 @@ int main(int argc, char *argv[])
 
 					ImGui::Separator();
 
+					if(ImGui::CollapsingHeader("sky"))
+					{
+						bval = app.current_scene()->sky()->distance_fog_enabled();
+						ImGui::Checkbox("distance fog enabled", &bval);
+						app.current_scene()->sky()->set_distance_fog_enabled(bval);
+						
+						fval = app.current_scene()->sky()->distance_fog_min();
+						ImGui::InputFloat("distance fog near", &fval);
+						app.current_scene()->sky()->set_distance_fog_min(fval);
+
+						fval = app.current_scene()->sky()->distance_fog_max();
+						ImGui::InputFloat("distance fog far", &fval);
+						app.current_scene()->sky()->set_distance_fog_max(fval);
+					}
+					
+					ImGui::Separator();
+
 					std::function<void(nle::Object3D*)> generate_tree = [&](nle::Object3D* o){
 
 						if(ImGui::TreeNodeEx(o->id().c_str()))
