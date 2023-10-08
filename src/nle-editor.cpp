@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
 	app.current_scene()->sky()->set_distance_fog_min(5.f);
 	app.current_scene()->sky()->set_distance_fog_max(200.f);
 
-	nle::Terrain terrain("nle_projdir/heightmap03.png", 40.0f);
+	nle::Terrain terrain(nle_projdir + "/heightmap03.png", 40.0f);
 	auto * terrain_instance = terrain.create_instance();
 
 	for(int i = 0; i < 500; i++)
@@ -521,35 +521,42 @@ int main(int argc, char *argv[])
 					ImGui::EndTabItem();
 				}
 
-				if(ImGui::BeginTabItem("loaded models"))
+				if(ImGui::BeginTabItem("assets"))
 				{
-					for(const auto& it : models)
+					if(ImGui::CollapsingHeader("models", ImGuiTreeNodeFlags_DefaultOpen))
 					{
-						ImGui::Text(it.second->name().c_str());
-						ImGui::SameLine();
-						ImGui::PushID(it.second->name().c_str());
-						if(ImGui::Button("create instance"))
+						for(const auto& it : models)
 						{
-							auto * instance = it.second->create_instance();
-							if(instance)
+							ImGui::Text(it.second->name().c_str());
+							ImGui::SameLine();
+							ImGui::PushID(it.second->name().c_str());
+							if(ImGui::Button("create instance"))
 							{
-								app.current_scene()->add_child(instance);
+								auto * instance = it.second->create_instance();
+								if(instance)
+								{
+									app.current_scene()->add_child(instance);
+								}
 							}
+							ImGui::PopID();
 						}
-						ImGui::PopID();
 					}
 					ImGui::EndTabItem();
 				}
 
-				if (ImGui::BeginTabItem("renderer settings"))
+				if (ImGui::BeginTabItem("renderer"))
 				{
 					auto rla = app.renderer()->render_layer_attributes();
 					ImGui::SliderInt("render distance", &rla.render_distance, 0, 100000);
 					ImGui::Checkbox("render layer [0] visible", &rla.visible);
 					app.renderer()->set_render_layer_attributes(nle::RenderLayer::_0, rla);
 					
-					// ImGui::Separator();
-					
+					ImGui::EndTabItem();
+				}
+
+				if (ImGui::BeginTabItem("+"))
+				{
+					// create mesh, terrain, object3d etc. will be added here.
 					ImGui::EndTabItem();
 				}
 				ImGui::EndTabBar();
