@@ -45,7 +45,8 @@ int main(int argc, char *argv[])
 	};
 
 	prinf("autoloading assets");
-	for (auto const &dir_entry : std::filesystem::recursive_directory_iterator(std::filesystem::current_path()))
+	for (auto const &dir_entry : std::filesystem::recursive_directory_iterator(nle_projdir))
+	// for (auto const &dir_entry : std::filesystem::recursive_directory_iterator(std::filesystem::current_path()))
 	{
 		std::string path = dir_entry.path().c_str();
 		std::string name = dir_entry.path().filename();

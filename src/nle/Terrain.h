@@ -44,6 +44,9 @@ namespace nle
         TerrainInstance(Terrain * terrain);
         void add_child(Object3D *child) override;
         void add_terrain_feature(Object3D *feature, float from_height = 0.0f, float to_height = 10.f);
+
+        nlohmann::json to_json() override;
+        void from_json(const nlohmann::json& j) override;
     };
 
     // class TerrainFeatureLayers

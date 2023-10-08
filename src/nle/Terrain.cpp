@@ -267,4 +267,15 @@ namespace nle
         }
     }
 
+    nlohmann::json TerrainInstance::to_json()
+    {
+        auto ret = Object3D::to_json();
+        
+        return ret;
+    }
+
+    void TerrainInstance::from_json(const nlohmann::json &j)
+    {
+    }
+
 } // namespace nle
