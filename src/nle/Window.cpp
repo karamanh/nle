@@ -31,9 +31,6 @@ namespace nle
         prinf("%s", (char*)renderer);
 
         glfwSetWindowUserPointer(m_handle, this);
-        glfwSetKeyCallback(m_handle, Window::key_handler);
-        glfwSetCursorPosCallback(m_handle, Window::mouse_position_handler);
-        glfwSetMouseButtonCallback(m_handle, Window::mouse_button_handler);
 
         m_input_handler = new InputHandler(m_handle);
     }
@@ -49,6 +46,9 @@ namespace nle
         while (!glfwWindowShouldClose(m_handle))
         {
             glfwGetWindowSize(m_handle, &m_width, &m_height);
+
+            m_input_handler->poll_mouse_input();
+            m_input_handler->poll_keyboard_input();
 
             if (m_draw_callback)
             {
@@ -107,67 +107,5 @@ namespace nle
     bool Window::closed()
     {
         return m_closed;
-    }
-
-    void Window::key_handler(GLFWwindow *window, int key, int code, int action, int mode)
-    {
-        Window *w = static_cast<Window *>(glfwGetWindowUserPointer(window));
-        if (!w)
-        {
-            return;
-        }
-
-        // prdbg("key: %d action %d mode %d", key, action, mode);
-
-        key = (unsigned int)key;
-        if (key >= 0 && key < w->m_input_handler->keys().size())
-        {
-            if (action == GLFW_PRESS)
-            {
-                // if(!w->input_handler()->key_state(key))
-                // {
-                //     w->input_handler()->set_key_state(key, true);
-                //     w->input_handler()->sig_key_released.emit(key, false);
-                // }
-                w->input_handler()->set_key_state(key, true);
-                w->input_handler()->sig_key_just_pressed.emit(key, false);
-            }
-            else if (action == GLFW_RELEASE)
-            {
-                w->input_handler()->set_key_state(key, false);
-                w->input_handler()->sig_key_released.emit(key, false);
-            }
-        }
-    }
-
-    void Window::mouse_position_handler(GLFWwindow *window, double mouse_x, double mouse_y)
-    {
-        Window *w = static_cast<Window *>(glfwGetWindowUserPointer(window));
-        if (!w)
-        {
-            return;
-        }
-        w->m_input_handler->set_mouse_position(mouse_x, mouse_y);
-    }
-
-    void Window::mouse_button_handler(GLFWwindow *window, int button, int action, int mods)
-    {
-        Window *w = static_cast<Window *>(glfwGetWindowUserPointer(window));
-        if (!w)
-        {
-            return;
-        }
-        button = (unsigned int)button;
-        if (button >= 0 && button < w->m_input_handler->m_mouse_buttons.size())
-        {
-            if ((action == GLFW_PRESS) || (action == GLFW_REPEAT))
-            {
-                w->m_input_handler->set_mouse_button_state(button, true);
-            }
-            else if (action == GLFW_RELEASE)
-            {
-                w->m_input_handler->set_mouse_button_state(button, false);
-            }
-        }
     }
 } // namespace nle
