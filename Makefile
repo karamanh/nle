@@ -9,7 +9,7 @@
 CXX = g++
 
 # define any compile-time flags
-CXXFLAGS	:= -std=c++17 -Wall -Wextra -g
+CXXFLAGS	:= -std=c++20 -Wall -Wextra -g
 
 ifeq "$(CONFIG_DEBUG)" "true"
 	CXXFLAGS += -DDEBUG
@@ -27,13 +27,13 @@ OUTPUT	:= output
 SRC		:= src
 
 # define include directory
-INCLUDE	:= include src
+INCLUDE	:= vendor src
 
 # define lib directory
 LIB		:= lib
 
 ifeq ($(OS),Windows_NT)
-MAIN	:= nle-editor.exe
+MAIN	:= demo.exe
 SOURCEDIRS	:= $(SRC)
 INCLUDEDIRS	:= $(INCLUDE)
 LIBDIRS		:= $(LIB)
@@ -41,7 +41,7 @@ FIXPATH = $(subst /,\,$1)
 RM			:= del /q /f
 MD	:= mkdir
 else
-MAIN	:= nle-editor
+MAIN	:= demo
 SOURCEDIRS	:= $(shell find $(SRC) -type d)
 INCLUDEDIRS	:= $(shell find $(INCLUDE) -type d)
 LIBDIRS		:= $(shell find $(LIB) -type d)
