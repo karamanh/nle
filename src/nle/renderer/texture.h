@@ -25,11 +25,11 @@ public:
     texture(const uint8_t *blob, size_t size, bool flip);
     virtual ~texture();
 
-    uint8_t id() const;
+    uint32_t id() const;
     void use(uint8_t unit = 0);
     void unuse(uint8_t unit = 0);
 private:
-    unsigned int m_id;
+    uint32_t m_id;
     int m_width;
     int m_height;
     int m_bit_depth;

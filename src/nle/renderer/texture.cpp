@@ -20,7 +20,7 @@ namespace nle
         glDeleteTextures(1, &m_id);
     }
 
-    uint8_t texture::id() const
+    uint32_t texture::id() const
     {
         return m_id;
     }

@@ -54,15 +54,14 @@ void scene_3d::delete_child(ref<object_3d> child)
 nlohmann::json scene_3d::to_json() const
 {
     auto j = object_3d::to_json();
-    // add scene properties
-    #pragma message ("nlohmann::json scene_3d::to_json() not implemented")
+    throw std::runtime_error("nlohmann::json scene_3d::to_json() not fully implemented");
     return j;
 }
 
 void scene_3d::from_json(const nlohmann::json &j)
 {
     object_3d::from_json(j);
-    #pragma message ("nlohmann::json scene_3d::from_json() not implemented")
+    throw std::runtime_error("nlohmann::json scene_3d::from_json() not fully implemented");
 }
 
 } // namespace nle
