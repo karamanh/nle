@@ -53,6 +53,7 @@ namespace nle
         {
             std::vector<struct vertex> vertices;
             std::vector<uint32_t> indices;
+            std::vector<class texture> textures;
 
             for (const auto &v : it.Vertices)
             {
@@ -80,8 +81,10 @@ namespace nle
             {
                 indices.push_back(i);
             }
+            
+            textures.push_back(texture(it.MeshMaterial.map_Ka));
 
-            auto mesh = make_ref<class mesh_3d>(vertices, indices /** textures later */);
+            auto mesh = make_ref<class mesh_3d>(vertices, indices, textures);
             m_multimesh_3d->meshes().push_back(mesh);
 
             auto material = make_ref<class material>();
@@ -95,5 +98,7 @@ namespace nle
             mesh->set_material(material);
             m_multimesh_3d->meshes().push_back(mesh);
         }
+
+        utils::print(path + " loaded", "number of meshes", m_multimesh_3d->meshes().size());
     }
 } // namespace nle
