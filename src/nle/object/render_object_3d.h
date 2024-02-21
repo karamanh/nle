@@ -11,6 +11,7 @@
 #pragma once
 
 #include "object_3d.h"
+#include "../renderer/shader.h"
 
 #include <GL/gl.h>
 
@@ -52,14 +53,28 @@ public:
 
     virtual void set_visible(bool visible);
     virtual bool visible() const;
+
+    virtual void set_shader(ref<class shader> shader);
+    virtual ref<class shader> shader();
+
+    ref<class object_3d> scene();
     
     nlohmann::json to_json() const override;
     void from_json(const nlohmann::json& j) override;
+    
 private:
+    ref<class shader> m_shader;
+    ref<object_3d> m_scene;
+
     enum render_layer m_render_layer;
     enum render_mode m_render_mode;
 
     bool m_visible;
+
+    void set_scene(ref<class object_3d> scene);
+
+    friend class scene_3d;
+    friend class renderer_3d;
 };
 
 } // namespace nle
