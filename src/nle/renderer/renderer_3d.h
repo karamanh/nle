@@ -32,6 +32,8 @@ public:
     void set_current_scene(ref<scene_3d> scene);
     ref<scene_3d> current_scene();
 
+    ref<window_glfw> render_target();
+
 private:
     ref<window_glfw> m_render_target;
 

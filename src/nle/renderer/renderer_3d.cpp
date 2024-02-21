@@ -5,7 +5,14 @@ namespace nle
     renderer_3d::renderer_3d(ref<window_glfw> render_target)
         : m_render_target(render_target)
     {
-        glClearColor(1.0f, 1.0f, 0.0f, 1.0f);
+        glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_TEXTURE_2D);
+        glEnable(GL_LIGHTING);
+        glDepthFunc(GL_LEQUAL);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        // glClearColor(m_clear_color.r, m_clear_color.g, m_clear_color.b, m_clear_color.a);
 
         render_target->render_routine() = [&](){
             this->main_routine();
@@ -26,19 +33,22 @@ namespace nle
         return m_current_scene;
     }
 
+    ref<window_glfw> renderer_3d::render_target()
+    {
+        return m_render_target;
+    }
+
     void renderer_3d::render_scene(ref<scene_3d> scene)
     {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
         /// TODO: disable depth buffer / render sky / enable depth buffer
 
         for(auto ro : scene->m_render_objects)
         {
-            bool render = m_render_layer_attributes[ro->render_layer()].visible || 
+            bool visible = m_render_layer_attributes[ro->render_layer()].visible || 
                 glm::distance(ro->position(), scene->camera()->position()) < m_render_layer_attributes[ro->render_layer()].render_distance ||
                 ro->visible();
 
-            if(render)
+            if(visible)
             {
                 ro->render();
             }
