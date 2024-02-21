@@ -47,6 +47,13 @@ namespace nle
     void render_object_3d::set_shader(ref<class shader> shader)
     {
         m_shader = shader;
+        for(auto child : children())
+        {
+            if(auto ro = std::dynamic_pointer_cast<render_object_3d>(child))
+            {
+                ro->set_shader(shader);
+            }
+        }
     }
 
     ref<class shader> render_object_3d::shader()
