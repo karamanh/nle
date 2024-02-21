@@ -28,6 +28,11 @@ namespace nle
         glUseProgram(m_program);
     }
 
+    void shader::unuse()
+    {
+        glUseProgram(0);
+    }
+
     void shader::unload()
     {
         if(m_vertex_shader != 0)

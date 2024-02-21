@@ -42,6 +42,8 @@ public:
 
     void use();
 
+    void unuse();
+
     void unload();
     
     unsigned int program() const;
