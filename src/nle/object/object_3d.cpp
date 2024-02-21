@@ -24,6 +24,7 @@ namespace nle
     void object_3d::set_position(glm::vec3 position)
     {
         m_position = position;
+        update();
     }
 
     glm::vec3 object_3d::position() const
@@ -34,6 +35,7 @@ namespace nle
     void object_3d::set_rotation(glm::vec3 rotation)
     {
         m_rotation = rotation;
+        update();
     }
 
     glm::vec3 object_3d::rotation() const
@@ -44,6 +46,7 @@ namespace nle
     void object_3d::set_scale(glm::vec3 scale)
     {
         m_scale = scale;
+        update();
     }
 
     glm::vec3 object_3d::scale() const

@@ -62,11 +62,11 @@ namespace nle
         virtual void move_left();
         virtual void move_up();
         virtual void move_down();
+    
+    protected:
+        virtual void update();
 
     private:
-
-        virtual void update();
-        
         std::string m_id;
         enum object_3d_type m_type;
 
