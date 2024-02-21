@@ -13,13 +13,14 @@
 
 #include "../object/render_object_3d.h"
 #include "../renderer/camera.h"
+#include "../renderer/light.h"
 
 #include <set>
 
 namespace nle
 {
 
-class scene_3d : public object_3d
+class scene_3d : public object_3d, public std::enable_shared_from_this<scene_3d>
 {
 public:
     scene_3d();
@@ -29,6 +30,9 @@ public:
     ref<class camera> camera();
     ref<class camera> default_camera();
 
+    void set_light(ref<class light> light);
+    ref<class light> light();
+    
     /// check if added child is render object, if so, add it to set of render objects.
     void add_child(ref<object_3d> child) override;
 
@@ -43,6 +47,10 @@ private:
     ref<class camera> m_default_camera;
     // this will be set by the user.
     ref<class camera> m_camera;
+
+    ref<class light> m_default_light;
+
+    ref<class light> m_light;
 
     std::set<ref<render_object_3d>> m_render_objects;
 

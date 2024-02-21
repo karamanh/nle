@@ -6,10 +6,15 @@ namespace nle
 scene_3d::scene_3d()
 {
     m_default_camera = make_ref<class camera>();
+    m_default_light = make_ref<class light>();
 }
 
 scene_3d::~scene_3d()
 {
+    for(auto ro : m_render_objects)
+    {
+        delete_child(ro);
+    }
 }
 
 void scene_3d::set_camera(ref<class camera> camera)
@@ -27,6 +32,16 @@ ref<class camera> scene_3d::default_camera()
     return m_default_camera;
 }
 
+void scene_3d::set_light(ref<class light> light)
+{
+    m_light = light;
+}
+
+ref<class light> scene_3d::light()
+{
+    return m_light == nullptr ? m_default_light : m_light;
+}
+
 void scene_3d::add_child(ref<object_3d> child)
 {
     object_3d::add_child(child);
@@ -35,6 +50,7 @@ void scene_3d::add_child(ref<object_3d> child)
     auto ro = std::dynamic_pointer_cast<render_object_3d>(child);
     if(ro)
     {
+        ro->set_scene(shared_from_this());
         m_render_objects.insert(ro);
     }
 }
@@ -45,6 +61,7 @@ void scene_3d::delete_child(ref<object_3d> child)
     auto ro = std::dynamic_pointer_cast<render_object_3d>(child);
     if(ro)
     {
+        ro->m_scene.reset();
         m_render_objects.erase(ro);
     }
 
