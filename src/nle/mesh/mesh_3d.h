@@ -61,9 +61,6 @@ private:
     /// vertex array object
     unsigned int m_vao;
 
-    /// triangles, lines or dots?
-    unsigned int m_primitive_type;
-
     ref<class shader> m_shader;
 
     ref<class material> m_material;
@@ -71,6 +68,8 @@ private:
     ref<class material> m_material_override;
 
     void load();
+
+    friend class mesh_instance_3d;
 };
 
 } // namespace nle

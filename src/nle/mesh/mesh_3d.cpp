@@ -8,7 +8,7 @@ namespace nle
         m_indices(indices),
         m_textures(textures)
     {
-        
+        // m_primitive_type = GL_LINES;
     }
 
     mesh_3d::~mesh_3d()
@@ -58,10 +58,30 @@ namespace nle
     void mesh_3d::load()
     {
         glGenVertexArrays(1, &m_vao);
+        glGenBuffers(1, &m_vbo);
+        glGenBuffers(1, &m_ebo);
+
         glBindVertexArray(m_vao);
 
-        glGenBuffers(1, &m_vbo);
         glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+        glBufferData(GL_ARRAY_BUFFER, m_vertices.size() * sizeof(vertex), m_vertices.data(), GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ebo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.size() * sizeof(uint32_t), m_indices.data(), GL_STATIC_DRAW);
+
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0,3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)0);
+
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1,3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, normal));
+
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(2,3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, color));
+
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(3,2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, uv));
+
+        glBindVertexArray(0);
     }
 
 } // namespace nle
