@@ -21,13 +21,13 @@ namespace nle
 class texture
 {
 public:
-    texture(const std::string& path, bool flip);
-    texture(const uint8_t *blob, size_t size, bool flip);
+    texture(const std::string& path, bool flip = true);
+    texture(const uint8_t *blob, size_t size, bool flip = true);
     virtual ~texture();
 
     uint32_t id() const;
-    void use(uint8_t unit = 0);
-    void unuse(uint8_t unit = 0);
+    void use(uint8_t unit = 0) const;
+    void unuse(uint8_t unit = 0) const;
 private:
     uint32_t m_id;
     int m_width;

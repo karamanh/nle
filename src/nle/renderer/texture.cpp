@@ -25,13 +25,13 @@ namespace nle
         return m_id;
     }
 
-    void texture::use(uint8_t unit)
+    void texture::use(uint8_t unit) const
     {
         glActiveTexture(GL_TEXTURE0 + unit);
         glBindTexture(GL_TEXTURE_2D, m_id);
     }
 
-    void texture::unuse(uint8_t unit)
+    void texture::unuse(uint8_t unit) const
     {
         glBindTexture(GL_TEXTURE_2D + unit, 0);
     }
