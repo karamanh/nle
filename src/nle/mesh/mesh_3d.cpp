@@ -8,11 +8,23 @@ namespace nle
         m_indices(indices),
         m_textures(textures)
     {
-        // m_primitive_type = GL_LINES;
+        load();
     }
 
     mesh_3d::~mesh_3d()
     {
+        if (m_ebo != 0)
+        {
+            glDeleteBuffers(1, &m_ebo);
+        }
+        if (m_vbo != 0)
+        {
+            glDeleteBuffers(1, &m_vbo);
+        }
+        if (m_vao != 0)
+        {
+            glDeleteBuffers(1, &m_vao);
+        }
     }
 
     void mesh_3d::set_shader(ref<class shader> shader)
@@ -67,7 +79,7 @@ namespace nle
         glBufferData(GL_ARRAY_BUFFER, m_vertices.size() * sizeof(vertex), m_vertices.data(), GL_STATIC_DRAW);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ebo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.size() * sizeof(uint32_t), m_indices.data(), GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.size() * sizeof(m_indices[0]), m_indices.data(), GL_STATIC_DRAW);
 
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0,3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)0);
@@ -75,10 +87,10 @@ namespace nle
         glEnableVertexAttribArray(1);
         glVertexAttribPointer(1,3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, normal));
 
-        glEnableVertexAttribArray(1);
+        glEnableVertexAttribArray(2);
         glVertexAttribPointer(2,3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, color));
 
-        glEnableVertexAttribArray(1);
+        glEnableVertexAttribArray(3);
         glVertexAttribPointer(3,2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, uv));
 
         glBindVertexArray(0);
