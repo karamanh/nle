@@ -20,7 +20,7 @@
 namespace nle
 {
 
-class scene_3d : public object_3d, public std::enable_shared_from_this<scene_3d>
+class scene_3d : public render_object_3d, public std::enable_shared_from_this<scene_3d>
 {
 public:
     scene_3d();
@@ -32,6 +32,10 @@ public:
 
     void set_light(ref<class light> light);
     ref<class light> light();
+
+    glm::vec2 target_resolution() const;
+    
+    void render();
     
     /// check if added child is render object, if so, add it to set of render objects.
     void add_child(ref<object_3d> child) override;
@@ -53,6 +57,10 @@ private:
     ref<class light> m_light;
 
     std::set<ref<render_object_3d>> m_render_objects;
+
+    glm::vec2 m_target_resolution;
+
+    void set_target_resolution(glm::vec2 resolution);
 
 friend class renderer_3d;
 };
