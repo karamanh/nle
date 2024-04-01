@@ -12,9 +12,8 @@ namespace nle
         glDepthFunc(GL_LEQUAL);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        // glClearColor(m_clear_color.r, m_clear_color.g, m_clear_color.b, m_clear_color.a);
 
-        render_target->render_routine() = [&](){
+        render_target->render_routine() = [render_target, this](){
             this->main_routine();
         };
     }
@@ -42,10 +41,10 @@ namespace nle
     {
         /// TODO: disable depth buffer / render sky / enable depth buffer
 
-        for(auto ro : scene->m_render_objects)
+        for(auto ro : scene->render_objects())
         {
-            bool visible = m_render_layer_attributes[ro->render_layer()].visible || 
-                glm::distance(ro->position(), scene->camera()->position()) < m_render_layer_attributes[ro->render_layer()].render_distance ||
+            bool visible = m_render_layer_attributes[ro->render_layer()].visible && 
+                glm::distance(ro->position(), scene->camera()->position()) < m_render_layer_attributes[ro->render_layer()].render_distance &&
                 ro->visible();
 
             if(visible)
@@ -67,13 +66,18 @@ namespace nle
 
     void renderer_3d::main_routine()
     {
-        glViewport(0, 0, this->m_render_target->width(), this->m_render_target->height());
+        glViewport(0, 0, m_render_target->width(), m_render_target->height());
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         if(m_current_scene)
         {
+            m_current_scene->set_target_resolution(glm::vec2(m_render_target->width(), m_render_target->height()));
             render_scene(m_current_scene);
         }
+
+        // glfw specific functions like glfwSwapBuffers are called
+        // from window_glfw::display().
+        // we only have gl specific function calls here.
     }
 
 } // namespace nle
