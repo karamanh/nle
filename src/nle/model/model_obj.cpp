@@ -67,9 +67,9 @@ namespace nle
                 vert.normal.y = v.Normal.Y;
                 vert.normal.z = v.Normal.Z;
 
-                vert.color.x = it.MeshMaterial.Kd.X;
-                vert.color.y = it.MeshMaterial.Kd.Y;
-                vert.color.z = it.MeshMaterial.Kd.Z;
+                vert.color.x = it.MeshMaterial.Ka.X;
+                vert.color.y = it.MeshMaterial.Ka.Y;
+                vert.color.z = it.MeshMaterial.Ka.Z;
 
                 vert.uv.x = v.TextureCoordinate.X;
                 vert.uv.y = v.TextureCoordinate.Y;
@@ -82,10 +82,12 @@ namespace nle
                 indices.push_back(i);
             }
             
-            textures.push_back(texture(it.MeshMaterial.map_Ka));
+            if(!it.MeshMaterial.map_Ka.empty())
+            {
+                textures.push_back(texture(it.MeshMaterial.map_Ka));
+            }
 
             auto mesh = make_ref<class mesh_3d>(vertices, indices, textures);
-            m_multimesh_3d->meshes().push_back(mesh);
 
             auto material = make_ref<class material>();
             material->set_ambient({it.MeshMaterial.Ka.X, it.MeshMaterial.Ka.Y, it.MeshMaterial.Ka.Z});
