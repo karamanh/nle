@@ -42,16 +42,23 @@ ref<class light> scene_3d::light()
     return m_light == nullptr ? m_default_light : m_light;
 }
 
+void scene_3d::render()
+{
+    for(auto it : m_render_objects)
+    {
+        it->render();
+    }
+}
+
 void scene_3d::add_child(ref<object_3d> child)
 {
-    object_3d::add_child(child);
+    render_object_3d::add_child(child);
     
     /// register as render object (if it's a render object)
-    auto ro = std::dynamic_pointer_cast<render_object_3d>(child);
-    if(ro)
+    if(auto ro = std::dynamic_pointer_cast<render_object_3d>(child))
     {
-        ro->set_scene(shared_from_this());
-        m_render_objects.insert(ro);
+        auto sp = shared_from_this();
+        ro->set_scene(sp);
     }
 }
 
@@ -65,7 +72,7 @@ void scene_3d::delete_child(ref<object_3d> child)
         m_render_objects.erase(ro);
     }
 
-    object_3d::delete_child(child);
+    render_object_3d::delete_child(child);
 }
 
 nlohmann::json scene_3d::to_json() const
@@ -81,4 +88,13 @@ void scene_3d::from_json(const nlohmann::json &j)
     throw std::runtime_error("nlohmann::json scene_3d::from_json() not fully implemented");
 }
 
+void scene_3d::set_target_resolution(glm::vec2 resolution)
+{
+    m_target_resolution = resolution;
+}
+
+glm::vec2 scene_3d::target_resolution() const
+{
+    return m_target_resolution;
+}
 } // namespace nle
