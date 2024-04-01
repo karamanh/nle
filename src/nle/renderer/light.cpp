@@ -4,6 +4,10 @@ namespace nle
 {
     light::light()
     {
+        m_ambient = glm::vec3(1.0f);
+        m_diffuse = glm::vec3(1.0f);
+        m_specular = glm::vec3(1.0f);
+        m_color = glm::vec3(1.0f);
     }
 
     light::light(glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular)
