@@ -54,9 +54,10 @@ namespace nle
         GLuint unf_material_dissolve = this->shader()->uniform_location("u_material.dissolve");
         // other
         GLuint unf_texture_enabled = this->shader()->uniform_location("u_texture_enabled");
-        GLuint unf_sky_distance_fog_enabled = this->shader()->uniform_location("u_sky.distance_fog_enabled");
-        GLuint unf_sky_distance_fog_near = this->shader()->uniform_location("u_sky.distance_fog_near");
-        GLuint unf_sky_distance_fog_far = this->shader()->uniform_location("u_sky.distance_fog_far");
+        /// TODO: implement a sky class, then re-enable and set following uniforms.
+        // GLuint unf_sky_distance_fog_enabled = this->shader()->uniform_location("u_sky.distance_fog_enabled");
+        // GLuint unf_sky_distance_fog_near = this->shader()->uniform_location("u_sky.distance_fog_near");
+        // GLuint unf_sky_distance_fog_far = this->shader()->uniform_location("u_sky.distance_fog_far");
 
         /// TODO: For now i don't know how, but later we might use multiple textures
         /// needs to be implemented though. Until then, we only use textures()[0]
@@ -81,6 +82,7 @@ namespace nle
             glUniform3f(unf_material_specular, this->mesh()->material()->specular().x, this->mesh()->material()->specular().y, this->mesh()->material()->specular().z);
             glUniform1f(unf_material_shininess, this->mesh()->material()->shininess());
             glUniform1f(unf_material_dissolve, this->mesh()->material()->dissolve());
+            glUniform1i(unf_material_accept_light, static_cast<int>(this->mesh()->material()->accept_light()));
             accept_light = this->mesh()->material()->accept_light();
         }
         
