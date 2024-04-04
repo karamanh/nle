@@ -4,7 +4,7 @@ namespace nle
 {
     camera::camera()
     {
-        m_field_of_view = 75.0f;
+        m_field_of_view = 45.0f;
         m_near = 0.1f;
         m_far = 100.0f;
     }
