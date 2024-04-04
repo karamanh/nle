@@ -1,8 +1,12 @@
 #include "object_3d.h"
 
+#include <glm/gtx/euler_angles.hpp>
+
 namespace nle
 {
-    const glm::vec3 WORLD_UP = {0.f, 1.f, 0.f};
+    const glm::vec3 WORLD_UP = glm::vec3(0.0f, 1.0f, 0.0f);
+    const glm::vec3 WORLD_FRONT = glm::vec3(0.0f, 0.0f, -1.0f);
+    const glm::vec3 WORLD_RIGHT = glm::vec3(1.0f, 0.0f, 0.0f);
 
     object_3d::object_3d(const std::string &id)
     {
@@ -12,9 +16,12 @@ namespace nle
         m_rotation = glm::vec3(0.0f);
         m_scale = glm::vec3(1.0f);
         m_velocity = glm::vec3(0.0f);
-        m_right = glm::vec3(1.0f, 0.0f, 0.0f);
-        m_up = glm::vec3(0.0f, 1.0f, 0.0f);
-        m_front = glm::vec3(0.0f, 0.0f, 1.0f);
+        m_speed = 1.0f;
+        m_right = WORLD_RIGHT;
+        m_up = WORLD_UP;
+        m_front = WORLD_FRONT;
+
+        update();
     }
 
     object_3d::~object_3d()
@@ -24,6 +31,10 @@ namespace nle
     void object_3d::set_position(glm::vec3 position)
     {
         m_position = position;
+        for(auto it : m_children)
+        {
+            it->set_position(m_position);
+        }
         update();
     }
 
@@ -35,6 +46,10 @@ namespace nle
     void object_3d::set_rotation(glm::vec3 rotation)
     {
         m_rotation = rotation;
+        for(auto it : m_children)
+        {
+            it->set_rotation(m_rotation);
+        }
         update();
     }
 
@@ -46,6 +61,10 @@ namespace nle
     void object_3d::set_scale(glm::vec3 scale)
     {
         m_scale = scale;
+        for(auto it : m_children)
+        {
+            it->set_scale(m_scale);
+        }
         update();
     }
 
@@ -57,6 +76,10 @@ namespace nle
     void object_3d::set_velocity(glm::vec3 velocity)
     {
         m_velocity = velocity;
+        for(auto it : m_children)
+        {
+            it->set_velocity(m_velocity);
+        }
     }
 
     glm::vec3 object_3d::velocity() const
@@ -105,6 +128,11 @@ namespace nle
     void object_3d::set_parent(ref<object_3d> parent)
     {
         m_parent = parent;
+        m_root = parent->root();
+        for(auto it : m_children)
+        {
+            it->set_root(m_root);
+        }
     }
 
     ref<object_3d> object_3d::parent() const
@@ -212,11 +240,11 @@ namespace nle
 
     void object_3d::update()
     {
-        m_front.x = cos(glm::radians(rotation().y)) * cos(glm::radians(rotation().x));
-        m_front.y = sin(glm::radians(rotation().x));
-        m_front.z = sin(glm::radians(rotation().y)) * cos(glm::radians(rotation().x));
-        m_front = glm::normalize(m_front);
+        float yaw = glm::radians(rotation().y);
+        float pitch = glm::radians(rotation().x);
 
+        glm::mat4 rot = glm::yawPitchRoll(yaw, pitch, 0.0f);
+        m_front = glm::normalize(glm::vec3(rot * glm::vec4(WORLD_FRONT, 0.0f)));
         m_right = glm::normalize(glm::cross(m_front, WORLD_UP));
         m_up = glm::normalize(glm::cross(m_right, m_front));
     }
