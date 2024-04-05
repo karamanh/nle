@@ -93,7 +93,7 @@ namespace nle
             glUniform3f(unf_light_ambient, scene->light()->ambient().x, scene->light()->ambient().y, scene->light()->ambient().z);
             glUniform3f(unf_light_diffuse, scene->light()->diffuse().x, scene->light()->diffuse().y, scene->light()->diffuse().z);
             glUniform3f(unf_light_specular, scene->light()->specular().x, scene->light()->specular().y, scene->light()->specular().z);
-            glUniform3f(unf_light_direction, glm::radians(scene->light()->rotation().x), glm::radians(scene->light()->rotation().y), glm::radians(scene->light()->rotation().z));
+            glUniform3f(unf_light_direction, scene->light()->front().x, scene->light()->front().y, scene->light()->front().z);
         }
         else
         {
