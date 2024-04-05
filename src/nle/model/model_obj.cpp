@@ -67,9 +67,9 @@ namespace nle
                 vert.normal.y = v.Normal.Y;
                 vert.normal.z = v.Normal.Z;
 
-                vert.color.x = it.MeshMaterial.Ka.X;
-                vert.color.y = it.MeshMaterial.Ka.Y;
-                vert.color.z = it.MeshMaterial.Ka.Z;
+                vert.color.x = it.MeshMaterial.Kd.X;
+                vert.color.y = it.MeshMaterial.Kd.Y;
+                vert.color.z = it.MeshMaterial.Kd.Z;
 
                 vert.uv.x = v.TextureCoordinate.X;
                 vert.uv.y = v.TextureCoordinate.Y;
