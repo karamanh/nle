@@ -26,7 +26,7 @@ class mesh_3d
 {
 public:
 
-    mesh_3d(const std::vector<struct vertex>& vertices, const std::vector<uint32_t>& indices, const std::vector<class texture>& textures = {});
+    mesh_3d(const std::vector<struct vertex>& vertices, const std::vector<uint32_t>& indices, ref<class texture> texture);
     virtual ~mesh_3d();
 
     void set_shader(ref<class shader> shader);
@@ -39,8 +39,8 @@ public:
     const std::vector<struct vertex>& vertices();
 
     const std::vector<uint32_t>& indices();
-    
-    const std::vector<class texture>& textures();
+
+    ref<class texture> texture();
 private:
 
     /// vertices
@@ -50,7 +50,8 @@ private:
     std::vector<uint32_t> m_indices;
 
     /// textures
-    std::vector<class texture> m_textures;
+    // std::vector<class texture> m_textures;
+    ref<class texture> m_texture;
 
     /// element buffer object
     unsigned int m_ebo;

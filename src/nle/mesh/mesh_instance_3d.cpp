@@ -59,16 +59,10 @@ namespace nle
         // GLuint unf_sky_distance_fog_near = this->shader()->uniform_location("u_sky.distance_fog_near");
         // GLuint unf_sky_distance_fog_far = this->shader()->uniform_location("u_sky.distance_fog_far");
 
-        /// TODO: For now i don't know how, but later we might use multiple textures
-        /// needs to be implemented though. Until then, we only use textures()[0]
-        if (!mesh()->textures().empty())
+        if(this->mesh()->texture())
         {
-            this->mesh()->textures()[0].use();
             glUniform1i(unf_texture_enabled, 1);
-        }
-        else
-        {
-            glUniform1i(unf_texture_enabled, 0);
+            this->mesh()->texture()->use();
         }
 
         /// TODO: render sky
@@ -123,5 +117,9 @@ namespace nle
         glBindVertexArray(0);
         
         this->shader()->unuse();
+        if(this->mesh()->texture())
+        {
+            this->mesh()->texture()->unuse();
+        }
     }
 } // namespace nle

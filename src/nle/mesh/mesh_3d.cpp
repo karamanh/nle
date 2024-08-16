@@ -3,10 +3,10 @@
 namespace nle
 {
 
-    mesh_3d::mesh_3d(const std::vector<struct vertex> &vertices, const std::vector<uint32_t> &indices, const std::vector<class texture>& textures)
+    mesh_3d::mesh_3d(const std::vector<struct vertex> &vertices, const std::vector<uint32_t> &indices, ref<class texture> texture)
         : m_vertices(vertices),
         m_indices(indices),
-        m_textures(textures)
+        m_texture(texture)
     {
         load();
     }
@@ -62,9 +62,9 @@ namespace nle
         return m_indices;
     }
 
-    const std::vector<class texture> &mesh_3d::textures()
+    ref<class texture> mesh_3d::texture()
     {
-        return m_textures;
+        return m_texture;
     }
 
     void mesh_3d::load()
@@ -82,7 +82,8 @@ namespace nle
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.size() * sizeof(m_indices[0]), m_indices.data(), GL_STATIC_DRAW);
 
         glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0,3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)0);
+        glVertexAttribPointer(0,3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, position));
+        // glVertexAttribPointer(0,3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)0);
 
         glEnableVertexAttribArray(1);
         glVertexAttribPointer(1,3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, normal));

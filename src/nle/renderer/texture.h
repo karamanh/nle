@@ -29,7 +29,7 @@ public:
     void use(uint8_t unit = 0) const;
     void unuse(uint8_t unit = 0) const;
 private:
-    uint32_t m_id;
+    uint32_t m_id = 0U;
     int m_width;
     int m_height;
     int m_bit_depth;
