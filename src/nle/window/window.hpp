@@ -11,8 +11,6 @@
 
 #pragma once
 
-#include <functional>
-
 namespace nle
 {
 
@@ -33,6 +31,9 @@ public:
     virtual void set_fullscreen(bool fullscreen) = 0;
     virtual bool fullscreen() = 0;
 
+    virtual void set_cursor_visibility(bool visible) = 0;
+    virtual bool cursor_visibility() = 0;
+
     int width() { return m_width; }
     int height() { return m_height; }
     bool closed() { return m_closed; }
@@ -42,8 +43,9 @@ protected:
     handle_type m_handle;
     int m_width;
     int m_height;
-    bool m_closed;
-    bool m_fullscreen;
+    bool m_closed = false;
+    bool m_fullscreen = false;
+    bool m_cursor_visible = false;
     std::function<void()> m_render_routine;
 };
 

@@ -38,6 +38,8 @@ window_glfw::window_glfw(unsigned int width, unsigned int height, const std::str
         throw std::runtime_error("fatal_error: could not initialize glew. error code: " + std::to_string(err));
     }
 
+    m_input_handler = make_ref<input_handler_glfw>(m_handle);
+
     const GLubyte* vendor = glGetString(GL_VENDOR);
     const GLubyte* renderer = glGetString(GL_RENDERER);
     utils::print((char*)vendor);
@@ -61,6 +63,9 @@ void window_glfw::display()
         glfwGetWindowSize(m_handle, &m_width, &m_height);
 
         render_routine()(); // or m_render_routine() if this is too annoying :P
+
+        m_input_handler->poll_keyboard_input();
+        m_input_handler->poll_mouse_input();
         
         glfwSwapBuffers(m_handle);
         glfwPollEvents();
@@ -89,6 +94,21 @@ void window_glfw::set_fullscreen(bool fullscreen)
 bool window_glfw::fullscreen()
 {
     return m_fullscreen;
+}
+
+void window_glfw::set_cursor_visibility(bool visible)
+{
+    glfwSetInputMode(m_handle, GLFW_CURSOR, (m_cursor_visible = visible) ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
+}
+
+bool window_glfw::cursor_visibility()
+{
+    return m_cursor_visible;
+}
+
+ref<input_handler_glfw> window_glfw::input_handler()
+{
+    return m_input_handler;
 }
 
 } // namespace nle

@@ -11,13 +11,15 @@
 
 #pragma once
 
-#include "window.hpp"
-
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
 #include <string>
 #include <functional>
+
+#include "window.hpp"
+#include "input_handler_glfw.h"
+#include "../core/ref.h"
 
 namespace nle
 {
@@ -33,7 +35,13 @@ public:
     void set_fullscreen(bool fullscreen);
     bool fullscreen();
 
+    void set_cursor_visibility(bool visible);
+    bool cursor_visibility();
+
+    ref<input_handler_glfw> input_handler();
+
 private:
+    ref<input_handler_glfw> m_input_handler;
 };
 
 } // namespace nle
