@@ -13,7 +13,7 @@
 
 #include "multimesh_3d.h"
 #include "mesh_instance_3d.h"
-#include "../object/render_object_3d.h"
+#include "../renderer/render_object_3d.h"
 
 namespace nle
 {

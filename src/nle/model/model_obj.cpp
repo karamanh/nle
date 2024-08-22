@@ -53,7 +53,7 @@ namespace nle
         {
             std::vector<struct vertex> vertices;
             std::vector<uint32_t> indices;
-            std::vector<class texture> textures;
+            ref<texture> tex;
 
             for (const auto &v : it.Vertices)
             {
@@ -82,12 +82,31 @@ namespace nle
                 indices.push_back(i);
             }
             
-            if(!it.MeshMaterial.map_Ka.empty())
+            if(!it.MeshMaterial.map_Kd.empty())
             {
-                textures.push_back(texture(it.MeshMaterial.map_Ka));
+
+                auto texpath = std::filesystem::path(it.MeshMaterial.map_Kd);
+
+                if (texpath.is_absolute())
+                {
+                    if (std::filesystem::exists(texpath))
+                    {
+                        tex = make_ref<class texture>(texpath);
+                    }
+                }
+                else if (texpath.is_relative())
+                {
+                    for (auto const &dir_entry : std::filesystem::recursive_directory_iterator(std::filesystem::path(path).parent_path()))
+                    {
+                        if (dir_entry.path().filename() == texpath.filename())
+                        {
+                            tex = make_ref<class texture>(dir_entry.path());
+                        }
+                    }
+                }
             }
 
-            auto mesh = make_ref<class mesh_3d>(vertices, indices, textures);
+            auto mesh = make_ref<class mesh_3d>(vertices, indices, tex);
 
             auto material = make_ref<class material>();
             material->set_ambient({it.MeshMaterial.Ka.X, it.MeshMaterial.Ka.Y, it.MeshMaterial.Ka.Z});

@@ -66,8 +66,6 @@ namespace nle
 
         glBindTexture(GL_TEXTURE_2D, 0);
 
-        std::cout << "texture loaded" << std::endl;
-
         stbi_image_free(data);
     }
 

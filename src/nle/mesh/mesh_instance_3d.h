@@ -12,7 +12,7 @@
 #pragma once
 
 #include "mesh_3d.h"
-#include "../object/render_object_3d.h"
+#include "../renderer/render_object_3d.h"
 
 namespace nle
 {

@@ -7,9 +7,9 @@ namespace nle
     {
         glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
         glEnable(GL_TEXTURE_2D);
         glEnable(GL_LIGHTING);
-        glDepthFunc(GL_LEQUAL);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -40,6 +40,13 @@ namespace nle
     void renderer_3d::render_scene(ref<scene_3d> scene)
     {
         /// TODO: disable depth buffer / render sky / enable depth buffer
+
+        if(scene->sky())
+        {
+
+            scene->sky()->set_position(scene->camera()->position());
+            scene->sky()->render();
+        }
 
         for(auto ro : scene->render_objects())
         {

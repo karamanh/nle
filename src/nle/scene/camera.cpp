@@ -6,7 +6,9 @@ namespace nle
     {
         m_field_of_view = 45.0f;
         m_near = 0.1f;
-        m_far = 100.0f;
+        m_far = 1000.0f;
+        m_turn_speed = 1.0f;
+        m_free_roam = false;
     }
 
     camera::~camera()

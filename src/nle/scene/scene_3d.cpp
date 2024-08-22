@@ -42,6 +42,18 @@ ref<class light> scene_3d::light()
     return m_light == nullptr ? m_default_light : m_light;
 }
 
+void scene_3d::set_sky(ref<class sky> sky)
+{
+    m_sky = sky;
+    m_sky->set_scene(shared_from_this());
+    m_sky->set_shader(this->shader());
+}
+
+ref<class sky> scene_3d::sky()
+{
+    return m_sky;
+}
+
 void scene_3d::render()
 {
     for(auto it : m_render_objects)

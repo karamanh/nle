@@ -54,6 +54,7 @@ namespace nle
         GLuint unf_material_dissolve = this->shader()->uniform_location("u_material.dissolve");
         // other
         GLuint unf_texture_enabled = this->shader()->uniform_location("u_texture_enabled");
+        
         /// TODO: implement a sky class, then re-enable and set following uniforms.
         // GLuint unf_sky_distance_fog_enabled = this->shader()->uniform_location("u_sky.distance_fog_enabled");
         // GLuint unf_sky_distance_fog_near = this->shader()->uniform_location("u_sky.distance_fog_near");
@@ -69,15 +70,17 @@ namespace nle
 
         bool accept_light = true;
 
-        if(this->mesh()->material())
+        auto material = this->material_override() ? this->material_override() : this->mesh()->material();
+
+        if(material)
         {
-            glUniform3f(unf_material_ambient, this->mesh()->material()->ambient().x, this->mesh()->material()->ambient().y, this->mesh()->material()->ambient().z);
-            glUniform3f(unf_material_diffuse, this->mesh()->material()->diffuse().x, this->mesh()->material()->diffuse().y, this->mesh()->material()->diffuse().z);
-            glUniform3f(unf_material_specular, this->mesh()->material()->specular().x, this->mesh()->material()->specular().y, this->mesh()->material()->specular().z);
-            glUniform1f(unf_material_shininess, this->mesh()->material()->shininess());
-            glUniform1f(unf_material_dissolve, this->mesh()->material()->dissolve());
-            glUniform1i(unf_material_accept_light, static_cast<int>(this->mesh()->material()->accept_light()));
-            accept_light = this->mesh()->material()->accept_light();
+            glUniform3f(unf_material_ambient, material->ambient().x, material->ambient().y, material->ambient().z);
+            glUniform3f(unf_material_diffuse, material->diffuse().x, material->diffuse().y, material->diffuse().z);
+            glUniform3f(unf_material_specular, material->specular().x, material->specular().y, material->specular().z);
+            glUniform1f(unf_material_shininess, material->shininess());
+            glUniform1f(unf_material_dissolve, material->dissolve());
+            glUniform1i(unf_material_accept_light, static_cast<int>(material->accept_light()));
+            accept_light = material->accept_light();
         }
         
         if (accept_light && scene->light()->enabled())

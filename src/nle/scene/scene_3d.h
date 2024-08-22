@@ -11,9 +11,10 @@
 
 #pragma once
 
-#include "../object/render_object_3d.h"
-#include "../renderer/camera.h"
-#include "../renderer/light.h"
+#include "../renderer/render_object_3d.h"
+#include "camera.h"
+#include "light.h"
+#include "sky.h"
 
 #include <set>
 
@@ -32,6 +33,9 @@ public:
 
     void set_light(ref<class light> light);
     ref<class light> light();
+
+    void set_sky(ref<class sky> sky);
+    ref<class sky> sky();
 
     glm::vec2 target_resolution() const;
     
@@ -55,6 +59,8 @@ private:
     ref<class light> m_default_light;
 
     ref<class light> m_light;
+
+    ref<class sky> m_sky;
 
     std::set<ref<render_object_3d>> m_render_objects;
 
