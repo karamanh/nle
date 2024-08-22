@@ -40,6 +40,7 @@ public:
 
     const std::vector<uint32_t>& indices();
 
+    void set_texture(ref<class texture> texture);
     ref<class texture> texture();
 private:
 
@@ -50,7 +51,6 @@ private:
     std::vector<uint32_t> m_indices;
 
     /// textures
-    // std::vector<class texture> m_textures;
     ref<class texture> m_texture;
 
     /// element buffer object

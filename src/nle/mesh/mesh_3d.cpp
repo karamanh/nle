@@ -6,7 +6,8 @@ namespace nle
     mesh_3d::mesh_3d(const std::vector<struct vertex> &vertices, const std::vector<uint32_t> &indices, ref<class texture> texture)
         : m_vertices(vertices),
         m_indices(indices),
-        m_texture(texture)
+        m_texture(texture),
+        m_material(make_ref<class material>())
     {
         load();
     }
@@ -60,6 +61,11 @@ namespace nle
     const std::vector<uint32_t> &mesh_3d::indices()
     {
         return m_indices;
+    }
+
+    void mesh_3d::set_texture(ref<class texture> texture)
+    {
+        m_texture = texture;
     }
 
     ref<class texture> mesh_3d::texture()
