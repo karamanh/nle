@@ -86,7 +86,6 @@ vec4 point_light_factor(PointLight pl)
 }
 
 void main() {
-
     vec4 light_factor = vec4(1.f);
     vec3 view_direction = normalize(u_eye_position - io_frag_position);
     vec3 refl = reflect(view_direction, normalize(io_normal));
@@ -118,16 +117,9 @@ void main() {
         io_color = io_vertex_color * light_factor;
     }
 
-    // io_color = gl_FragColor * (1.0 - u_material.dissolve) + io_color * (u_material.dissolve);
     if(u_sky.distance_fog_enabled == 1)
     {
         io_color.a = u_material.dissolve;
         io_color += fog_factor();
-    }
-
-    PointLight pl0 = create_point_light(u_eye_position, vec4(1.0, 0.0, 0.0, 1.0));
-    if(pl0.enabled == 1)
-    {
-        io_color += point_light_factor(pl0);
     }
 }
