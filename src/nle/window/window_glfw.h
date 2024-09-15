@@ -20,7 +20,6 @@
 #include "window.hpp"
 #include "input_handler_glfw.h"
 #include "../core/ref.h"
-#include "../ui/ui.hpp"
 
 namespace nle
 {
