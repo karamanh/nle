@@ -13,7 +13,7 @@ nle::~nle()
 {
 }
 
-ref<window_glfw> nle::window_glfw()
+ref<window_glfw> nle::window()
 {
     return m_window;
 }

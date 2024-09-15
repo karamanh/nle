@@ -3,7 +3,6 @@
 #include "../../../vendor/OBJ_Loader.h"
 
 #include <algorithm>
-#include <filesystem>
 
 namespace nle
 {
@@ -85,18 +84,18 @@ namespace nle
             if(!it.MeshMaterial.map_Kd.empty())
             {
 
-                auto texpath = std::filesystem::path(it.MeshMaterial.map_Kd);
+                auto texpath = fs::path(it.MeshMaterial.map_Kd);
 
                 if (texpath.is_absolute())
                 {
-                    if (std::filesystem::exists(texpath))
+                    if (fs::exists(texpath))
                     {
                         tex = make_ref<class texture>(texpath);
                     }
                 }
                 else if (texpath.is_relative())
                 {
-                    for (auto const &dir_entry : std::filesystem::recursive_directory_iterator(std::filesystem::path(path).parent_path()))
+                    for (auto const &dir_entry : fs::recursive_directory_iterator(fs::path(path).parent_path()))
                     {
                         if (dir_entry.path().filename() == texpath.filename())
                         {

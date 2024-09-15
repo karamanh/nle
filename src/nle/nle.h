@@ -24,7 +24,7 @@ public:
     nle();
     ~nle();
 
-    ref<class window_glfw> window_glfw();
+    ref<class window_glfw> window();
 
     ref<class renderer_3d> renderer_3d(); 
 

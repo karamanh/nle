@@ -25,7 +25,7 @@ namespace nle
         virtual ~model() {}
         virtual ref<multimesh_instance_3d> create_instance() = 0;
 
-        ref<class multimesh_3d> multimesh_3d() { return m_multimesh_3d; }
+        ref<class multimesh_3d> multimesh() { return m_multimesh_3d; }
 
     protected:
         ref<class multimesh_3d> m_multimesh_3d;
