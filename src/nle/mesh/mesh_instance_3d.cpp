@@ -65,6 +65,10 @@ namespace nle
             glUniform1i(unf_texture_enabled, 1);
             this->mesh()->texture()->use();
         }
+        else
+        {
+            glUniform1i(unf_texture_enabled, 0);
+        }
 
         /// TODO: render sky
 
