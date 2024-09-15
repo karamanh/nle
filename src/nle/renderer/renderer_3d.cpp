@@ -13,7 +13,7 @@ namespace nle
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        render_target->render_routine() = [render_target, this](){
+        render_target->render_3d() = [this](){
             this->main_routine();
         };
     }

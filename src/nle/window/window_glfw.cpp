@@ -62,7 +62,15 @@ void window_glfw::display()
     {
         glfwGetWindowSize(m_handle, &m_width, &m_height);
 
-        render_routine()(); // or m_render_routine() if this is too annoying :P
+        if(render_3d())
+        {
+            render_3d()();
+        }
+
+        if(render_ui())
+        {
+            render_ui()();
+        }
 
         m_input_handler->poll_keyboard_input();
         m_input_handler->poll_mouse_input();

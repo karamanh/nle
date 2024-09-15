@@ -37,7 +37,8 @@ public:
     int width() { return m_width; }
     int height() { return m_height; }
     bool closed() { return m_closed; }
-    std::function<void()>& render_routine() { return m_render_routine; }
+    std::function<void()>& render_3d() { return m_render_3d; }
+    std::function<void()>& render_ui() { return m_render_ui; }
 
 protected:
     handle_type m_handle;
@@ -46,7 +47,8 @@ protected:
     bool m_closed = false;
     bool m_fullscreen = false;
     bool m_cursor_visible = false;
-    std::function<void()> m_render_routine;
+    std::function<void()> m_render_3d;
+    std::function<void()> m_render_ui;
 };
 
 } // namespace nle
