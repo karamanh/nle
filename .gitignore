@@ -9,3 +9,4 @@ imgui.ini
 
 # local project assets (large binary scenes & models)
 nle_projdir/
+*.d
