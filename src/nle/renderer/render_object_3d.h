@@ -88,7 +88,17 @@ public:
     
     nlohmann::json to_json() const override;
     void from_json(const nlohmann::json& j) override;
-    
+
+protected:
+    /**
+     * @brief Tells this object, and everything under it, which scene it is in.
+     *
+     * Called by scene_3d as objects are added. Override it to react to joining
+     * a scene -- terrain_3d uses it to hand over props that were scattered
+     * before there was a scene to put them in -- and call the base version.
+     */
+    virtual void set_scene(ref<class render_object_3d> scene);
+
 private:
     ref<class shader> m_shader;
     ref<class render_object_3d> m_scene;
@@ -101,8 +111,6 @@ private:
     enum primitive_type m_primitive_type;
 
     bool m_visible;
-
-    void set_scene(ref<class render_object_3d> scene);
 
     friend class scene_3d;
     friend class renderer_3d;
