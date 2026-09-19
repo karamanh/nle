@@ -130,4 +130,9 @@ ref<input_handler_glfw> window_glfw::input_handler()
     return m_input_handler;
 }
 
+GLFWwindow* window_glfw::handle() const
+{
+    return m_handle;
+}
+
 } // namespace nle

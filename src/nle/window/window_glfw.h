@@ -40,6 +40,10 @@ public:
 
     ref<input_handler_glfw> input_handler();
 
+    /// The underlying GLFW window. Needed by anything that talks to GLFW
+    /// directly, such as the imgui backend.
+    GLFWwindow* handle() const;
+
 private:
     ref<input_handler_glfw> m_input_handler;
 };

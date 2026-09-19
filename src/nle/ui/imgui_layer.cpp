@@ -1,0 +1,77 @@
+#include "imgui_layer.h"
+
+#include "../core/utils.h"
+
+#include "../../../vendor/imgui/imgui.h"
+#include "../../../vendor/imgui/backends/imgui_impl_glfw.h"
+#include "../../../vendor/imgui/backends/imgui_impl_opengl3.h"
+
+#include <string>
+
+namespace nle
+{
+
+imgui_layer::imgui_layer(ref<window_glfw> window, unsigned int glsl_version)
+    : m_window(window)
+{
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+    // imgui installs its own GLFW callbacks and chains to any already there,
+    // which is what lets it see input without the engine forwarding anything.
+    ImGui_ImplGlfw_InitForOpenGL(m_window ? m_window->handle() : nullptr, true);
+
+    const std::string version = "#version " + std::to_string(glsl_version);
+    ImGui_ImplOpenGL3_Init(version.c_str());
+
+    ImGui::StyleColorsDark();
+}
+
+imgui_layer::~imgui_layer()
+{
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+}
+
+void imgui_layer::begin_frame()
+{
+    if(m_frame_open)
+    {
+        return;
+    }
+
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    m_frame_open = true;
+}
+
+void imgui_layer::end_frame()
+{
+    if(!m_frame_open)
+    {
+        return;
+    }
+
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+    m_frame_open = false;
+}
+
+bool imgui_layer::wants_mouse() const
+{
+    return ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantCaptureMouse;
+}
+
+bool imgui_layer::wants_keyboard() const
+{
+    return ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantCaptureKeyboard;
+}
+
+} // namespace nle
