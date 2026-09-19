@@ -111,6 +111,10 @@ public:
         return key >= 0 && static_cast<size_t>(key) < m_keys.size() && m_keys[static_cast<size_t>(key)];
     }
 
+    /// Cursor position in pixels, origin at the top left of the window.
+    double mouse_x() const { return m_mouse_last_x; }
+    double mouse_y() const { return m_mouse_last_y; }
+
     bool mouse_button_down(int button) const
     {
         return button >= 0 && static_cast<size_t>(button) < m_mouse_buttons.size()

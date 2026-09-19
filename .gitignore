@@ -1,7 +1,6 @@
 # build artifacts
 *.o
 build/
-output/
 
 # editor / tooling
 .vscode/

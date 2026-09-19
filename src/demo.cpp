@@ -6,7 +6,13 @@
 
 #include <glm/gtc/random.hpp>
 
+#include <string>
+
 #include "nle.h"
+
+#ifndef NLE_SHADER_DIR
+#define NLE_SHADER_DIR "shader"
+#endif
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
 {
@@ -18,7 +24,9 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
     auto executionermodel = nle::make_ref<nle::model_obj>("nle_projdir/models/Airplane.obj");
     auto spaceshipmodel = nle::make_ref<nle::model_obj>("nle_projdir/models/SkyNebula.obj");
     auto asteroidmodel = nle::make_ref<nle::model_obj>("nle_projdir/models/Asteroid1.obj");
-    auto shader = nle::make_ref<nle::shader>("shader/default_vert.glsl", "shader/default_frag.glsl", nle::shader_source::file);
+    auto shader = nle::make_ref<nle::shader>(std::string(NLE_SHADER_DIR) + "/default_vert.glsl",
+                                             std::string(NLE_SHADER_DIR) + "/default_frag.glsl",
+                                             nle::shader_source::file);
     shader->load();
 
     auto scene = nle::make_ref<nle::scene_3d>();
@@ -74,7 +82,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
     nle::ref<nle::gltf_instance_3d> bar;
     try
     {
-        auto barmodel = nle::make_ref<nle::model_gltf>("tests/assets/skinned_bar.gltf");
+        auto barmodel = nle::make_ref<nle::model_gltf>(std::string(NLE_PROJECT_DIR) + "/tests/assets/skinned_bar.gltf");
         bar = barmodel->create_gltf_instance();
         bar->set_position({0.0f, 0.0f, 4.0f});
         scene->add_child(bar);

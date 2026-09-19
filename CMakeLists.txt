@@ -15,6 +15,11 @@ endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# Everything built lands under the build directory this was configured with.
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+
 # Where the engine lives. A project that pulls this file in through
 # add_subdirectory() gets a CMAKE_SOURCE_DIR pointing at itself rather than at
 # the engine, so paths into the engine tree use this instead.
@@ -93,6 +98,9 @@ else()
     target_link_libraries(nle PUBLIC "${IMGUI_LIBRARY}")
 endif()
 
+# Shaders are read at runtime, so executables need to know where they live.
+set(NLE_SHADER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shader" CACHE PATH "runtime shader directory")
+
 # ---------------------------------------------------------------------------
 # demo
 # ---------------------------------------------------------------------------
@@ -102,14 +110,12 @@ if(NLE_BUILD_DEMO)
     target_link_libraries(demo PRIVATE nle)
     target_compile_options(demo PRIVATE -Wall -Wextra)
 
-    # The demo reads shader/ and nle_projdir/ by relative path, so it runs from
-    # the source tree rather than from the build directory.
-    set_target_properties(demo PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/output")
+    # The demo still reads nle_projdir/ by relative path, so run it from the
+    # source tree: ./build/bin/demo
+    target_compile_definitions(demo PRIVATE
+        NLE_SHADER_DIR="${NLE_SHADER_DIR}"
+        NLE_PROJECT_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 endif()
-
-# Shaders are read at runtime, so executables need to know where they live.
-set(NLE_SHADER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shader" CACHE PATH "runtime shader directory")
 
 # ---------------------------------------------------------------------------
 # tests

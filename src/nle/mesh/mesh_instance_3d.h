@@ -26,7 +26,8 @@ public:
     ref<class mesh_3d> mesh(); 
 
     void render(render_command_buffer& command_buffer, const render_context& context) override;
-private:
+protected:
+    /// Subclasses such as terrain_3d rebuild their own geometry.
     ref<class mesh_3d> m_mesh;
 };
 
