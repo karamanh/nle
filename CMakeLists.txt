@@ -42,9 +42,12 @@ if(NOT glfw3_FOUND)
     pkg_check_modules(GLFW REQUIRED IMPORTED_TARGET glfw3)
 endif()
 
-# imgui and stb are taken from the system, as the Makefile build did. The imgui
-# headers under vendor/ are what the sources include; the implementation comes
-# from the system library.
+# imgui and stb come from the system. The headers come from there too, which
+# they did not use to: vendor/imgui is pinned at 1.86 while the system library
+# here is 1.90.1, and ImGuiIO does not have the same layout in both. Compiling
+# against one and linking the other is undefined behaviour that happens to
+# start by silently reading the wrong fields. vendor/imgui is left in place as
+# a submodule but is no longer on the include path.
 pkg_check_modules(IMGUI IMPORTED_TARGET imgui)
 
 find_library(STB_LIBRARY NAMES stb)
@@ -68,9 +71,7 @@ target_include_directories(nle PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/src"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nle"
     "${CMAKE_CURRENT_SOURCE_DIR}/vendor"
-    "${CMAKE_CURRENT_SOURCE_DIR}/vendor/nlohmann"
-    "${CMAKE_CURRENT_SOURCE_DIR}/vendor/imgui"
-    "${CMAKE_CURRENT_SOURCE_DIR}/vendor/imgui/backends")
+    "${CMAKE_CURRENT_SOURCE_DIR}/vendor/nlohmann")
 
 target_compile_options(nle PRIVATE -Wall -Wextra)
 

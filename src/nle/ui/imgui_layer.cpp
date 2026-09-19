@@ -2,9 +2,11 @@
 
 #include "../core/utils.h"
 
-#include "../../../vendor/imgui/imgui.h"
-#include "../../../vendor/imgui/backends/imgui_impl_glfw.h"
-#include "../../../vendor/imgui/backends/imgui_impl_opengl3.h"
+// From the system imgui, which is also the one linked. See the note in
+// CMakeLists.txt about vendor/imgui.
+#include <imgui.h>
+#include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_opengl3.h>
 
 #include <string>
 
