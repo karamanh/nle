@@ -41,11 +41,12 @@ namespace nle
     {
         /// TODO: disable depth buffer / render sky / enable depth buffer
 
+        m_command_buffer.clear();
+
         if(scene->sky())
         {
-
             scene->sky()->set_position(scene->camera()->position());
-            scene->sky()->render();
+            scene->sky()->render(m_command_buffer);
         }
 
         for(auto ro : scene->render_objects())
@@ -56,9 +57,12 @@ namespace nle
 
             if(visible)
             {
-                ro->render();
+                ro->render(m_command_buffer);
             }
         }
+
+        // Execute all commands through OpenGL backend
+        m_opengl_backend.execute_commands(m_command_buffer);
     }
 
     void renderer_3d::render([[maybe_unused]] ref<render_object_3d> ro)

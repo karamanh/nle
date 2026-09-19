@@ -26,7 +26,7 @@ public:
     
     ref<class multimesh_3d> multimesh();
 
-    void render();
+    void render(render_command_buffer& command_buffer) override;
 
 private:
     ref<class multimesh_3d> m_multimesh;

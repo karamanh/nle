@@ -128,11 +128,12 @@ namespace nle
     void object_3d::set_parent(ref<object_3d> parent)
     {
         m_parent = parent;
-        m_root = parent->root();
-        for(auto it : m_children)
-        {
-            it->set_root(m_root);
-        }
+        this->set_root(parent->root());
+        // m_root = parent->root();
+        // for(auto it : m_children)
+        // {
+        //     it->set_root(m_root);
+        // }
     }
 
     ref<object_3d> object_3d::parent() const

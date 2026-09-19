@@ -18,7 +18,7 @@ endif
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
 #   their path using -Lpath, something like:
-LFLAGS = -lglfw -lGL -lGLEW -lGLU
+LFLAGS = -lglfw -lGL -lGLEW -lGLU -lstb -limgui
 
 # define output directory
 OUTPUT	:= output
@@ -97,4 +97,4 @@ run: all
 	@echo Executing 'run: all' complete!
 
 fire:
-	@make -j12	
+	@make -j12

@@ -25,7 +25,7 @@ public:
 
     ref<class mesh_3d> mesh(); 
 
-    void render();
+    void render(render_command_buffer& command_buffer) override;
 private:
     ref<class mesh_3d> m_mesh;
 };

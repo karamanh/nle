@@ -56,9 +56,15 @@ ref<class sky> scene_3d::sky()
 
 void scene_3d::render()
 {
+    // This method is deprecated and should not be used
+    // Use render(command_buffer) instead
+}
+
+void scene_3d::render(render_command_buffer& command_buffer)
+{
     for(auto it : m_render_objects)
     {
-        it->render();
+        it->render(command_buffer);
     }
 }
 

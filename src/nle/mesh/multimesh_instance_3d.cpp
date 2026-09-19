@@ -24,11 +24,11 @@ namespace nle
         return m_multimesh;
     }
 
-    void multimesh_instance_3d::render()
+    void multimesh_instance_3d::render(render_command_buffer& command_buffer)
     {
         for(auto ro : render_objects())
         {
-            ro->render();
+            ro->render(command_buffer);
         }
     }
 

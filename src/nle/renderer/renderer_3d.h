@@ -13,6 +13,8 @@
 
 #include "../window/window_glfw.h"
 #include "../scene/scene_3d.h"
+#include "render_command.h"
+#include "opengl_backend.h"
 
 namespace nle
 {
@@ -20,7 +22,7 @@ namespace nle
 struct render_layer_attribute
 {
     bool visible = true;
-    float render_distance = 100.0f;
+    float render_distance = 500000.0f;
 };
 
 class renderer_3d
@@ -40,6 +42,9 @@ private:
     ref<scene_3d> m_current_scene;
 
     std::unordered_map<render_layer, render_layer_attribute> m_render_layer_attributes;
+
+    render_command_buffer m_command_buffer;
+    opengl_backend m_opengl_backend;
 
     void render(ref<render_object_3d> ro);
 

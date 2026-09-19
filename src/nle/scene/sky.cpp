@@ -1,14 +1,13 @@
 #include "sky.h"
-#include "../mesh/box_mesh.h"
 #include "../static/default_sky.hpp"
 
 namespace nle
 {
 
-sky::sky()
-    : mesh_instance_3d(make_ref<boxmesh>())
+sky::sky(ref<mesh_3d> mesh)
+    : mesh_instance_3d(mesh)
 {
-    this->mesh()->set_texture(make_ref<texture>(default_sky_png, default_sky_png_len));
+    this->mesh()->set_texture(mesh->texture() ? mesh->texture() : make_ref<texture>(default_sky_png, default_sky_png_len));
     this->mesh()->material()->set_accept_light(false);
 }
 
@@ -16,11 +15,11 @@ sky::~sky()
 {
 }
 
-void sky::render()
+void sky::render(render_command_buffer& command_buffer)
 {
-    glDepthMask(GL_FALSE);
-    mesh_instance_3d::render();
-    glDepthMask(GL_TRUE);
+    command_buffer.set_depth_mask(false);
+    mesh_instance_3d::render(command_buffer);
+    command_buffer.set_depth_mask(true);
 }
 
 void sky::set_distance_fog_far(float far)

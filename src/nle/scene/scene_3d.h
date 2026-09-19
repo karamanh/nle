@@ -40,6 +40,7 @@ public:
     glm::vec2 target_resolution() const;
     
     void render();
+    void render(render_command_buffer& command_buffer) override;
     
     /// check if added child is render object, if so, add it to set of render objects.
     void add_child(ref<object_3d> child) override;

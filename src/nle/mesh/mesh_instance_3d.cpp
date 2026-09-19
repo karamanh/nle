@@ -20,7 +20,7 @@ namespace nle
         return m_mesh;
     }
 
-    void mesh_instance_3d::render()
+    void mesh_instance_3d::render(render_command_buffer& command_buffer)
     {
         auto scene = std::dynamic_pointer_cast<scene_3d>(this->scene());
         if(!scene)
@@ -28,81 +28,53 @@ namespace nle
             return;
         }
 
-        glPolygonMode(GL_FRONT_AND_BACK, static_cast<GLenum>(render_mode()));
+        command_buffer.set_polygon_mode(GL_FRONT_AND_BACK, static_cast<GLenum>(render_mode()));
 
-        this->shader()->use();
+        command_buffer.use_shader(this->shader());
 
-        // matrices and stuff
-        GLuint unf_model = this->shader()->uniform_location("u_model");
-        GLuint unf_proj = this->shader()->uniform_location("u_projection");
-        GLuint unf_view = this->shader()->uniform_location("u_view");
-        GLuint unf_eye_position = this->shader()->uniform_location("u_eye_position");
-
-        // light
-        GLuint unf_light_color = this->shader()->uniform_location("u_directional_light.color");
-        GLuint unf_light_ambient = this->shader()->uniform_location("u_directional_light.ambient");
-        GLuint unf_light_diffuse = this->shader()->uniform_location("u_directional_light.diffuse");
-        GLuint unf_light_specular = this->shader()->uniform_location("u_directional_light.specular");
-        GLuint unf_light_direction = this->shader()->uniform_location("u_directional_light.direction");
-        GLuint unf_light_enabled = this->shader()->uniform_location("u_lighting_enabled");
-        // material
-        GLuint unf_material_shininess = this->shader()->uniform_location("u_material.shininess");
-        GLuint unf_material_accept_light = this->shader()->uniform_location("u_material.accept_light");
-        GLuint unf_material_ambient = this->shader()->uniform_location("u_material.ambient");
-        GLuint unf_material_diffuse = this->shader()->uniform_location("u_material.diffuse");
-        GLuint unf_material_specular = this->shader()->uniform_location("u_material.specular");
-        GLuint unf_material_dissolve = this->shader()->uniform_location("u_material.dissolve");
-        // other
-        GLuint unf_texture_enabled = this->shader()->uniform_location("u_texture_enabled");
-        
-        /// TODO: implement a sky class, then re-enable and set following uniforms.
-        // GLuint unf_sky_distance_fog_enabled = this->shader()->uniform_location("u_sky.distance_fog_enabled");
-        // GLuint unf_sky_distance_fog_near = this->shader()->uniform_location("u_sky.distance_fog_near");
-        // GLuint unf_sky_distance_fog_far = this->shader()->uniform_location("u_sky.distance_fog_far");
-
+        // Handle texture
         if(this->mesh()->texture())
         {
-            glUniform1i(unf_texture_enabled, 1);
-            this->mesh()->texture()->use();
+            command_buffer.set_uniform("u_texture_enabled", 1);
+            command_buffer.use_texture(this->mesh()->texture());
         }
         else
         {
-            glUniform1i(unf_texture_enabled, 0);
+            command_buffer.set_uniform("u_texture_enabled", 0);
         }
-
-        /// TODO: render sky
 
         bool accept_light = true;
 
+        // Handle material uniforms
         auto material = this->material_override() ? this->material_override() : this->mesh()->material();
-
         if(material)
         {
-            glUniform3f(unf_material_ambient, material->ambient().x, material->ambient().y, material->ambient().z);
-            glUniform3f(unf_material_diffuse, material->diffuse().x, material->diffuse().y, material->diffuse().z);
-            glUniform3f(unf_material_specular, material->specular().x, material->specular().y, material->specular().z);
-            glUniform1f(unf_material_shininess, material->shininess());
-            glUniform1f(unf_material_dissolve, material->dissolve());
-            glUniform1i(unf_material_accept_light, static_cast<int>(material->accept_light()));
+            command_buffer.set_uniform("u_material.ambient", material->ambient());
+            command_buffer.set_uniform("u_material.diffuse", material->diffuse());
+            command_buffer.set_uniform("u_material.specular", material->specular());
+            command_buffer.set_uniform("u_material.shininess", material->shininess());
+            command_buffer.set_uniform("u_material.dissolve", material->dissolve());
+            command_buffer.set_uniform("u_material.accept_light", static_cast<int>(material->accept_light()));
             accept_light = material->accept_light();
         }
         
+        // Handle lighting
         if (accept_light && scene->light()->enabled())
         {
-            glUniform1i(unf_light_enabled, 1);
-            glUniform3f(unf_light_color, scene->light()->color().x, scene->light()->color().y, scene->light()->color().z);
-            glUniform3f(unf_light_ambient, scene->light()->ambient().x, scene->light()->ambient().y, scene->light()->ambient().z);
-            glUniform3f(unf_light_diffuse, scene->light()->diffuse().x, scene->light()->diffuse().y, scene->light()->diffuse().z);
-            glUniform3f(unf_light_specular, scene->light()->specular().x, scene->light()->specular().y, scene->light()->specular().z);
-            glUniform3f(unf_light_direction, scene->light()->front().x, scene->light()->front().y, scene->light()->front().z);
+            command_buffer.set_uniform("u_lighting_enabled", 1);
+            command_buffer.set_uniform("u_directional_light.color", scene->light()->color());
+            command_buffer.set_uniform("u_directional_light.ambient", scene->light()->ambient());
+            command_buffer.set_uniform("u_directional_light.diffuse", scene->light()->diffuse());
+            command_buffer.set_uniform("u_directional_light.specular", scene->light()->specular());
+            command_buffer.set_uniform("u_directional_light.direction", scene->light()->front());
         }
         else
         {
-            glUniform1i(unf_light_enabled, 0);
+            command_buffer.set_uniform("u_lighting_enabled", 0);
         }
 
+        // Calculate matrices
         glm::mat4 model = glm::mat4(1.0f);
-
         float aspect_ratio = scene->target_resolution().x / scene->target_resolution().y;
         glm::mat4 projection = glm::perspective(scene->camera()->field_of_view(), aspect_ratio, scene->camera()->near(), scene->camera()->far());
 
@@ -112,21 +84,13 @@ namespace nle
         model = glm::rotate(model, glm::radians(this->rotation().z), glm::vec3(0.0f, 0.0f, 1.0f));
         model = glm::scale(model, this->scale());
 
-        glUniformMatrix4fv(unf_model, 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(unf_proj, 1, GL_FALSE, glm::value_ptr(projection));
-        glUniformMatrix4fv(unf_view, 1, GL_FALSE, glm::value_ptr(scene->camera()->view_matrix()));
-        glUniform3f(unf_eye_position, scene->camera()->position().x, scene->camera()->position().y, scene->camera()->position().z);
+        // Set matrix uniforms
+        command_buffer.set_uniform("u_model", model);
+        command_buffer.set_uniform("u_projection", projection);
+        command_buffer.set_uniform("u_view", scene->camera()->view_matrix());
+        command_buffer.set_uniform("u_eye_position", scene->camera()->position());
 
-        glBindVertexArray(this->mesh()->m_vao);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->mesh()->m_ebo);
-        glDrawElements(static_cast<GLenum>(this->primitive_type()), this->mesh()->indices().size(), GL_UNSIGNED_INT, 0);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
-        
-        this->shader()->unuse();
-        if(this->mesh()->texture())
-        {
-            this->mesh()->texture()->unuse();
-        }
+        // Draw the mesh
+        command_buffer.draw_elements(static_cast<GLenum>(this->primitive_type()), this->mesh()->m_vao, this->mesh()->m_ebo, this->mesh()->indices().size());
     }
 } // namespace nle

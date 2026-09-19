@@ -12,6 +12,7 @@
 #pragma once
 
 #include "../mesh/mesh_instance_3d.h"
+#include "../mesh/box_mesh.h"
 
 namespace nle
 {
@@ -19,10 +20,10 @@ namespace nle
     class sky : public mesh_instance_3d
     {
     public:
-        sky();
+        sky(ref<mesh_3d> mesh = make_ref<boxmesh>());
         virtual ~sky();
 
-        void render() override;
+        void render(render_command_buffer& command_buffer) override;
 
         void set_distance_fog_far(float far);
         float distance_fog_far();

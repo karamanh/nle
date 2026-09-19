@@ -42,7 +42,7 @@ struct PointLight
 };
 
 uniform int u_lighting_enabled = 1;
-uniform int u_texture_enabled = 1;
+uniform int u_texture_enabled = 0;
 uniform int u_fog_enabled = 1;
 uniform sampler2D u_texture_0;
 uniform DirectionalLight u_directional_light;

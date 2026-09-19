@@ -12,6 +12,7 @@
 
 #include "object_3d.h"
 #include "../renderer/shader.h"
+#include "render_command.h"
 
 #include <GL/gl.h>
 
@@ -50,7 +51,7 @@ public:
     render_object_3d(const std::string &id = "");
     virtual ~render_object_3d();
 
-    virtual void render() = 0;
+    virtual void render(render_command_buffer& command_buffer) = 0;
 
     virtual void set_render_mode(enum render_mode rm);
     virtual enum render_mode render_mode() const;
