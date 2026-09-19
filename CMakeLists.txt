@@ -15,6 +15,11 @@ endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# Where the engine lives. A project that pulls this file in through
+# add_subdirectory() gets a CMAKE_SOURCE_DIR pointing at itself rather than at
+# the engine, so paths into the engine tree use this instead.
+set(NLE_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}" CACHE INTERNAL "nle source root")
+
 option(NLE_BUILD_DEMO "Build the demo executable" ON)
 option(NLE_BUILD_TESTS "Build the test executables" ON)
 option(NLE_ENABLE_DEBUG_OUTPUT "Define DEBUG for verbose engine logging" ON)
