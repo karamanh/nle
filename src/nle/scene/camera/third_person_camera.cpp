@@ -85,8 +85,26 @@ float third_person_camera::maximum_pitch() const
 
 void third_person_camera::orbit(float delta_x, float delta_y)
 {
-    set_yaw(m_yaw + delta_x * m_sensitivity);
-    set_pitch(m_pitch + delta_y * m_sensitivity);
+    // Both signs are negative against the raw screen delta, for the same
+    // reason: the arm points from the target at the camera, which is the
+    // opposite of where the camera is looking. Adding the delta would turn
+    // the arm the way the mouse went and therefore swing the view the other
+    // way, which reads as inverted on both axes.
+    set_yaw(m_yaw - delta_x * m_sensitivity);
+
+    // Screen y already grows downwards, so dragging up is a negative delta
+    // and lowers the arm, which raises the view.
+    set_pitch(m_pitch + (m_invert_pitch ? -delta_y : delta_y) * m_sensitivity);
+}
+
+void third_person_camera::set_invert_pitch(bool invert)
+{
+    m_invert_pitch = invert;
+}
+
+bool third_person_camera::invert_pitch() const
+{
+    return m_invert_pitch;
 }
 
 void third_person_camera::set_sensitivity(float degrees_per_pixel)

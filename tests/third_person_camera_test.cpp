@@ -116,16 +116,61 @@ void test_orbit()
     std::cout << "\norbit\n";
 
     auto view = make_camera();
-
     view->set_sensitivity(0.25f);
+
+    // The sense of the turn, which is what a raw yaw number does not pin down:
+    // a camera can have exactly the yaw asked for and still swing the wrong
+    // way, because the arm points from the target at the camera and the view
+    // points back along it.
+    view->set_yaw(0.0f);
+    view->set_pitch(0.0f);
+    view->snap();
+
+    check_near(view->front().z, -1.0f, "starts looking down -Z");
+    check_near(view->position().z, 10.0f, "from an arm's length along +Z");
+
+    view->orbit(40.0f, 0.0f);
+    view->snap();
+    check(view->front().x > 0.0f, "dragging right turns the view right");
+    check(view->position().x < 0.0f, "which swings the camera itself to the left");
+
+    view->set_yaw(0.0f);
+    view->orbit(-40.0f, 0.0f);
+    view->snap();
+    check(view->front().x < 0.0f, "dragging left turns the view left");
+
+    // Vertically: screen y grows downwards, so dragging up is a negative
+    // delta. It lowers the camera, which raises the view.
+    view->set_yaw(0.0f);
+    view->set_pitch(30.0f);
+    view->snap();
+
+    const float height_before = view->position().y;
+    const float rise_before = view->front().y;
+
+    view->orbit(0.0f, -40.0f);
+    view->snap();
+
+    check(view->pitch() < 30.0f, "dragging up lowers the arm");
+    check(view->position().y < height_before, "so the camera drops");
+    check(view->front().y > rise_before, "and the view is raised");
+
+    view->set_invert_pitch(true);
+    view->set_pitch(30.0f);
+    view->orbit(0.0f, -40.0f);
+    check(view->pitch() > 30.0f, "inverted, the same drag does the opposite");
+    check(view->invert_pitch(), "and the setting reads back");
+    view->set_invert_pitch(false);
+
+    // How far, as opposed to which way.
     view->set_yaw(0.0f);
     view->orbit(40.0f, 0.0f);
-    check_near(view->yaw(), 10.0f, "yaw follows the mouse by the sensitivity");
+    check_near(view->yaw(), 350.0f, "forty pixels at 0.25 is ten degrees");
 
     // Yaw has no limits, it wraps.
-    view->set_yaw(350.0f);
-    view->orbit(80.0f, 0.0f);
-    check_near(view->yaw(), 10.0f, "yaw wraps past a full turn");
+    view->set_yaw(5.0f);
+    view->orbit(40.0f, 0.0f);
+    check_near(view->yaw(), 355.0f, "and wraps below zero");
 
     view->set_yaw(-90.0f);
     check_near(view->yaw(), 270.0f, "negative yaw wraps into range");
@@ -151,12 +196,6 @@ void test_orbit()
     check_near(placed.x, 0.0f, "at yaw zero the camera is on the Z axis");
     check_near(placed.y, 2.0f, "level with the pivot when the pitch is zero");
     check_near(placed.z, 10.0f, "a full arm length behind the pivot");
-
-    // A quarter turn should swing it onto +X.
-    view->set_yaw(90.0f);
-    view->snap();
-    check_near(view->position().x, 10.0f, "a quarter turn swings the arm onto +X");
-    check_near(view->position().z, 0.0f, "and off the Z axis");
 
     // Whatever the angles, the camera looks back at what it orbits.
     view->set_yaw(37.0f);

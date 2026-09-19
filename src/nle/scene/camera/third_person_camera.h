@@ -94,13 +94,27 @@ public:
     float maximum_pitch() const;
 
     /**
-     * @brief Turns the camera by a mouse movement, in pixels.
+     * @brief Turns the camera by a mouse movement, in screen pixels.
      *
-     * @p delta_y follows the engine's mouse convention, where moving the mouse
-     * away from you is positive; that raises the camera, which is the
-     * un-inverted sense.
+     * Both deltas are in the same frame the cursor position is reported in:
+     * x grows to the right, y grows downwards. Feed it the difference between
+     * two readings of mouse_x()/mouse_y() and nothing needs negating.
+     *
+     * The sense is mouse look: dragging right turns the view right, dragging
+     * up looks up. Turning the view right swings the camera itself to the
+     * left, which is what an arm anchored on the target has to do.
      */
     void orbit(float delta_x, float delta_y);
+
+    /**
+     * @brief Flips the vertical sense, so dragging up looks down.
+     *
+     * The horizontal sense is not negotiable -- dragging right must turn the
+     * view right -- but which way is "up" is a preference, and a game with a
+     * mouse usually offers it.
+     */
+    void set_invert_pitch(bool invert);
+    bool invert_pitch() const;
 
     /// Degrees turned per pixel of mouse movement.
     void set_sensitivity(float degrees_per_pixel);
@@ -151,6 +165,7 @@ private:
     float m_maximum_pitch = 80.0f;
 
     float m_sensitivity = 0.25f;
+    bool m_invert_pitch = false;
 
     float m_distance = 16.0f;
     float m_minimum_distance = 1.5f;
