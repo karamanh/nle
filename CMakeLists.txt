@@ -117,4 +117,13 @@ if(NLE_BUILD_TESTS)
     # The test needs a GL context; without a display it reports 77 rather than
     # failing, and ctest treats that as skipped.
     set_tests_properties(gltf_animation PROPERTIES SKIP_RETURN_CODE 77)
+
+    # This one does not: the camera is a transform and some arithmetic, and
+    # what it collides with arrives through a callback a stub can supply.
+    add_executable(nle_third_person_camera_test
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/third_person_camera_test.cpp")
+    target_link_libraries(nle_third_person_camera_test PRIVATE nle)
+    target_compile_options(nle_third_person_camera_test PRIVATE -Wall -Wextra)
+
+    add_test(NAME third_person_camera COMMAND nle_third_person_camera_test)
 endif()
