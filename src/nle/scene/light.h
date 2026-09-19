@@ -53,6 +53,16 @@ namespace nle
         void set_enabled(bool enabled);
         bool enabled() const;
 
+        /**
+         * @brief Brightness multiplier, applied to the light's colour.
+         *
+         * Separate from colour so that a light can be made brighter without
+         * washing out its hue, which is what raising the colour past white
+         * would do. Defaults to 1.
+         */
+        void set_intensity(float intensity);
+        float intensity() const;
+
         /// Fills the per-frame description consumed by the renderer.
         directional_light_data to_directional_light_data() const;
 
@@ -63,6 +73,7 @@ namespace nle
         glm::vec3 m_specular;
 
         bool m_enabled = true;
+        float m_intensity = 1.0f;
     };
 
     /**
@@ -88,9 +99,15 @@ namespace nle
 
         enum light_type light_type() const override;
 
-        /// Sets attenuation from a target range using the values tabulated in
-        /// the classic Ogre3D attenuation table. Convenience over correctness:
-        /// it just picks a sane curve for a given reach.
+        /**
+         * @brief Sets the attenuation curve from a target reach.
+         *
+         * Follows the classic Ogre3D attenuation table, where brightness has
+         * fallen to roughly 1/80 of its peak at @p range. That decay is steep:
+         * a light is only really useful over about a third of its range, so
+         * set this well beyond the distance you want lit, or raise
+         * set_intensity() to compensate.
+         */
         void set_range(float range);
         float range() const;
 

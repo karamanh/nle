@@ -79,11 +79,21 @@ namespace nle
         return m_enabled;
     }
 
+    void light::set_intensity(float intensity)
+    {
+        m_intensity = intensity;
+    }
+
+    float light::intensity() const
+    {
+        return m_intensity;
+    }
+
     directional_light_data light::to_directional_light_data() const
     {
         directional_light_data data;
         data.direction = front();
-        data.color = m_color;
+        data.color = m_color * m_intensity;
         data.ambient = m_ambient;
         data.diffuse = m_diffuse;
         data.specular = m_specular;
@@ -118,9 +128,8 @@ namespace nle
     {
         m_range = std::max(range, 0.0001f);
 
-        /// Ogre3D's attenuation table, condensed to a continuous fit: both
-        /// terms are chosen so the light has decayed to roughly 1/256 of its
-        /// peak by the time it reaches m_range.
+        /// Ogre3D's attenuation table, condensed to a continuous fit. At
+        /// m_range the light has decayed to roughly 1/80 of its peak.
         m_constant = 1.0f;
         m_linear = 4.5f / m_range;
         m_quadratic = 75.0f / (m_range * m_range);
@@ -175,7 +184,7 @@ namespace nle
     {
         point_light_data data;
         data.position = position();
-        data.color = color();
+        data.color = color() * intensity();
         data.ambient = ambient();
         data.diffuse = diffuse();
         data.specular = specular();

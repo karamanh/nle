@@ -32,8 +32,8 @@ protected:
     double m_mouse_delta_y = 0.0;
     double m_input_timestamp = 0.0;
     
-    std::array<bool, 1024> m_keys;
-    std::array<bool, 8> m_mouse_buttons;
+    std::array<bool, 1024> m_keys{};
+    std::array<bool, 8> m_mouse_buttons{};
 
     void set_key_state(int key, bool state)
     {
@@ -98,6 +98,24 @@ public:
     input_handler(winhandle_type handle)
         : m_handle(handle)
     {}
+
+    /**
+     * @brief True while @p key is held down.
+     *
+     * Polling beats the signals for continuous input such as movement: the
+     * signals report edges and repeats, so reconstructing "is it held" from
+     * them means every caller keeping its own copy of the keyboard.
+     */
+    bool key_down(int key) const
+    {
+        return key >= 0 && static_cast<size_t>(key) < m_keys.size() && m_keys[static_cast<size_t>(key)];
+    }
+
+    bool mouse_button_down(int button) const
+    {
+        return button >= 0 && static_cast<size_t>(button) < m_mouse_buttons.size()
+            && m_mouse_buttons[static_cast<size_t>(button)];
+    }
 };
 
 } // namespace nle

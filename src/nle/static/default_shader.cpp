@@ -152,7 +152,10 @@ vec3 directional_light_contribution(vec3 normal, vec3 view_direction)
 {
     vec3 direction = normalize(u_directional_light.direction);
 
-    vec3 ambient = u_directional_light.color * u_material.ambient;
+    // The light's own ambient term belongs here too; leaving it out made
+    // light::set_ambient() a no-op for directional lights. It defaults to
+    // white, so default lights are unaffected.
+    vec3 ambient = u_directional_light.color * u_directional_light.ambient * u_material.ambient;
 
     float diffuse_factor = max(dot(normal, direction), 0.0);
     vec3 diffuse = u_material.diffuse * u_directional_light.diffuse * diffuse_factor;

@@ -103,6 +103,9 @@ if(NLE_BUILD_DEMO)
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/output")
 endif()
 
+# Shaders are read at runtime, so executables need to know where they live.
+set(NLE_SHADER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shader" CACHE PATH "runtime shader directory")
+
 # ---------------------------------------------------------------------------
 # tests
 # ---------------------------------------------------------------------------

@@ -58,9 +58,20 @@ window_glfw::~window_glfw()
 
 void window_glfw::display()
 {
+    double last_frame = glfwGetTime();
+
     while (!glfwWindowShouldClose(m_handle))
     {
+        const double now = glfwGetTime();
+        const float delta_time = static_cast<float>(now - last_frame);
+        last_frame = now;
+
         glfwGetWindowSize(m_handle, &m_width, &m_height);
+
+        if(update())
+        {
+            update()(delta_time);
+        }
 
         if(render_3d())
         {

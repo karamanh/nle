@@ -57,6 +57,12 @@ void gltf_instance_3d::render(render_command_buffer& command_buffer, const rende
     const glm::mat4 instance_transform = this->transform_matrix();
     const auto& override_material = this->material_override();
 
+    // A model is usually split into several primitives that all share one
+    // skin -- this character is 15 primitives over a single 62-joint skin --
+    // and the palette uniform persists between draws, so it only has to be
+    // uploaded when the skin actually changes.
+    int uploaded_skin = -1;
+
     for(const auto& primitive : m_model->primitives())
     {
         if(!primitive.mesh)
@@ -76,7 +82,13 @@ void gltf_instance_3d::render(render_command_buffer& command_buffer, const rende
                 // glTF poses a skinned mesh entirely through its joints, so the
                 // node's own transform is not part of the model matrix here.
                 command_buffer.set_uniform("u_skinning_enabled", 1);
-                command_buffer.set_uniform("u_joint_matrices", palette);
+
+                if(primitive.skin != uploaded_skin)
+                {
+                    command_buffer.set_uniform("u_joint_matrices", palette);
+                    uploaded_skin = primitive.skin;
+                }
+
                 command_buffer.set_uniform("u_model", instance_transform);
             }
             else

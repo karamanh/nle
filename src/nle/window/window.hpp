@@ -11,6 +11,8 @@
 
 #pragma once
 
+#include <functional>
+
 namespace nle
 {
 
@@ -40,6 +42,15 @@ public:
     std::function<void()>& render_3d() { return m_render_3d; }
     std::function<void()>& render_ui() { return m_render_ui; }
 
+    /**
+     * @brief Game logic hook, called once per frame before rendering.
+     *
+     * The argument is the time in seconds since the previous frame. This is
+     * where per-frame work belongs; doing it on another thread, as the old
+     * demo did, races with the renderer reading the same objects.
+     */
+    std::function<void(float)>& update() { return m_update; }
+
 protected:
     handle_type m_handle;
     int m_width;
@@ -49,6 +60,7 @@ protected:
     bool m_cursor_visible = false;
     std::function<void()> m_render_3d;
     std::function<void()> m_render_ui;
+    std::function<void(float)> m_update;
 };
 
 } // namespace nle
