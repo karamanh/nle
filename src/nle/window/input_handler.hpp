@@ -80,6 +80,17 @@ protected:
 
     void set_mouse_button_state(int button, bool state)
     {
+        // Edges only, as the signal's name says and as set_key_state() above
+        // already does. The buttons are polled every frame, so emitting
+        // unconditionally made this fire continuously for every button in
+        // whatever state it was in -- including the ones nobody was touching.
+        // A handler reading it as "the button just went down" then ran on
+        // every frame the button was up.
+        if(m_mouse_buttons[button] == state)
+        {
+            return;
+        }
+
         m_mouse_buttons[button] = state;
         sig_mouse_state_changed.emit(button, state, m_mouse_last_x, m_mouse_last_y, false);
     }

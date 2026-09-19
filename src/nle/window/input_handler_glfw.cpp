@@ -22,7 +22,6 @@ namespace nle
         {
             int state = glfwGetMouseButton(m_handle, i);
             set_mouse_button_state(i, static_cast<bool>(state));
-            set_mouse_position(x, y);
         }
     }
 

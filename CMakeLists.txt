@@ -126,4 +126,13 @@ if(NLE_BUILD_TESTS)
     target_compile_options(nle_third_person_camera_test PRIVATE -Wall -Wextra)
 
     add_test(NAME third_person_camera COMMAND nle_third_person_camera_test)
+
+    # Also headless: input_handler is a template over the window handle, so the
+    # test instantiates it over an int and drives the setters a poll would.
+    add_executable(nle_input_handler_test
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/input_handler_test.cpp")
+    target_link_libraries(nle_input_handler_test PRIVATE nle)
+    target_compile_options(nle_input_handler_test PRIVATE -Wall -Wextra)
+
+    add_test(NAME input_handler COMMAND nle_input_handler_test)
 endif()
