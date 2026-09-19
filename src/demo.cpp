@@ -1,4 +1,6 @@
 #include "model/model_obj.h"
+#include "model/model_gltf.h"
+#include "model/gltf_instance_3d.h"
 #include "effects/emitter_3d.h"
 #include "core/clock.h"
 
@@ -24,7 +26,9 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
     scene->light()->set_rotation({-45.0f, 45.0f, 0.0f});
     scene->set_sky(nle::make_ref<nle::sky>());
     scene->camera()->set_field_of_view(45.0f);
-    scene->camera()->set_position(glm::vec3(0.0f, 5.0f, 10.0f));
+    scene->camera()->set_position(glm::vec3(0.0f, 4.0f, 12.0f));
+    // tilt down a little, so the demo opens looking at the scene and not at sky
+    scene->camera()->set_rotation({-10.0f, 0.0f, 0.0f});
     scene->camera()->set_turn_speed(0.2f);
     scene->camera()->set_speed(0.2f);
     scene->camera()->set_far(200000);
@@ -50,6 +54,43 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
     executioner->add_child(emitter);
     scene->add_child(executioner);
 
+    // ---- point lights ---------------------------------------------------
+    // Three coloured lamps around the origin. They are ordinary objects, so
+    // they can be moved, parented and toggled like anything else.
+    std::vector<nle::ref<nle::point_light>> lamps;
+
+    for(const auto& [color, offset] : std::vector<std::pair<glm::vec3, glm::vec3>>{
+            {{1.0f, 0.2f, 0.2f}, {6.0f, 2.0f, 0.0f}},
+            {{0.2f, 1.0f, 0.3f}, {-3.0f, 2.0f, 5.0f}},
+            {{0.3f, 0.4f, 1.0f}, {-3.0f, 2.0f, -5.0f}}})
+    {
+        auto lamp = nle::make_ref<nle::point_light>(color, 25.0f);
+        lamp->set_position(offset);
+        scene->add_child(lamp);
+        lamps.push_back(lamp);
+    }
+
+    // ---- an animated glTF model ----------------------------------------
+    nle::ref<nle::gltf_instance_3d> bar;
+    try
+    {
+        auto barmodel = nle::make_ref<nle::model_gltf>("tests/assets/skinned_bar.gltf");
+        bar = barmodel->create_gltf_instance();
+        bar->set_position({0.0f, 0.0f, 4.0f});
+        scene->add_child(bar);
+
+        if(!bar->animator()->play("bend"))
+        {
+            nle::utils::prerror("demo: the bar model has no 'bend' animation");
+        }
+
+        nle::utils::print("demo: glTF animations available:", barmodel->animation_names().size());
+    }
+    catch(const std::exception& e)
+    {
+        nle::utils::prerror("demo: could not load the glTF model:", e.what());
+    }
+
     auto thread = std::thread([&](){
         nle::clock clk;
         while (app.window()->closed() == false)
@@ -58,6 +99,14 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
             float time = static_cast<float>(clk.elapsed_time_ms()) / 1000.0f;
             float height = std::sin(time) * 0.5f;
             executioner->set_position({0.0f, height, 0.0f});
+
+            // orbit the lamps so the attenuation is easy to see
+            for(size_t i = 0; i < lamps.size(); ++i)
+            {
+                const float phase = time * 0.7f + static_cast<float>(i) * 2.0944f;
+                lamps[i]->set_position({std::cos(phase) * 6.0f, 2.0f + std::sin(time + i) * 1.5f,
+                                        std::sin(phase) * 6.0f});
+            }
             // scene->camera()->set_position({0.0f, 5.0f + height, 10.0f});
         }
     });
@@ -110,6 +159,19 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
         case nle::input_handler_glfw::key::left_control: // Toggle free roam
             app.renderer_3d()->current_scene()->camera()->set_free_roam(!app.renderer_3d()->current_scene()->camera()->free_roam());
             app.window()->set_cursor_visibility(!app.renderer_3d()->current_scene()->camera()->free_roam());
+            break;
+        case nle::input_handler_glfw::key::l: // Toggle the point lights
+            for(auto& lamp : lamps)
+            {
+                lamp->set_enabled(!lamp->enabled());
+            }
+            break;
+        case nle::input_handler_glfw::key::p: // Pause/resume the glTF animation
+            if(bar)
+            {
+                bar->animator()->playing() ? bar->animator()->pause()
+                                           : bar->animator()->resume();
+            }
             break;
         case nle::input_handler_glfw::key::escape: // Close the window
             app.window()->close();

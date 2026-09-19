@@ -188,6 +188,17 @@ namespace nle
         this->set_scale({j["scale"]["x"], j["scale"]["y"], j["scale"]["z"]});
     }
 
+    glm::mat4 object_3d::transform_matrix() const
+    {
+        glm::mat4 matrix = glm::mat4(1.0f);
+        matrix = glm::translate(matrix, m_position);
+        matrix = glm::rotate(matrix, glm::radians(m_rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+        matrix = glm::rotate(matrix, glm::radians(m_rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+        matrix = glm::rotate(matrix, glm::radians(m_rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+        matrix = glm::scale(matrix, m_scale);
+        return matrix;
+    }
+
     glm::vec3 object_3d::front() const
     {
         return m_front;

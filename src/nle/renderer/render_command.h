@@ -29,7 +29,9 @@ enum class command_type
     set_polygon_mode,
     use_shader,
     set_uniform_matrix4,
+    set_uniform_matrix4_array,
     set_uniform_vec3,
+    set_uniform_vec4,
     set_uniform_float,
     set_uniform_int,
     use_texture,
@@ -40,13 +42,20 @@ enum class command_type
 struct uniform_data
 {
     std::string name;
-    std::variant<glm::mat4, glm::vec3, float, int> value;
+    std::variant<glm::mat4, glm::vec3, glm::vec4, float, int, std::vector<glm::mat4>> value;
 };
 
 struct polygon_mode_data
 {
     unsigned int front_and_back;
     unsigned int mode;
+};
+
+struct texture_bind_data
+{
+    /// not named `texture`: that would shadow the class name inside the struct.
+    ref<class texture> handle;
+    unsigned int unit;
 };
 
 struct draw_elements_data
@@ -66,7 +75,7 @@ struct render_command
         polygon_mode_data,         // set_polygon_mode
         ref<shader>,               // use_shader
         uniform_data,              // uniform data
-        ref<texture>,              // use_texture
+        texture_bind_data,         // use_texture
         draw_elements_data,        // draw_elements
         bool                       // set_depth_mask
     > data;
@@ -81,10 +90,12 @@ public:
     void set_polygon_mode(unsigned int front_and_back, unsigned int mode);
     void use_shader(ref<shader> shader);
     void set_uniform(const std::string& name, const glm::mat4& value);
+    void set_uniform(const std::string& name, const std::vector<glm::mat4>& value);
     void set_uniform(const std::string& name, const glm::vec3& value);
+    void set_uniform(const std::string& name, const glm::vec4& value);
     void set_uniform(const std::string& name, float value);
     void set_uniform(const std::string& name, int value);
-    void use_texture(ref<texture> texture);
+    void use_texture(ref<texture> texture, unsigned int unit = 0);
     void draw_elements(unsigned int primitive_type, unsigned int vao, unsigned int ebo, size_t count);
     void set_depth_mask(bool mask);
 

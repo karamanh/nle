@@ -13,12 +13,15 @@
 
 #include "../mesh/multimesh_instance_3d.h"
 
+#include <memory>
 #include <string>
 
 namespace nle
 {
 
-    class model
+    /// Shared base for loaded models. enable_shared_from_this lets an
+    /// instance hold a reference back to the model it was created from.
+    class model : public std::enable_shared_from_this<model>
     {
     public:
         model() {}

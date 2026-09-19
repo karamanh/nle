@@ -24,7 +24,7 @@ namespace nle
         }
         if (m_vao != 0)
         {
-            glDeleteBuffers(1, &m_vao);
+            glDeleteVertexArrays(1, &m_vao);
         }
     }
 
@@ -73,6 +73,16 @@ namespace nle
         return m_texture;
     }
 
+    unsigned int mesh_3d::vao() const
+    {
+        return m_vao;
+    }
+
+    unsigned int mesh_3d::ebo() const
+    {
+        return m_ebo;
+    }
+
     void mesh_3d::load()
     {
         glGenVertexArrays(1, &m_vao);
@@ -99,6 +109,12 @@ namespace nle
 
         glEnableVertexAttribArray(3);
         glVertexAttribPointer(3,2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, uv));
+
+        glEnableVertexAttribArray(4);
+        glVertexAttribPointer(4,4, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, joints));
+
+        glEnableVertexAttribArray(5);
+        glVertexAttribPointer(5,4, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, weights));
 
         glBindVertexArray(0);
     }

@@ -46,6 +46,22 @@ void render_command_buffer::set_uniform(const std::string& name, const glm::mat4
     m_commands.push_back(cmd);
 }
 
+void render_command_buffer::set_uniform(const std::string& name, const std::vector<glm::mat4>& value)
+{
+    render_command cmd;
+    cmd.type = command_type::set_uniform_matrix4_array;
+    cmd.data = uniform_data{name, value};
+    m_commands.push_back(cmd);
+}
+
+void render_command_buffer::set_uniform(const std::string& name, const glm::vec4& value)
+{
+    render_command cmd;
+    cmd.type = command_type::set_uniform_vec4;
+    cmd.data = uniform_data{name, value};
+    m_commands.push_back(cmd);
+}
+
 void render_command_buffer::set_uniform(const std::string& name, const glm::vec3& value)
 {
     render_command cmd;
@@ -70,11 +86,11 @@ void render_command_buffer::set_uniform(const std::string& name, int value)
     m_commands.push_back(cmd);
 }
 
-void render_command_buffer::use_texture(ref<texture> texture)
+void render_command_buffer::use_texture(ref<texture> texture, unsigned int unit)
 {
     render_command cmd;
     cmd.type = command_type::use_texture;
-    cmd.data = texture;
+    cmd.data = texture_bind_data{ texture, unit };
     m_commands.push_back(cmd);
 }
 

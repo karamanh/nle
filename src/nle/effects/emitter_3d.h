@@ -44,7 +44,7 @@ private:
     float m_emission_radius = 10.0f;
     float m_max_distance = 10.0f;
 
-    void render(render_command_buffer& command_buffer) override;
+    void render(render_command_buffer& command_buffer, const render_context& context) override;
 
     void generate_particles();
 };

@@ -42,6 +42,10 @@ public:
 
     void set_texture(ref<class texture> texture);
     ref<class texture> texture();
+
+    /// GL object names, for recording draw commands.
+    unsigned int vao() const;
+    unsigned int ebo() const;
 private:
 
     /// vertices
@@ -71,6 +75,7 @@ private:
     void load();
 
     friend class mesh_instance_3d;
+    friend class gltf_instance_3d;
 };
 
 } // namespace nle

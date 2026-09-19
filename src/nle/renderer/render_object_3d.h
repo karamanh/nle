@@ -10,9 +10,10 @@
  */
 #pragma once
 
-#include "object_3d.h"
+#include "../object/object_3d.h"
 #include "../renderer/shader.h"
 #include "render_command.h"
+#include "render_context.h"
 
 #include <GL/gl.h>
 
@@ -51,7 +52,14 @@ public:
     render_object_3d(const std::string &id = "");
     virtual ~render_object_3d();
 
-    virtual void render(render_command_buffer& command_buffer) = 0;
+    /**
+     * @brief Records the draw for this object into @p command_buffer.
+     *
+     * @p context carries everything that is constant for the frame (camera,
+     * lights, fog). Objects must not re-upload those; the backend does it once
+     * per shader program per frame.
+     */
+    virtual void render(render_command_buffer& command_buffer, const render_context& context) = 0;
 
     virtual void set_render_mode(enum render_mode rm);
     virtual enum render_mode render_mode() const;

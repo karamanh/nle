@@ -23,6 +23,15 @@ class texture
 public:
     texture(const std::string& path, bool flip = true);
     texture(const uint8_t *blob, size_t size, bool flip = true);
+
+    /**
+     * @brief Wraps pixels that are already decoded.
+     *
+     * glTF hands back decoded images rather than encoded files, so there is
+     * nothing for stb to do. @p channels may be 1, 2, 3 or 4.
+     */
+    texture(const uint8_t *pixels, int width, int height, int channels, bool flip = false);
+
     virtual ~texture();
 
     uint32_t id() const;
@@ -36,6 +45,10 @@ private:
 
     void load_from_file(const std::string& path, bool flip);
     void load_from_memory(const unsigned char *blob, size_t size, bool flip);
+    void load_from_pixels(const unsigned char *pixels, int width, int height, int channels, bool flip);
+
+    /// Applies the wrap/filter parameters and uploads to the bound texture.
+    void upload(const unsigned char *pixels, int format);
 };
 
 } // namespace nle

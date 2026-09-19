@@ -52,6 +52,9 @@ namespace nle
         virtual nlohmann::json to_json() const;
         virtual void from_json(const nlohmann::json &j);
 
+        /// Model matrix for this object: translate * rotate (XYZ) * scale.
+        virtual glm::mat4 transform_matrix() const;
+
         virtual glm::vec3 front() const;
         virtual glm::vec3 right() const;
         virtual glm::vec3 up() const;

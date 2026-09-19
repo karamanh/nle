@@ -1,5 +1,7 @@
 #include "scene_3d.h"
 
+#include <algorithm>
+
 namespace nle
 {
 
@@ -11,7 +13,7 @@ scene_3d::scene_3d()
 
 scene_3d::~scene_3d()
 {
-    for(auto ro : m_render_objects)
+    for(auto ro : render_objects())
     {
         delete_child(ro);
     }
@@ -42,6 +44,66 @@ ref<class light> scene_3d::light()
     return m_light == nullptr ? m_default_light : m_light;
 }
 
+void scene_3d::add_point_light(ref<class point_light> light)
+{
+    if(!light)
+    {
+        return;
+    }
+
+    if(std::find(m_point_lights.begin(), m_point_lights.end(), light) == m_point_lights.end())
+    {
+        m_point_lights.push_back(light);
+    }
+}
+
+void scene_3d::remove_point_light(ref<class point_light> light)
+{
+    m_point_lights.erase(std::remove(m_point_lights.begin(), m_point_lights.end(), light),
+                         m_point_lights.end());
+}
+
+const std::vector<ref<class point_light>>& scene_3d::point_lights() const
+{
+    return m_point_lights;
+}
+
+std::vector<point_light_data> scene_3d::collect_point_lights(const glm::vec3& eye) const
+{
+    std::vector<std::pair<float, point_light_data>> candidates;
+    candidates.reserve(m_point_lights.size());
+
+    for(const auto& pl : m_point_lights)
+    {
+        if(!pl || !pl->enabled())
+        {
+            continue;
+        }
+
+        candidates.emplace_back(glm::distance(pl->position(), eye), pl->to_point_light_data());
+    }
+
+    /// Nearest lights win the limited slots. Sorting by distance to the eye
+    /// rather than to each object is an approximation, but it keeps the set
+    /// stable across the frame, which avoids lights popping between draws.
+    std::sort(candidates.begin(), candidates.end(),
+              [](const auto& a, const auto& b) { return a.first < b.first; });
+
+    if(candidates.size() > static_cast<size_t>(MAX_POINT_LIGHTS))
+    {
+        candidates.resize(static_cast<size_t>(MAX_POINT_LIGHTS));
+    }
+
+    std::vector<point_light_data> result;
+    result.reserve(candidates.size());
+    for(auto& candidate : candidates)
+    {
+        result.push_back(candidate.second);
+    }
+
+    return result;
+}
+
 void scene_3d::set_sky(ref<class sky> sky)
 {
     m_sky = sky;
@@ -54,17 +116,11 @@ ref<class sky> scene_3d::sky()
     return m_sky;
 }
 
-void scene_3d::render()
+void scene_3d::render(render_command_buffer& command_buffer, const render_context& context)
 {
-    // This method is deprecated and should not be used
-    // Use render(command_buffer) instead
-}
-
-void scene_3d::render(render_command_buffer& command_buffer)
-{
-    for(auto it : m_render_objects)
+    for(auto it : render_objects())
     {
-        it->render(command_buffer);
+        it->render(command_buffer, context);
     }
 }
 
@@ -78,6 +134,12 @@ void scene_3d::add_child(ref<object_3d> child)
         auto sp = shared_from_this();
         ro->set_scene(sp);
     }
+
+    /// lights are not render objects, but the renderer still needs to find them.
+    if(auto pl = std::dynamic_pointer_cast<class point_light>(child))
+    {
+        add_point_light(pl);
+    }
 }
 
 void scene_3d::delete_child(ref<object_3d> child)
@@ -87,7 +149,11 @@ void scene_3d::delete_child(ref<object_3d> child)
     if(ro)
     {
         ro->m_scene.reset();
-        m_render_objects.erase(ro);
+    }
+
+    if(auto pl = std::dynamic_pointer_cast<class point_light>(child))
+    {
+        remove_point_light(pl);
     }
 
     render_object_3d::delete_child(child);

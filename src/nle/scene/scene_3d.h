@@ -17,6 +17,7 @@
 #include "sky.h"
 
 #include <set>
+#include <vector>
 
 namespace nle
 {
@@ -31,16 +32,38 @@ public:
     ref<class camera> camera();
     ref<class camera> default_camera();
 
+    /// The scene's directional light. Always non-null; a default one is created
+    /// with the scene.
     void set_light(ref<class light> light);
     ref<class light> light();
+
+    /**
+     * @brief Registers a point light with the scene.
+     *
+     * Point lights are not render objects, so they are tracked separately from
+     * the object tree. add_child() also picks them up, which is what you want
+     * when parenting a light to a moving object; this method is for lights that
+     * belong to the scene itself.
+     */
+    void add_point_light(ref<class point_light> light);
+    void remove_point_light(ref<class point_light> light);
+    const std::vector<ref<class point_light>>& point_lights() const;
+
+    /**
+     * @brief The point lights that actually matter for a viewer at @p eye.
+     *
+     * Disabled lights and lights whose range cannot reach @p eye's neighbourhood
+     * are dropped, and the remainder are sorted nearest-first and truncated to
+     * MAX_POINT_LIGHTS so the shader's fixed-size array is never overrun.
+     */
+    std::vector<point_light_data> collect_point_lights(const glm::vec3& eye) const;
 
     void set_sky(ref<class sky> sky);
     ref<class sky> sky();
 
     glm::vec2 target_resolution() const;
     
-    void render();
-    void render(render_command_buffer& command_buffer) override;
+    void render(render_command_buffer& command_buffer, const render_context& context) override;
     
     /// check if added child is render object, if so, add it to set of render objects.
     void add_child(ref<object_3d> child) override;
@@ -61,9 +84,9 @@ private:
 
     ref<class light> m_light;
 
-    ref<class sky> m_sky;
+    std::vector<ref<class point_light>> m_point_lights;
 
-    std::set<ref<render_object_3d>> m_render_objects;
+    ref<class sky> m_sky;
 
     glm::vec2 m_target_resolution;
 

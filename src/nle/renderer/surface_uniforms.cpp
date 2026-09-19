@@ -1,0 +1,44 @@
+#include "surface_uniforms.h"
+
+#include "material.h"
+#include "texture.h"
+
+namespace nle
+{
+
+void record_surface_uniforms(render_command_buffer& command_buffer,
+                             const render_context& context,
+                             const ref<class texture>& texture,
+                             const ref<class material>& material)
+{
+    if(texture)
+    {
+        command_buffer.set_uniform("u_texture_enabled", 1);
+        command_buffer.use_texture(texture);
+    }
+    else
+    {
+        command_buffer.set_uniform("u_texture_enabled", 0);
+    }
+
+    bool accept_light = true;
+
+    if(material)
+    {
+        command_buffer.set_uniform("u_material.ambient", material->ambient());
+        command_buffer.set_uniform("u_material.diffuse", material->diffuse());
+        command_buffer.set_uniform("u_material.specular", material->specular());
+        command_buffer.set_uniform("u_material.shininess", material->shininess());
+        command_buffer.set_uniform("u_material.dissolve", material->dissolve());
+        command_buffer.set_uniform("u_material.accept_light", static_cast<int>(material->accept_light()));
+        accept_light = material->accept_light();
+    }
+
+    // Only whether to consult the lights is per-draw; their values are frame
+    // constants uploaded by the backend.
+    command_buffer.set_uniform("u_lighting_enabled",
+                               (accept_light && context.directional_light.enabled) ? 1 : 0);
+    command_buffer.set_uniform("u_point_lighting_enabled", accept_light ? 1 : 0);
+}
+
+} // namespace nle

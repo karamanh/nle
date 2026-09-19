@@ -54,13 +54,24 @@ namespace nle
         return m_program;
     }
 
-    unsigned int shader::uniform_location(const std::string &uniform) const
+    int shader::uniform_location(const std::string &uniform) const
     {
-        return glGetUniformLocation(m_program, uniform.c_str());
+        auto it = m_uniform_locations.find(uniform);
+        if(it != m_uniform_locations.end())
+        {
+            return it->second;
+        }
+
+        int location = glGetUniformLocation(m_program, uniform.c_str());
+        m_uniform_locations.emplace(uniform, location);
+        return location;
     }
 
     void shader::compile_shaders()
     {
+        /// a relink invalidates every previously resolved location.
+        m_uniform_locations.clear();
+
         m_program = glCreateProgram();
 
         if(m_program == 0)

@@ -1,0 +1,207 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "nle tools/make_test_gltf.py"
+  },
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "skinned_bar",
+      "nodes": [
+        0,
+        1
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "bar",
+      "mesh": 0,
+      "skin": 0
+    },
+    {
+      "name": "joint_root",
+      "children": [
+        2
+      ]
+    },
+    {
+      "name": "joint_tip",
+      "translation": [
+        0.0,
+        1.0,
+        0.0
+      ]
+    }
+  ],
+  "meshes": [
+    {
+      "name": "bar_mesh",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "JOINTS_0": 1,
+            "WEIGHTS_0": 2
+          },
+          "indices": 3,
+          "material": 0,
+          "mode": 4
+        }
+      ]
+    }
+  ],
+  "skins": [
+    {
+      "name": "bar_skin",
+      "inverseBindMatrices": 4,
+      "joints": [
+        1,
+        2
+      ]
+    }
+  ],
+  "materials": [
+    {
+      "name": "bar_material",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.8,
+          0.3,
+          0.2,
+          1.0
+        ],
+        "metallicFactor": 0.0,
+        "roughnessFactor": 0.5
+      }
+    }
+  ],
+  "animations": [
+    {
+      "name": "bend",
+      "samplers": [
+        {
+          "input": 5,
+          "output": 6,
+          "interpolation": "LINEAR"
+        }
+      ],
+      "channels": [
+        {
+          "sampler": 0,
+          "target": {
+            "node": 2,
+            "path": "rotation"
+          }
+        }
+      ]
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+        -0.25,
+        0.0,
+        -0.25
+      ],
+      "max": [
+        0.25,
+        2.0,
+        0.25
+      ]
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5123,
+      "count": 8,
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 4,
+      "componentType": 5126,
+      "count": 2,
+      "type": "MAT4"
+    },
+    {
+      "bufferView": 5,
+      "componentType": 5126,
+      "count": 3,
+      "type": "SCALAR",
+      "min": [
+        0.0
+      ],
+      "max": [
+        1.0
+      ]
+    },
+    {
+      "bufferView": 6,
+      "componentType": 5126,
+      "count": 3,
+      "type": "VEC4"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 96,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 96,
+      "byteLength": 64,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 160,
+      "byteLength": 128,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 288,
+      "byteLength": 72,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 360,
+      "byteLength": 128
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 488,
+      "byteLength": 12
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 500,
+      "byteLength": 48
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 548,
+      "uri": "data:application/octet-stream;base64,AACAvgAAAAAAAIC+AACAPgAAAAAAAIC+AACAPgAAAAAAAIA+AACAvgAAAAAAAIA+AACAvgAAAEAAAIC+AACAPgAAAEAAAIC+AACAPgAAAEAAAIA+AACAvgAAAEAAAIA+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAEAAAAAAAAAAQAAAAAAAAABAAAAAAAAAAAAgD8AAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAAAAAACAPwAAAAAAAAAAAAAAAAAAgD8AAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAAAAAACAPwAAAAAAAAAAAAAAAAAAgD8AAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAAAAAAABAAIAAAACAAMABAAGAAUABAAHAAYAAAAEAAUAAAAFAAEAAQAFAAYAAQAGAAIAAgAGAAcAAgAHAAMAAwAHAAQAAwAEAAAAAACAPwAAAAAAAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAPwAAgD8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAIC/AAAAAAAAgD8AAAAAAAAAPwAAgD8AAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAV78M+XoNsPwAAAAAAAAAA8wQ1P/MENT8="
+    }
+  ]
+}

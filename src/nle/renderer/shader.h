@@ -15,6 +15,7 @@
 
 #include <string>
 #include <future>
+#include <unordered_map>
 
 namespace nle
 {
@@ -48,10 +49,17 @@ public:
     
     unsigned int program() const;
 
-    unsigned int uniform_location(const std::string& uniform) const;
+    /// Cached lookup of a uniform's location. Returns -1 when the uniform is
+    /// not active in the linked program.
+    int uniform_location(const std::string& uniform) const;
 
 private:
     GLuint m_program;
+
+    /// glGetUniformLocation() is a driver round trip, and the renderer asks for
+    /// the same handful of names every frame. Locations are stable for the
+    /// lifetime of a linked program, so they are memoised here.
+    mutable std::unordered_map<std::string, int> m_uniform_locations;
 
     GLuint m_vertex_shader;
 

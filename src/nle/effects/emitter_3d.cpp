@@ -55,7 +55,7 @@ namespace nle
         return m_particle_multimesh;
     }
 
-    void emitter_3d::render(render_command_buffer& command_buffer)
+    void emitter_3d::render(render_command_buffer& command_buffer, const render_context& context)
     {
         for(auto& particle : render_objects())
         {
@@ -66,7 +66,7 @@ namespace nle
                 particle->set_position(this->position() + glm::sphericalRand(m_emission_radius));
                 // particle->set_position(this->position() + glm::vec3(glm::circularRand(m_emission_radius), 0.0f));
             }
-            particle->render(command_buffer);
+            particle->render(command_buffer, context);
         }
     }
 
