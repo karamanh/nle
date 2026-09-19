@@ -25,7 +25,6 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 # the engine, so paths into the engine tree use this instead.
 set(NLE_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}" CACHE INTERNAL "nle source root")
 
-option(NLE_BUILD_DEMO "Build the demo executable" ON)
 option(NLE_BUILD_TESTS "Build the test executables" ON)
 option(NLE_ENABLE_DEBUG_OUTPUT "Define DEBUG for verbose engine logging" ON)
 
@@ -64,7 +63,7 @@ add_library(nle::nle ALIAS nle)
 
 # Two include roots, not one per directory as the old Makefile had: "src" for
 # fully qualified includes such as <nle/nle.h>, and "src/nle" for the short
-# forms the engine sources and the demo already use.
+# forms the engine sources already use.
 target_include_directories(nle PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/src"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/nle"
@@ -100,22 +99,6 @@ endif()
 
 # Shaders are read at runtime, so executables need to know where they live.
 set(NLE_SHADER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shader" CACHE PATH "runtime shader directory")
-
-# ---------------------------------------------------------------------------
-# demo
-# ---------------------------------------------------------------------------
-
-if(NLE_BUILD_DEMO)
-    add_executable(demo "${CMAKE_CURRENT_SOURCE_DIR}/src/demo.cpp")
-    target_link_libraries(demo PRIVATE nle)
-    target_compile_options(demo PRIVATE -Wall -Wextra)
-
-    # The demo still reads nle_projdir/ by relative path, so run it from the
-    # source tree: ./build/bin/demo
-    target_compile_definitions(demo PRIVATE
-        NLE_SHADER_DIR="${NLE_SHADER_DIR}"
-        NLE_PROJECT_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
-endif()
 
 # ---------------------------------------------------------------------------
 # tests
