@@ -3,22 +3,39 @@
 #include "../../../vendor/OBJ_Loader.h"
 
 #include <algorithm>
+#include <stdexcept>
 
 namespace nle
 {
     model_obj::model_obj(const std::string& path)
     {
-        std::string fmt = path.substr(path.find_last_of("."));
         m_name = path.substr(path.find_last_of('/') + 1);
+
+        // Never left null. create_instance() hands the multimesh straight to
+        // multimesh_instance_3d, which walks it in its constructor, so a model
+        // that gave up quietly used to take the program with it the moment
+        // anything tried to place one.
+        m_multimesh_3d = make_ref<class multimesh_3d>();
+
+        const size_t dot = path.find_last_of('.');
+
+        if (dot == std::string::npos)
+        {
+            throw std::runtime_error("model_obj: " + path + " has no extension");
+        }
+
+        std::string fmt = path.substr(dot);
 
         std::transform(fmt.begin(), fmt.end(), fmt.begin(),
                        [](unsigned char c)
                        { return std::tolower(c); });
 
-        if (fmt == ".obj")
+        if (fmt != ".obj")
         {
-            load(path);
+            throw std::runtime_error("model_obj: " + path + " is not a .obj file");
         }
+
+        load(path);
     }
 
     model_obj::~model_obj()
@@ -41,12 +58,12 @@ namespace nle
     {
         objl::Loader loader;
 
+        // Reports failure the same way model_gltf does, rather than leaving an
+        // empty model behind for the caller to discover later.
         if (!loader.LoadFile(path))
         {
-            return;
+            throw std::runtime_error("model_obj: could not load " + path);
         }
-
-        m_multimesh_3d = make_ref<class multimesh_3d>();
 
         for(const auto& it: loader.LoadedMeshes)
         {

@@ -7,9 +7,12 @@ namespace nle
     {
         m_multimesh = multimesh;
 
-        for(auto m3d : m_multimesh->meshes())
+        if(m_multimesh)
         {
-            add_child(make_ref<mesh_instance_3d>(m3d));
+            for(auto m3d : m_multimesh->meshes())
+            {
+                add_child(make_ref<mesh_instance_3d>(m3d));
+            }
         }
 
         update();
