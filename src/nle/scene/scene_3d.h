@@ -11,6 +11,7 @@
 
 #pragma once
 
+#include "../renderer/render_context.h"
 #include "../renderer/render_object_3d.h"
 #include "camera.h"
 #include "light.h"
@@ -61,6 +62,19 @@ public:
     void set_sky(ref<class sky> sky);
     ref<class sky> sky();
 
+    /**
+     * @brief Distance fog: how far you can see, and what the air looks like.
+     *
+     * Belongs to the scene rather than to the sky, so that a level can fade
+     * into the distance without also having a skybox -- and so that the fog
+     * colour can be matched to whatever the background actually is.
+     *
+     * Setting it to the same colour as the background is what makes a render
+     * distance stop looking like things winking out of existence.
+     */
+    void set_fog(const fog_data& fog);
+    const fog_data& fog() const;
+
     glm::vec2 target_resolution() const;
     
     void render(render_command_buffer& command_buffer, const render_context& context) override;
@@ -87,6 +101,8 @@ private:
     std::vector<ref<class point_light>> m_point_lights;
 
     ref<class sky> m_sky;
+
+    fog_data m_fog;
 
     glm::vec2 m_target_resolution;
 

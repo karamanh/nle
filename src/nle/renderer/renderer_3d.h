@@ -16,6 +16,7 @@
 #include "../scene/scene_3d.h"
 #include "render_command.h"
 #include "render_context.h"
+#include "bloom.h"
 #include "opengl_backend.h"
 
 namespace nle
@@ -58,6 +59,9 @@ public:
     void set_clear_color(const glm::vec3& color);
     glm::vec3 clear_color() const;
 
+    /// Post-processing. Bright things bleed light into what is around them.
+    class bloom& bloom();
+
 private:
     ref<window_glfw> m_render_target;
 
@@ -67,6 +71,8 @@ private:
 
     render_command_buffer m_command_buffer;
     opengl_backend m_opengl_backend;
+
+    class bloom m_bloom;
 
     clock m_clock;
     int64_t m_last_frame_us = 0;

@@ -116,6 +116,16 @@ ref<class sky> scene_3d::sky()
     return m_sky;
 }
 
+void scene_3d::set_fog(const fog_data& fog)
+{
+    m_fog = fog;
+}
+
+const fog_data& scene_3d::fog() const
+{
+    return m_fog;
+}
+
 void scene_3d::render(render_command_buffer& command_buffer, const render_context& context)
 {
     for(auto it : render_objects())

@@ -33,6 +33,11 @@ namespace nle
         return m_current_scene;
     }
 
+    class bloom& renderer_3d::bloom()
+    {
+        return m_bloom;
+    }
+
     ref<window_glfw> renderer_3d::render_target()
     {
         return m_render_target;
@@ -89,13 +94,7 @@ namespace nle
         context.directional_light = scene->light()->to_directional_light_data();
         context.point_lights = scene->collect_point_lights(context.eye_position);
 
-        if(auto sky = scene->sky())
-        {
-            context.fog.enabled = sky->distance_fog_enabled();
-            context.fog.near_distance = sky->distance_fog_near();
-            context.fog.far_distance = sky->distance_fog_far();
-            context.fog.color = sky->distance_fog_color();
-        }
+        context.fog = scene->fog();
 
         return context;
     }
@@ -148,14 +147,26 @@ namespace nle
         m_last_frame_us = now_us;
         m_time = static_cast<float>(now_us) / 1000000.0f;
 
-        glViewport(0, 0, m_render_target->width(), m_render_target->height());
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        const int width = m_render_target->width();
+        const int height = m_render_target->height();
+
+        // The scene goes into bloom's own target when it is on, and straight
+        // to the window when it is not. Either way it is cleared once, here.
+        if(!m_bloom.begin(width, height))
+        {
+            glViewport(0, 0, width, height);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        }
 
         if(m_current_scene)
         {
-            m_current_scene->set_target_resolution(glm::vec2(m_render_target->width(), m_render_target->height()));
+            m_current_scene->set_target_resolution(glm::vec2(width, height));
             render_scene(m_current_scene);
         }
+
+        // Nothing if bloom did not begin, so the interface drawn after this
+        // lands on the window either way.
+        m_bloom.end();
 
         // glfw specific functions like glfwSwapBuffers are called
         // from window_glfw::display().

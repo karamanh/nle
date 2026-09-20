@@ -17,6 +17,13 @@
 namespace nle
 {
 
+    /**
+     * @brief The box drawn behind everything else.
+     *
+     * Distance fog used to live here and now lives on scene_3d. Fog is a
+     * property of the air in a scene rather than of the backdrop, and keeping
+     * it here meant a scene could not have fog without also having a skybox.
+     */
     class sky : public mesh_instance_3d
     {
     public:
@@ -24,24 +31,6 @@ namespace nle
         virtual ~sky();
 
         void render(render_command_buffer& command_buffer, const render_context& context) override;
-
-        void set_distance_fog_enabled(bool enabled);
-        bool distance_fog_enabled() const;
-
-        void set_distance_fog_far(float far);
-        float distance_fog_far() const;
-
-        void set_distance_fog_near(float near);
-        float distance_fog_near() const;
-
-        void set_distance_fog_color(glm::vec3 color);
-        glm::vec3 distance_fog_color() const;
-
-    private:
-        bool m_distance_fog_enabled = false;
-        float m_distance_fog_near = 0.0f;
-        float m_distance_fog_far = 1000.0f;
-        glm::vec3 m_distance_fog_color = glm::vec3(1.0f);
     };
 
 } // namespace nle
