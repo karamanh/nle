@@ -38,6 +38,17 @@ public:
 
     const std::vector<struct vertex>& vertices();
 
+    /**
+     * @brief Rewrites a run of vertices in place, without rebuilding anything.
+     *
+     * For geometry that changes shape but not size -- terrain under a brush,
+     * where a stroke moves a few hundred vertices of a hundred thousand and
+     * rebuilding the mesh to say so costs more than the stroke did.
+     *
+     * @return false if the run falls outside the mesh.
+     */
+    bool update_vertices(size_t first, const struct vertex* data, size_t count);
+
     const std::vector<uint32_t>& indices();
 
     void set_texture(ref<class texture> texture);

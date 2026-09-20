@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cmath>
 #include <random>
+#include <cstdint>
 
 namespace nle
 {
@@ -90,6 +91,11 @@ void terrain_3d::set_height_function(std::function<float(float, float)> height)
 {
     m_height = std::move(height);
     m_generated = false;
+
+    // A new description of the surface replaces the sculpted one, which is
+    // the only sensible reading of being handed a new one.
+    m_heights.clear();
+
     rebuild();
 }
 
@@ -98,6 +104,11 @@ void terrain_3d::set_noise(const terrain_noise& noise)
     m_noise = noise;
     m_height = make_noise_height(noise, m_size);
     m_generated = true;
+
+    // Regenerating is starting again: whatever was sculpted described the old
+    // ground and means nothing on the new.
+    m_heights.clear();
+
     rebuild();
 }
 
@@ -157,14 +168,239 @@ int terrain_3d::resolution() const
     return m_resolution;
 }
 
+int terrain_3d::samples() const
+{
+    return m_resolution + 1;
+}
+
+const std::vector<float>& terrain_3d::heightmap() const
+{
+    return m_heights;
+}
+
+bool terrain_3d::sculpted() const
+{
+    return !m_heights.empty();
+}
+
+bool terrain_3d::set_heightmap(std::vector<float> heights)
+{
+    const auto wanted = static_cast<size_t>(samples()) * static_cast<size_t>(samples());
+
+    if(heights.size() != wanted)
+    {
+        return false;
+    }
+
+    m_heights = std::move(heights);
+    rebuild();
+
+    return true;
+}
+
+void terrain_3d::bake_heightmap()
+{
+    const int n = samples();
+    const float half = m_size * 0.5f;
+    const float step = m_size / static_cast<float>(m_resolution);
+
+    std::vector<float> baked(static_cast<size_t>(n) * static_cast<size_t>(n), 0.0f);
+
+    for(int z = 0; z < n; ++z)
+    {
+        for(int x = 0; x < n; ++x)
+        {
+            const float wx = static_cast<float>(x) * step - half;
+            const float wz = static_cast<float>(z) * step - half;
+
+            // Deliberately the function, not local_height: this is the moment
+            // the function stops being the answer and the samples start.
+            baked[static_cast<size_t>(z) * static_cast<size_t>(n) + static_cast<size_t>(x)] =
+                m_height ? m_height(wx, wz) : 0.0f;
+        }
+    }
+
+    m_heights = std::move(baked);
+}
+
+void terrain_3d::clear_heightmap()
+{
+    m_heights.clear();
+    rebuild();
+}
+
+float terrain_3d::sample_heightmap(float x, float z) const
+{
+    const int n = samples();
+    const float half = m_size * 0.5f;
+    const float step = m_size / static_cast<float>(m_resolution);
+
+    // Into grid coordinates, where a whole number lands on a sample.
+    const float gx = std::clamp((x + half) / step, 0.0f, static_cast<float>(m_resolution));
+    const float gz = std::clamp((z + half) / step, 0.0f, static_cast<float>(m_resolution));
+
+    const int x0 = std::min(static_cast<int>(gx), m_resolution - 1);
+    const int z0 = std::min(static_cast<int>(gz), m_resolution - 1);
+    const int x1 = x0 + 1;
+    const int z1 = z0 + 1;
+
+    const float tx = gx - static_cast<float>(x0);
+    const float tz = gz - static_cast<float>(z0);
+
+    auto at = [&](int sx, int sz) {
+        return m_heights[static_cast<size_t>(sz) * static_cast<size_t>(n)
+                       + static_cast<size_t>(sx)];
+    };
+
+    // Bilinear, which is what makes the surface continuous between samples --
+    // and therefore what makes height_at() agree with what is drawn.
+    const float bottom = at(x0, z0) * (1.0f - tx) + at(x1, z0) * tx;
+    const float top = at(x0, z1) * (1.0f - tx) + at(x1, z1) * tx;
+
+    return bottom * (1.0f - tz) + top * tz;
+}
+
+bool terrain_3d::sculpt(const glm::vec3& center, float radius, float strength,
+                        sculpt_mode mode, float delta_time, float level)
+{
+    if(radius <= 0.0f || delta_time <= 0.0f)
+    {
+        return false;
+    }
+
+    if(m_heights.empty())
+    {
+        bake_heightmap();
+    }
+
+    const int n = samples();
+    const glm::vec3 origin = position();
+    const float half = m_size * 0.5f;
+    const float step = m_size / static_cast<float>(m_resolution);
+
+    // Only the samples the brush actually covers, so the cost of a stroke is
+    // the size of the brush rather than the size of the map.
+    const float cx = center.x - origin.x;
+    const float cz = center.z - origin.z;
+
+    const int min_x = std::max(0, static_cast<int>(std::floor((cx - radius + half) / step)));
+    const int max_x = std::min(n - 1, static_cast<int>(std::ceil((cx + radius + half) / step)));
+    const int min_z = std::max(0, static_cast<int>(std::floor((cz - radius + half) / step)));
+    const int max_z = std::min(n - 1, static_cast<int>(std::ceil((cz + radius + half) / step)));
+
+    if(min_x > max_x || min_z > max_z)
+    {
+        return false;
+    }
+
+    auto at = [&](int sx, int sz) -> float& {
+        return m_heights[static_cast<size_t>(sz) * static_cast<size_t>(n)
+                       + static_cast<size_t>(sx)];
+    };
+
+    // Smoothing reads its neighbours, so it cannot read a half-smoothed grid.
+    std::vector<float> before;
+    if(mode == sculpt_mode::smooth)
+    {
+        before = m_heights;
+    }
+
+    auto sampled = [&](const std::vector<float>& from, int sx, int sz) {
+        const int cx_ = std::clamp(sx, 0, n - 1);
+        const int cz_ = std::clamp(sz, 0, n - 1);
+        return from[static_cast<size_t>(cz_) * static_cast<size_t>(n)
+                  + static_cast<size_t>(cx_)];
+    };
+
+    bool moved = false;
+
+    for(int sz = min_z; sz <= max_z; ++sz)
+    {
+        for(int sx = min_x; sx <= max_x; ++sx)
+        {
+            const float wx = static_cast<float>(sx) * step - half;
+            const float wz = static_cast<float>(sz) * step - half;
+
+            const float distance = std::sqrt((wx - cx) * (wx - cx) + (wz - cz) * (wz - cz));
+
+            if(distance >= radius)
+            {
+                continue;
+            }
+
+            // Smooth falloff to the rim, so overlapping strokes build up into
+            // a hill rather than stacking visible discs.
+            const float t = 1.0f - distance / radius;
+            const float weight = t * t * (3.0f - 2.0f * t);
+
+            float& height = at(sx, sz);
+            const float was = height;
+
+            switch(mode)
+            {
+                case sculpt_mode::raise:
+                    height += strength * weight * delta_time;
+                    break;
+
+                case sculpt_mode::lower:
+                    height -= strength * weight * delta_time;
+                    break;
+
+                case sculpt_mode::smooth:
+                {
+                    const float average =
+                        (sampled(before, sx - 1, sz) + sampled(before, sx + 1, sz)
+                       + sampled(before, sx, sz - 1) + sampled(before, sx, sz + 1)
+                       + sampled(before, sx, sz)) / 5.0f;
+
+                    const float rate = std::clamp(strength * weight * delta_time, 0.0f, 1.0f);
+                    height += (average - height) * rate;
+                    break;
+                }
+
+                case sculpt_mode::flatten:
+                {
+                    const float rate = std::clamp(strength * weight * delta_time, 0.0f, 1.0f);
+                    height += (level - height) * rate;
+                    break;
+                }
+            }
+
+            if(height != was)
+            {
+                moved = true;
+            }
+        }
+    }
+
+    if(moved)
+    {
+        refresh_region(min_x, max_x, min_z, max_z);
+    }
+
+    return moved;
+}
+
 float terrain_3d::local_height(float x, float z) const
 {
+    // Sculpted ground answers from its samples; everything else from whatever
+    // function generated it.
+    if(!m_heights.empty())
+    {
+        return sample_heightmap(x, z);
+    }
+
     return m_height ? m_height(x, z) : 0.0f;
+}
+
+bool terrain_3d::has_surface() const
+{
+    return static_cast<bool>(m_height) || !m_heights.empty();
 }
 
 glm::vec3 terrain_3d::local_normal(float x, float z) const
 {
-    if(!m_height)
+    if(!has_surface())
     {
         return glm::vec3(0.0f, 1.0f, 0.0f);
     }
@@ -322,9 +558,139 @@ ref<class mesh_3d> terrain_3d::build_mesh() const
     return mesh;
 }
 
+ref<class mesh_3d> terrain_3d::build_grid_mesh() const
+{
+    const int n = samples();
+    const float half = m_size * 0.5f;
+    const float step = m_size / static_cast<float>(m_resolution);
+
+    std::vector<vertex> vertices;
+    std::vector<uint32_t> indices;
+
+    vertices.reserve(static_cast<size_t>(n) * static_cast<size_t>(n));
+    indices.reserve(static_cast<size_t>(m_resolution) * static_cast<size_t>(m_resolution) * 6);
+
+    for(int z = 0; z < n; ++z)
+    {
+        for(int x = 0; x < n; ++x)
+        {
+            const float px = static_cast<float>(x) * step - half;
+            const float pz = static_cast<float>(z) * step - half;
+
+            const float y = local_height(px, pz);
+            const glm::vec3 normal = local_normal(px, pz);
+
+            vertices.push_back({ { px, y, pz },
+                                 normal,
+                                 surface_color(x, z, y, normal),
+                                 { static_cast<float>(x), static_cast<float>(z) } });
+        }
+    }
+
+    for(int z = 0; z < m_resolution; ++z)
+    {
+        for(int x = 0; x < m_resolution; ++x)
+        {
+            const auto row = static_cast<uint32_t>(z) * static_cast<uint32_t>(n);
+            const auto next = row + static_cast<uint32_t>(n);
+            const auto column = static_cast<uint32_t>(x);
+
+            const uint32_t bottom_left = row + column;
+            const uint32_t bottom_right = row + column + 1;
+            const uint32_t top_left = next + column;
+            const uint32_t top_right = next + column + 1;
+
+            // counter-clockwise seen from above, so the face normal is +Y
+            indices.insert(indices.end(), { top_left, top_right, bottom_right,
+                                            top_left, bottom_right, bottom_left });
+        }
+    }
+
+    auto mesh = make_ref<mesh_3d>(vertices, indices, nullptr);
+
+    // Ground is diffuse; a strong specular term on a whole field of it reads
+    // as wet plastic.
+    auto surface = make_ref<material>();
+    surface->set_ambient(glm::vec3(0.30f));
+    surface->set_diffuse(glm::vec3(0.85f));
+    surface->set_specular(glm::vec3(0.04f));
+    surface->set_shininess(8.0f);
+    surface->set_dissolve(1.0f);
+    mesh->set_material(surface);
+
+    return mesh;
+}
+
+void terrain_3d::refresh_region(int min_x, int max_x, int min_z, int max_z)
+{
+    if(!m_mesh || !m_mesh_is_grid)
+    {
+        rebuild();
+        return;
+    }
+
+    const int n = samples();
+
+    // A vertex's normal comes from the heights on either side of it, so the
+    // ring just outside the stroke has moved too even though its height has
+    // not.
+    min_x = std::max(0, min_x - 1);
+    min_z = std::max(0, min_z - 1);
+    max_x = std::min(n - 1, max_x + 1);
+    max_z = std::min(n - 1, max_z + 1);
+
+    if(min_x > max_x || min_z > max_z)
+    {
+        return;
+    }
+
+    const float half = m_size * 0.5f;
+    const float step = m_size / static_cast<float>(m_resolution);
+    const auto span = static_cast<size_t>(max_x - min_x + 1);
+
+    std::vector<vertex> row;
+    row.reserve(span);
+
+    // A row of the grid is contiguous in the buffer, so each one goes up as a
+    // single write rather than a vertex at a time.
+    for(int z = min_z; z <= max_z; ++z)
+    {
+        row.clear();
+
+        for(int x = min_x; x <= max_x; ++x)
+        {
+            const float px = static_cast<float>(x) * step - half;
+            const float pz = static_cast<float>(z) * step - half;
+
+            const float y = local_height(px, pz);
+            const glm::vec3 normal = local_normal(px, pz);
+
+            row.push_back({ { px, y, pz },
+                            normal,
+                            surface_color(x, z, y, normal),
+                            { static_cast<float>(x), static_cast<float>(z) } });
+        }
+
+        const auto first = static_cast<size_t>(z) * static_cast<size_t>(n)
+                         + static_cast<size_t>(min_x);
+
+        if(!m_mesh->update_vertices(first, row.data(), row.size()))
+        {
+            // The mesh is not the shape we thought it was, so start again.
+            rebuild();
+            return;
+        }
+    }
+}
+
 void terrain_3d::rebuild()
 {
-    m_mesh = build_mesh();
+    // The checkerboard is the only thing that needs a vertex per tile corner,
+    // since its colour changes across an edge. Everything else -- which is to
+    // say anything anyone would ship -- shares them, and rebuilds an order of
+    // magnitude faster for it.
+    m_mesh_is_grid = !(m_layers.empty() && m_heights.empty());
+    m_mesh = m_mesh_is_grid ? build_grid_mesh() : build_mesh();
 }
 
 void terrain_3d::set_scene(ref<render_object_3d> scene)
@@ -481,7 +847,7 @@ bool terrain_3d::raycast(const ray& r, glm::vec3& hit) const
 {
     const glm::vec3 origin = position();
 
-    if(!m_height)
+    if(!has_surface())
     {
         // Flat ground: solve it directly rather than marching towards it.
         float distance = 0.0f;

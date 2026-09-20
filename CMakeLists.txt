@@ -136,4 +136,13 @@ if(NLE_BUILD_TESTS)
     target_compile_options(nle_input_handler_test PRIVATE -Wall -Wextra)
 
     add_test(NAME input_handler COMMAND nle_input_handler_test)
+
+    # Building a terrain uploads a mesh, so this one needs a context too.
+    add_executable(nle_terrain_sculpt_test
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/terrain_sculpt_test.cpp")
+    target_link_libraries(nle_terrain_sculpt_test PRIVATE nle)
+    target_compile_options(nle_terrain_sculpt_test PRIVATE -Wall -Wextra)
+
+    add_test(NAME terrain_sculpt COMMAND nle_terrain_sculpt_test)
+    set_tests_properties(terrain_sculpt PROPERTIES SKIP_RETURN_CODE 77)
 endif()

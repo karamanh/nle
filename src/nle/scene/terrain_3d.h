@@ -68,6 +68,23 @@ struct terrain_noise
     float edge_falloff = 0.0f;
 };
 
+/// What a brush stroke does to the ground under it.
+enum class sculpt_mode
+{
+    /// Pulls the surface up.
+    raise,
+
+    /// Pushes it down.
+    lower,
+
+    /// Averages each sample with its neighbours, wearing edges off.
+    smooth,
+
+    /// Pulls everything towards a given height, which is how a building gets
+    /// somewhere level to stand.
+    flatten
+};
+
 /**
  * @brief Rules for sprinkling props across the surface.
  *
@@ -160,6 +177,52 @@ public:
      * than iterative.
      */
     void set_height_function(std::function<float(float, float)> height);
+
+    // ---- sculpting ------------------------------------------------------
+
+    /// Height samples along each edge. One more than the tile resolution,
+    /// since a row of tiles has a sample at each end.
+    int samples() const;
+
+    /**
+     * @brief The editable heightfield, row-major from -half to +half.
+     *
+     * Empty until something sculpts or bakes. While it is empty the surface
+     * comes from the height function instead, which is what noise sets.
+     */
+    const std::vector<float>& heightmap() const;
+
+    /// Replaces it wholesale. Wrong-sized input is refused.
+    bool set_heightmap(std::vector<float> heights);
+
+    /// Whether the surface comes from the heightfield rather than a function
+    /// -- which is to say, whether it has been shaped by hand.
+    bool sculpted() const;
+
+    /**
+     * @brief Samples the current surface into the heightfield.
+     *
+     * Generation and sculpting meet here: noise lays the ground out, this
+     * freezes it, and from then on a brush has something to push around.
+     * Called for you the first time anything sculpts.
+     */
+    void bake_heightmap();
+
+    /// Throws the heightfield away, going back to whatever the function says.
+    void clear_heightmap();
+
+    /**
+     * @brief Applies one brush stroke, centred on a world position.
+     *
+     * The brush falls off towards its edge, so overlapping strokes build up
+     * smoothly rather than in discs. @p strength is in world units per second
+     * for raise and lower, and a rate of approach for smooth and flatten.
+     *
+     * @param level the height flatten pulls towards. Ignored by the others.
+     * @return whether anything moved, so a caller can skip rebuilding.
+     */
+    bool sculpt(const glm::vec3& center, float radius, float strength,
+                sculpt_mode mode, float delta_time, float level = 0.0f);
 
     /**
      * @brief Generates a fractal heightfield, replacing any height function.
@@ -271,6 +334,46 @@ private:
     float m_cliff_blend = 12.0f;
 
     std::function<float(float, float)> m_height;
+
+    /// (samples * samples) heights, row-major. Empty means "use m_height".
+    std::vector<float> m_heights;
+
+    /// Bilinear sample of the heightfield, in local space.
+    float sample_heightmap(float x, float z) const;
+
+    /**
+     * @brief Whether the ground is anything other than the plane y = 0.
+     *
+     * Either a height function or a sculpted field counts. Asking about only
+     * one of them is how a hand-made hill ends up drawn but not collided
+     * with: the mesh comes from local_height(), which knows about both, while
+     * anything testing m_height alone quietly takes the flat path.
+     */
+    bool has_surface() const;
+
+    /**
+     * @brief Builds the mesh as a shared-vertex grid.
+     *
+     * Which is what sculpting needs: a stroke then rebuilds (resolution + 1)^2
+     * vertices rather than four per tile. At a resolution fine enough to sculpt
+     * at, that is the difference between a brush that follows the mouse and one
+     * that does not. The checkerboard still uses the old builder, since hard
+     * tile edges are the one thing shared vertices cannot do.
+     */
+    ref<class mesh_3d> build_grid_mesh() const;
+
+    /// Whether m_mesh is a grid, and so can be updated a patch at a time.
+    bool m_mesh_is_grid = false;
+
+    /**
+     * @brief Re-does the vertices in a rectangle of samples, in place.
+     *
+     * What makes a brush usable: a stroke touches a few hundred vertices, and
+     * rebuilding the mesh to report that costs more than the stroke did. The
+     * rectangle is widened by one sample on each side, because a vertex's
+     * normal is taken from the heights either side of it and those change too.
+     */
+    void refresh_region(int min_x, int max_x, int min_z, int max_z);
 
     terrain_noise m_noise;
     bool m_generated = false;

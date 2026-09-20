@@ -1,5 +1,7 @@
 #include "mesh_3d.h"
 
+#include <algorithm>
+
 namespace nle
 {
 
@@ -81,6 +83,30 @@ namespace nle
     unsigned int mesh_3d::ebo() const
     {
         return m_ebo;
+    }
+
+    bool mesh_3d::update_vertices(size_t first, const struct vertex* data, size_t count)
+    {
+        if(data == nullptr || count == 0 || first + count > m_vertices.size())
+        {
+            return false;
+        }
+
+        std::copy(data, data + count, m_vertices.begin() + static_cast<long>(first));
+
+        if(m_vbo == 0)
+        {
+            return false;
+        }
+
+        glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+        glBufferSubData(GL_ARRAY_BUFFER,
+                        static_cast<GLintptr>(first * sizeof(struct vertex)),
+                        static_cast<GLsizeiptr>(count * sizeof(struct vertex)),
+                        data);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        return true;
     }
 
     void mesh_3d::load()
