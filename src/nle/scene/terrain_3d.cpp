@@ -232,6 +232,26 @@ void terrain_3d::clear_heightmap()
 float terrain_3d::sample_heightmap(float x, float z) const
 {
     const int n = samples();
+    const auto expected = static_cast<size_t>(n) * static_cast<size_t>(n);
+
+    if(m_heights.size() != expected)
+    {
+        return 0.0f;
+    }
+
+    // Not finite, and therefore not a position on this or any terrain.
+    //
+    // Worth refusing rather than trusting the clamp below: std::clamp passes
+    // a NaN straight through, because every comparison against one is false,
+    // and casting that to an int is undefined -- in practice INT_MIN, which
+    // then indexes the heightfield somewhere off in memory. Callers really do
+    // hand this NaNs: a screen ray built from a cursor that has left the
+    // window is made of them.
+    if(!std::isfinite(x) || !std::isfinite(z))
+    {
+        return 0.0f;
+    }
+
     const float half = m_size * 0.5f;
     const float step = m_size / static_cast<float>(m_resolution);
 
@@ -239,13 +259,16 @@ float terrain_3d::sample_heightmap(float x, float z) const
     const float gx = std::clamp((x + half) / step, 0.0f, static_cast<float>(m_resolution));
     const float gz = std::clamp((z + half) / step, 0.0f, static_cast<float>(m_resolution));
 
-    const int x0 = std::min(static_cast<int>(gx), m_resolution - 1);
-    const int z0 = std::min(static_cast<int>(gz), m_resolution - 1);
+    // Clamped at both ends. The upper end is the interpolation needing a
+    // sample after this one; the lower end costs nothing and means no
+    // arithmetic above can put this out of range whatever it is given.
+    const int x0 = std::clamp(static_cast<int>(gx), 0, m_resolution - 1);
+    const int z0 = std::clamp(static_cast<int>(gz), 0, m_resolution - 1);
     const int x1 = x0 + 1;
     const int z1 = z0 + 1;
 
-    const float tx = gx - static_cast<float>(x0);
-    const float tz = gz - static_cast<float>(z0);
+    const float tx = std::clamp(gx - static_cast<float>(x0), 0.0f, 1.0f);
+    const float tz = std::clamp(gz - static_cast<float>(z0), 0.0f, 1.0f);
 
     auto at = [&](int sx, int sz) {
         return m_heights[static_cast<size_t>(sz) * static_cast<size_t>(n)
@@ -463,6 +486,13 @@ int terrain_3d::paint_at(float x, float z) const
     const float half = m_size * 0.5f;
     const float step = m_size / static_cast<float>(m_resolution);
 
+    if(!std::isfinite(x) || !std::isfinite(z))
+    {
+        return -1;
+    }
+
+    // std::lround of a NaN is as undefined as a cast is, so the check above
+    // has to come first here too.
     const int sx = std::clamp(static_cast<int>(std::lround((x - origin.x + half) / step)),
                               0, m_resolution);
     const int sz = std::clamp(static_cast<int>(std::lround((z - origin.z + half) / step)),

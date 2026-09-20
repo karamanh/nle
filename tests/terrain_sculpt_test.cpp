@@ -16,6 +16,7 @@
 #include <GLFW/glfw3.h>
 
 #include <cmath>
+#include <limits>
 #include <cstdlib>
 #include <iostream>
 #include <string>
@@ -300,6 +301,50 @@ void test_painting()
     check(ground->paint_at(0.0f, 0.0f) == -1, "and replaces what was there");
 }
 
+void test_nonsense_coordinates()
+{
+    std::cout << "\nimpossible positions\n";
+
+    auto ground = make_ground();
+    ground->sculpt({ 0.0f, 0.0f, 0.0f }, 20.0f, 6.0f, nle::sculpt_mode::raise, 1.0f);
+    ground->set_paint_layers({ { "road", { 0.4f, 0.3f, 0.2f } } });
+    ground->paint({ 0.0f, 0.0f, 0.0f }, 20.0f, 0, 0.5f, 1.0f);
+
+    // A screen ray built from a cursor that has left the window is made of
+    // infinities, and everything downstream inherits them. Sampling a
+    // heightfield at one used to index it at INT_MIN and take the process
+    // with it, because std::clamp passes a NaN straight through -- every
+    // comparison against one being false -- and casting that to an int is
+    // undefined.
+    const float nan = std::nanf("");
+    const float infinity = std::numeric_limits<float>::infinity();
+
+    for(float bad : { nan, infinity, -infinity })
+    {
+        check(std::isfinite(ground->height_at(bad, 0.0f)) || ground->height_at(bad, 0.0f) == 0.0f,
+              "height_at survives an impossible x");
+        check(std::isfinite(ground->height_at(0.0f, bad)) || ground->height_at(0.0f, bad) == 0.0f,
+              "height_at survives an impossible z");
+
+        ground->place_on_surface({ bad, bad, bad });
+        ground->slope_at(bad, bad);
+
+        check(ground->paint_at(bad, bad) == -1, "paint_at reports nothing for one");
+    }
+
+    // Far outside the patch is not impossible, merely elsewhere, and has to
+    // answer rather than reach past the end of the samples.
+    check(std::isfinite(ground->height_at(1e9f, -1e9f)), "and a position a long way off");
+
+    // A ray that cannot hit anything must say so rather than march forever.
+    nle::ray nowhere;
+    nowhere.origin = { nan, nan, nan };
+    nowhere.direction = { nan, nan, nan };
+
+    glm::vec3 hit(0.0f);
+    check(!ground->raycast(nowhere, hit), "a ray made of nothing hits nothing");
+}
+
 } // namespace
 
 int main()
@@ -337,6 +382,7 @@ int main()
     test_flatten_and_smooth();
     test_what_is_drawn_is_what_is_walked_on();
     test_painting();
+    test_nonsense_coordinates();
 
     std::cout << "\n" << (g_checks - g_failures) << "/" << g_checks << " checks passed\n";
 
