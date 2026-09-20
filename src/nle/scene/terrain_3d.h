@@ -68,6 +68,23 @@ struct terrain_noise
     float edge_falloff = 0.0f;
 };
 
+/**
+ * @brief A colour that can be painted onto the ground: a road, a path, sand.
+ *
+ * Colour rather than a texture. The ground has no texture at all today -- it
+ * is shaded from vertex colours, as the props are -- so painting colour is
+ * what actually matches the art, and it needs no change to the shader, no
+ * second set of samplers and no weight texture. Real splatting would want all
+ * three, and would want this data anyway: the weights below are exactly what
+ * a splat map holds, so that is a change of how they are drawn rather than a
+ * change of what is stored.
+ */
+struct terrain_paint_layer
+{
+    std::string name;
+    glm::vec3 color = glm::vec3(0.5f);
+};
+
 /// What a brush stroke does to the ground under it.
 enum class sculpt_mode
 {
@@ -224,6 +241,40 @@ public:
     bool sculpt(const glm::vec3& center, float radius, float strength,
                 sculpt_mode mode, float delta_time, float level = 0.0f);
 
+    // ---- painting -------------------------------------------------------
+
+    /**
+     * @brief The colours this terrain can be painted with.
+     *
+     * Changing the set keeps whatever weights still have a layer to belong
+     * to, so renaming or recolouring one does not wipe the painting.
+     */
+    void set_paint_layers(std::vector<terrain_paint_layer> layers);
+    const std::vector<terrain_paint_layer>& paint_layers() const;
+
+    /// One weight per sample per layer, 0 to 255, layer-major within a sample.
+    const std::vector<uint8_t>& paintmap() const;
+    bool set_paintmap(std::vector<uint8_t> weights);
+
+    /// Whether anything has been painted.
+    bool painted() const;
+
+    /**
+     * @brief Brushes @p layer onto the ground, or takes it off again.
+     *
+     * Layers are painted over one another in order, so a road laid after
+     * grass covers it. Erasing thins the layer rather than revealing a
+     * particular one underneath, which is what makes it behave like a brush.
+     *
+     * @return whether anything changed.
+     */
+    bool paint(const glm::vec3& center, float radius, int layer, float strength,
+               float delta_time, bool erase = false);
+
+    /// The strongest layer at a world position, or -1 where nothing is
+    /// painted. What gameplay would ask to know it is standing on a road.
+    int paint_at(float x, float z) const;
+
     /**
      * @brief Generates a fractal heightfield, replacing any height function.
      */
@@ -337,6 +388,14 @@ private:
 
     /// (samples * samples) heights, row-major. Empty means "use m_height".
     std::vector<float> m_heights;
+
+    std::vector<terrain_paint_layer> m_paint_layers;
+
+    /// (samples * samples * layers) weights, layer-major within a sample.
+    std::vector<uint8_t> m_paint;
+
+    /// Index of the first weight of a sample, or a size when given the count.
+    size_t paint_index(int x, int z) const;
 
     /// Bilinear sample of the heightfield, in local space.
     float sample_heightmap(float x, float z) const;

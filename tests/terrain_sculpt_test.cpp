@@ -238,6 +238,68 @@ void test_what_is_drawn_is_what_is_walked_on()
     check(ground->slope_at(60.0f, 60.0f) < 1.0f, "and untouched ground is not");
 }
 
+void test_painting()
+{
+    std::cout << "\npainting\n";
+
+    auto ground = make_ground();
+
+    check(!ground->painted(), "nothing is painted to begin with");
+    check(!ground->paint({ 0.0f, 0.0f, 0.0f }, 10.0f, 0, 0.4f, 1.0f),
+          "and painting does nothing without a layer to paint with");
+
+    ground->set_paint_layers({ { "grass", { 0.2f, 0.5f, 0.2f } },
+                               { "road", { 0.45f, 0.38f, 0.28f } } });
+
+    check(ground->paint_layers().size() == 2, "two layers to paint with");
+    check(ground->paint_at(0.0f, 0.0f) == -1, "and still nothing painted anywhere");
+
+    // Gentle enough not to saturate: a stroke that pins every sample to full
+    // strength has no falloff left to see.
+    check(ground->paint({ 0.0f, 0.0f, 0.0f }, 12.0f, 1, 0.4f, 1.0f), "a stroke paints");
+    check(ground->painted(), "which is now something");
+    check(ground->paint_at(0.0f, 0.0f) == 1, "the road is what is underfoot at the centre");
+    check(ground->paint_at(40.0f, 40.0f) == -1, "and nothing is, well outside the brush");
+
+    // The falloff has to leave the rim lighter than the middle, or strokes
+    // stack into visible discs instead of blending.
+    const auto& weights = ground->paintmap();
+    const int n = ground->samples();
+    const int middle = n / 2;
+
+    auto weight_at = [&](int x, int z, int layer) {
+        return weights[(static_cast<size_t>(z) * static_cast<size_t>(n)
+                      + static_cast<size_t>(x)) * 2u + static_cast<size_t>(layer)];
+    };
+
+    check(weight_at(middle, middle, 1) > weight_at(middle + 4, middle, 1),
+          "the brush falls off towards its rim");
+    check(weight_at(middle, middle, 0) == 0, "and leaves the layer it was not painting alone");
+
+    // Erasing takes it off again rather than revealing something else.
+    const uint8_t before = weight_at(middle, middle, 1);
+    ground->paint({ 0.0f, 0.0f, 0.0f }, 12.0f, 1, 0.15f, 0.5f, true);
+
+    const uint8_t after_erasing = weight_at(middle, middle, 1);
+    check(after_erasing < before, "erasing takes it off again");
+    check(after_erasing > 0, "a light touch thins it rather than stripping it");
+
+    // Changing the set of layers must not wipe what is already painted.
+    ground->set_paint_layers({ { "grass", { 0.2f, 0.5f, 0.2f } },
+                               { "road", { 0.5f, 0.4f, 0.3f } },
+                               { "sand", { 0.8f, 0.75f, 0.5f } } });
+
+    check(ground->paint_at(0.0f, 0.0f) == 1, "adding a layer keeps the painting");
+    check(ground->paintmap().size() == static_cast<size_t>(n) * n * 3u,
+          "and the weights grow to fit");
+
+    check(!ground->set_paintmap(std::vector<uint8_t>(10, 0)),
+          "a wrong-sized paintmap is refused");
+    check(ground->set_paintmap(std::vector<uint8_t>(static_cast<size_t>(n) * n * 3u, 0)),
+          "a right-sized one is taken");
+    check(ground->paint_at(0.0f, 0.0f) == -1, "and replaces what was there");
+}
+
 } // namespace
 
 int main()
@@ -274,6 +336,7 @@ int main()
     test_raise_and_lower();
     test_flatten_and_smooth();
     test_what_is_drawn_is_what_is_walked_on();
+    test_painting();
 
     std::cout << "\n" << (g_checks - g_failures) << "/" << g_checks << " checks passed\n";
 

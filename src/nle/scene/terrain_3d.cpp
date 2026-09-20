@@ -381,6 +381,196 @@ bool terrain_3d::sculpt(const glm::vec3& center, float radius, float strength,
     return moved;
 }
 
+void terrain_3d::set_paint_layers(std::vector<terrain_paint_layer> layers)
+{
+    const size_t was = m_paint_layers.size();
+    const size_t now = layers.size();
+
+    m_paint_layers = std::move(layers);
+
+    if(!m_paint.empty() && was != now)
+    {
+        // Keep the weights that still have a layer to belong to. Renaming or
+        // recolouring a layer must not wipe what has been painted with it,
+        // and dropping the last one should not wipe the others.
+        const auto count = static_cast<size_t>(samples()) * static_cast<size_t>(samples());
+
+        std::vector<uint8_t> moved(count * now, 0);
+
+        for(size_t sample = 0; sample < count; ++sample)
+        {
+            for(size_t layer = 0; layer < std::min(was, now); ++layer)
+            {
+                moved[sample * now + layer] = m_paint[sample * was + layer];
+            }
+        }
+
+        m_paint = std::move(moved);
+    }
+    else if(m_paint.empty())
+    {
+        m_paint.clear();
+    }
+
+    rebuild();
+}
+
+const std::vector<terrain_paint_layer>& terrain_3d::paint_layers() const
+{
+    return m_paint_layers;
+}
+
+const std::vector<uint8_t>& terrain_3d::paintmap() const
+{
+    return m_paint;
+}
+
+bool terrain_3d::painted() const
+{
+    return !m_paint.empty();
+}
+
+size_t terrain_3d::paint_index(int x, int z) const
+{
+    return (static_cast<size_t>(z) * static_cast<size_t>(samples())
+          + static_cast<size_t>(x)) * m_paint_layers.size();
+}
+
+bool terrain_3d::set_paintmap(std::vector<uint8_t> weights)
+{
+    const auto wanted = static_cast<size_t>(samples()) * static_cast<size_t>(samples())
+                      * m_paint_layers.size();
+
+    if(m_paint_layers.empty() || weights.size() != wanted)
+    {
+        return false;
+    }
+
+    m_paint = std::move(weights);
+    rebuild();
+
+    return true;
+}
+
+int terrain_3d::paint_at(float x, float z) const
+{
+    if(m_paint.empty() || m_paint_layers.empty())
+    {
+        return -1;
+    }
+
+    const glm::vec3 origin = position();
+    const float half = m_size * 0.5f;
+    const float step = m_size / static_cast<float>(m_resolution);
+
+    const int sx = std::clamp(static_cast<int>(std::lround((x - origin.x + half) / step)),
+                              0, m_resolution);
+    const int sz = std::clamp(static_cast<int>(std::lround((z - origin.z + half) / step)),
+                              0, m_resolution);
+
+    const size_t base = paint_index(sx, sz);
+
+    int strongest = -1;
+    uint8_t best = 0;
+
+    for(size_t layer = 0; layer < m_paint_layers.size(); ++layer)
+    {
+        if(m_paint[base + layer] > best)
+        {
+            best = m_paint[base + layer];
+            strongest = static_cast<int>(layer);
+        }
+    }
+
+    return strongest;
+}
+
+bool terrain_3d::paint(const glm::vec3& center, float radius, int layer, float strength,
+                       float delta_time, bool erase)
+{
+    if(radius <= 0.0f || delta_time <= 0.0f || m_paint_layers.empty())
+    {
+        return false;
+    }
+
+    if(layer < 0 || static_cast<size_t>(layer) >= m_paint_layers.size())
+    {
+        return false;
+    }
+
+    const int n = samples();
+    const size_t layers = m_paint_layers.size();
+
+    if(m_paint.empty())
+    {
+        m_paint.assign(static_cast<size_t>(n) * static_cast<size_t>(n) * layers, 0);
+    }
+
+    const glm::vec3 origin = position();
+    const float half = m_size * 0.5f;
+    const float step = m_size / static_cast<float>(m_resolution);
+
+    const float cx = center.x - origin.x;
+    const float cz = center.z - origin.z;
+
+    // Only the samples the brush covers, so a stroke costs the size of the
+    // brush rather than the size of the map.
+    const int min_x = std::max(0, static_cast<int>(std::floor((cx - radius + half) / step)));
+    const int max_x = std::min(n - 1, static_cast<int>(std::ceil((cx + radius + half) / step)));
+    const int min_z = std::max(0, static_cast<int>(std::floor((cz - radius + half) / step)));
+    const int max_z = std::min(n - 1, static_cast<int>(std::ceil((cz + radius + half) / step)));
+
+    if(min_x > max_x || min_z > max_z)
+    {
+        return false;
+    }
+
+    bool changed = false;
+
+    for(int sz = min_z; sz <= max_z; ++sz)
+    {
+        for(int sx = min_x; sx <= max_x; ++sx)
+        {
+            const float wx = static_cast<float>(sx) * step - half;
+            const float wz = static_cast<float>(sz) * step - half;
+
+            const float distance = std::sqrt((wx - cx) * (wx - cx) + (wz - cz) * (wz - cz));
+
+            if(distance >= radius)
+            {
+                continue;
+            }
+
+            // Same falloff as sculpting, so a painted edge and a sculpted one
+            // look like they were made by the same hand.
+            const float t = 1.0f - distance / radius;
+            const float weight = t * t * (3.0f - 2.0f * t);
+
+            const float amount = strength * weight * delta_time * 255.0f;
+
+            uint8_t& value = m_paint[paint_index(sx, sz) + static_cast<size_t>(layer)];
+            const uint8_t was = value;
+
+            const float target = erase ? static_cast<float>(value) - amount
+                                       : static_cast<float>(value) + amount;
+
+            value = static_cast<uint8_t>(std::clamp(target, 0.0f, 255.0f));
+
+            if(value != was)
+            {
+                changed = true;
+            }
+        }
+    }
+
+    if(changed)
+    {
+        refresh_region(min_x, max_x, min_z, max_z);
+    }
+
+    return changed;
+}
+
 float terrain_3d::local_height(float x, float z) const
 {
     // Sculpted ground answers from its samples; everything else from whatever
@@ -490,6 +680,25 @@ glm::vec3 terrain_3d::surface_color(int tile_x, int tile_z, float local_y, const
 
         color = glm::mix(color, m_cliff_color,
                          smooth01((slope - lower) / (m_cliff_blend * 2.0f)));
+    }
+
+    // Paint goes over everything else, in order, so a road laid after grass
+    // covers it. tile_x and tile_z are sample indices in the grid builder,
+    // which is the only builder painting is shown by.
+    if(!m_paint.empty() && !m_paint_layers.empty()
+       && tile_x >= 0 && tile_x < samples() && tile_z >= 0 && tile_z < samples())
+    {
+        const size_t base = paint_index(tile_x, tile_z);
+
+        for(size_t layer = 0; layer < m_paint_layers.size(); ++layer)
+        {
+            const float weight = static_cast<float>(m_paint[base + layer]) / 255.0f;
+
+            if(weight > 0.0f)
+            {
+                color = glm::mix(color, m_paint_layers[layer].color, weight);
+            }
+        }
     }
 
     return color;
@@ -689,7 +898,7 @@ void terrain_3d::rebuild()
     // since its colour changes across an edge. Everything else -- which is to
     // say anything anyone would ship -- shares them, and rebuilds an order of
     // magnitude faster for it.
-    m_mesh_is_grid = !(m_layers.empty() && m_heights.empty());
+    m_mesh_is_grid = !(m_layers.empty() && m_heights.empty() && m_paint.empty());
     m_mesh = m_mesh_is_grid ? build_grid_mesh() : build_mesh();
 }
 
