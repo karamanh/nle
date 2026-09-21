@@ -3,9 +3,9 @@
 namespace nle
 {
 
-nle::nle()
+nle::nle(unsigned int width, unsigned int height, const std::string& title)
 {
-    m_window = make_ref<class window_glfw>(480, 480, "nle");
+    m_window = make_ref<class window_glfw>(width, height, title);
     m_renderer = make_ref<class renderer_3d>(m_window);
 }
 
