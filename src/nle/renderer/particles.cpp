@@ -274,6 +274,11 @@ void particle_emitter::set_size(float size)
     m_size = size;
 }
 
+float particle_emitter::size() const
+{
+    return m_size;
+}
+
 void particle_emitter::set_radius(float radius)
 {
     m_radius = radius;

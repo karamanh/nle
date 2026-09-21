@@ -71,6 +71,7 @@ public:
 
     /// How big one is at birth, in world units.
     void set_size(float size);
+    float size() const;
 
     /// How far from the middle they are born.
     void set_radius(float radius);
