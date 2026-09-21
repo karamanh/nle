@@ -137,6 +137,15 @@ if(NLE_BUILD_TESTS)
 
     add_test(NAME input_handler COMMAND nle_input_handler_test)
 
+    # A shader that will not compile draws nothing and says nothing about it,
+    # so compiling and drawing it is the test. Needs a context.
+    add_executable(nle_particle_test "${CMAKE_CURRENT_SOURCE_DIR}/tests/particle_test.cpp")
+    target_link_libraries(nle_particle_test PRIVATE nle)
+    target_compile_options(nle_particle_test PRIVATE -Wall -Wextra)
+
+    add_test(NAME particles COMMAND nle_particle_test)
+    set_tests_properties(particles PROPERTIES SKIP_RETURN_CODE 77)
+
     # Building a terrain uploads a mesh, so this one needs a context too.
     add_executable(nle_terrain_sculpt_test
         "${CMAKE_CURRENT_SOURCE_DIR}/tests/terrain_sculpt_test.cpp")

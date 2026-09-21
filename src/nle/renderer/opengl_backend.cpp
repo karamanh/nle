@@ -43,6 +43,7 @@ void opengl_backend::invalidate_state_cache()
     m_current_ebo = 0;
     m_current_polygon_mode = -1;
     m_current_depth_mask = -1;
+    m_current_blend_mode = blend_mode::none;
 }
 
 const opengl_backend::frame_statistics& opengl_backend::statistics() const

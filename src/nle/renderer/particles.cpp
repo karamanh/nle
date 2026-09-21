@@ -211,6 +211,11 @@ void particle_emitter::ensure_resources()
 
     g_shader = make_ref<::nle::shader>(PARTICLE_VERTEX, PARTICLE_FRAGMENT,
                                       shader_source::memory);
+
+    // The constructor only keeps the source; nothing is compiled or linked
+    // until it is asked for. A shader that was never loaded has program zero
+    // and draws nothing at all, perfectly silently.
+    g_shader->load();
 }
 
 particle_emitter::particle_emitter()
