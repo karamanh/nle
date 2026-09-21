@@ -54,6 +54,16 @@ public:
     void begin_frame();
     void end_frame();
 
+    /**
+     * @brief Whether a frame is already in progress.
+     *
+     * Anything that draws a frame of its own -- a loading screen, say -- has
+     * to ask first. Rendering one from inside another ends the outer frame
+     * halfway through, with windows still open, which imgui catches as
+     * mismatched Begin/End calls and which is fatal.
+     */
+    bool frame_open() const;
+
     /// True when the interface is using the mouse, so the world should not.
     bool wants_mouse() const;
 

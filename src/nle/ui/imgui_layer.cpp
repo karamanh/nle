@@ -66,6 +66,11 @@ void imgui_layer::end_frame()
     m_frame_open = false;
 }
 
+bool imgui_layer::frame_open() const
+{
+    return m_frame_open;
+}
+
 bool imgui_layer::wants_mouse() const
 {
     return ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantCaptureMouse;
