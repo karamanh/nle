@@ -188,8 +188,29 @@ namespace nle
         this->set_scale({j["scale"]["x"], j["scale"]["y"], j["scale"]["z"]});
     }
 
+    void object_3d::set_transform_override(const glm::mat4& matrix)
+    {
+        m_transform_override = matrix;
+        m_has_transform_override = true;
+    }
+
+    void object_3d::clear_transform_override()
+    {
+        m_has_transform_override = false;
+    }
+
+    bool object_3d::has_transform_override() const
+    {
+        return m_has_transform_override;
+    }
+
     glm::mat4 object_3d::transform_matrix() const
     {
+        if(m_has_transform_override)
+        {
+            return m_transform_override;
+        }
+
         glm::mat4 matrix = glm::mat4(1.0f);
         matrix = glm::translate(matrix, m_position);
         matrix = glm::rotate(matrix, glm::radians(m_rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));

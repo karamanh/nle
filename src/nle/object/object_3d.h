@@ -55,6 +55,23 @@ namespace nle
         /// Model matrix for this object: translate * rotate (XYZ) * scale.
         virtual glm::mat4 transform_matrix() const;
 
+        /**
+         * @brief Places this by matrix rather than by position and rotation.
+         *
+         * For something whose placement comes from somewhere that does not
+         * think in Euler angles -- a bone in an animated pose, a physics
+         * body. Decomposing such a matrix into the three setters and hoping
+         * the composition order matches is the sort of thing that works for
+         * every orientation you happen to test.
+         *
+         * While one is set, position(), rotation() and scale() still report
+         * whatever they were last told; they simply stop deciding where this
+         * is drawn. clear_transform_override() gives them back.
+         */
+        virtual void set_transform_override(const glm::mat4& matrix);
+        virtual void clear_transform_override();
+        virtual bool has_transform_override() const;
+
         virtual glm::vec3 front() const;
         virtual glm::vec3 right() const;
         virtual glm::vec3 up() const;
@@ -72,6 +89,9 @@ namespace nle
     private:
         std::string m_id;
         enum object_3d_type m_type;
+
+        bool m_has_transform_override = false;
+        glm::mat4 m_transform_override = glm::mat4(1.0f);
 
         glm::vec3 m_position;
         glm::vec3 m_rotation;
