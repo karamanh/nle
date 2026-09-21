@@ -82,6 +82,10 @@ private:
     GLint m_current_polygon_mode;
     GLint m_current_depth_mask;
 
+    /// What is currently blended and how, so that a hundred particle draws in
+    /// a row set it once.
+    blend_mode m_current_blend_mode = blend_mode::none;
+
     /// programs that already have this frame's constants.
     std::unordered_set<GLuint> m_frame_uniform_programs;
 

@@ -98,7 +98,22 @@ void render_command_buffer::draw_elements(unsigned int primitive_type, unsigned 
 {
     render_command cmd;
     cmd.type = command_type::draw_elements;
-    cmd.data = draw_elements_data{ primitive_type, vao, ebo, count };
+    cmd.data = draw_elements_data{ primitive_type, vao, ebo, count, 1 };
+    m_commands.push_back(cmd);
+}
+
+void render_command_buffer::draw_elements_instanced(unsigned int primitive_type,
+                                                    unsigned int vao, unsigned int ebo,
+                                                    size_t count, size_t instances)
+{
+    if(instances == 0)
+    {
+        return;
+    }
+
+    render_command cmd;
+    cmd.type = command_type::draw_elements_instanced;
+    cmd.data = draw_elements_data{ primitive_type, vao, ebo, count, instances };
     m_commands.push_back(cmd);
 }
 
@@ -107,6 +122,14 @@ void render_command_buffer::set_depth_mask(bool mask)
     render_command cmd;
     cmd.type = command_type::set_depth_mask;
     cmd.data = mask;
+    m_commands.push_back(cmd);
+}
+
+void render_command_buffer::set_blending(blend_mode mode)
+{
+    render_command cmd;
+    cmd.type = command_type::set_blending;
+    cmd.data = mode;
     m_commands.push_back(cmd);
 }
 

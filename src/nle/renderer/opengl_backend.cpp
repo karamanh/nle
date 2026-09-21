@@ -308,6 +308,61 @@ void opengl_backend::execute_command(const render_command& cmd)
             ++m_statistics.draw_calls;
             break;
         }
+        case command_type::draw_elements_instanced:
+        {
+            const auto& data = std::get<draw_elements_data>(cmd.data);
+
+            if (data.vao != m_current_vao)
+            {
+                glBindVertexArray(data.vao);
+                m_current_vao = data.vao;
+            }
+            if (data.ebo != m_current_ebo)
+            {
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, data.ebo);
+                m_current_ebo = data.ebo;
+            }
+
+            glDrawElementsInstanced(data.primitive_type,
+                                    static_cast<GLsizei>(data.count),
+                                    GL_UNSIGNED_INT, nullptr,
+                                    static_cast<GLsizei>(data.instances));
+
+            ++m_statistics.draw_calls;
+            break;
+        }
+
+        case command_type::set_blending:
+        {
+            const blend_mode mode = std::get<blend_mode>(cmd.data);
+
+            if (mode == m_current_blend_mode)
+            {
+                ++m_statistics.redundant_commands_dropped;
+                break;
+            }
+
+            switch (mode)
+            {
+                case blend_mode::none:
+                    glDisable(GL_BLEND);
+                    break;
+
+                case blend_mode::additive:
+                    glEnable(GL_BLEND);
+                    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+                    break;
+
+                case blend_mode::alpha:
+                    glEnable(GL_BLEND);
+                    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                    break;
+            }
+
+            m_current_blend_mode = mode;
+            break;
+        }
+
         case command_type::set_depth_mask:
         {
             const GLint mask = std::get<bool>(cmd.data) ? 1 : 0;

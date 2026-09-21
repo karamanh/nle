@@ -36,7 +36,9 @@ enum class command_type
     set_uniform_int,
     use_texture,
     draw_elements,
-    set_depth_mask
+    draw_elements_instanced,
+    set_depth_mask,
+    set_blending
 };
 
 struct uniform_data
@@ -64,6 +66,24 @@ struct draw_elements_data
     unsigned int vao;
     unsigned int ebo;
     size_t count;
+
+    /// How many copies. One is an ordinary draw; more is instancing, where
+    /// the shader is handed gl_InstanceID and works out the rest itself.
+    size_t instances = 1;
+};
+
+/**
+ * @brief How what is being drawn is combined with what is already there.
+ *
+ * Only the two that matter so far. Opaque geometry writes over the frame;
+ * a glow adds to it, which is what makes a hundred faint sparks read as one
+ * bright one where they overlap.
+ */
+enum class blend_mode
+{
+    none,
+    additive,
+    alpha
 };
 
 struct render_command
@@ -76,8 +96,9 @@ struct render_command
         ref<shader>,               // use_shader
         uniform_data,              // uniform data
         texture_bind_data,         // use_texture
-        draw_elements_data,        // draw_elements
-        bool                       // set_depth_mask
+        draw_elements_data,        // draw_elements, draw_elements_instanced
+        bool,                      // set_depth_mask
+        blend_mode                 // set_blending
     > data;
 };
 
@@ -97,7 +118,19 @@ public:
     void set_uniform(const std::string& name, int value);
     void use_texture(ref<texture> texture, unsigned int unit = 0);
     void draw_elements(unsigned int primitive_type, unsigned int vao, unsigned int ebo, size_t count);
+
+    /**
+     * @brief The same draw, @p instances times over.
+     *
+     * For anything there are a great many of that differ only in numbers the
+     * shader can work out for itself -- particles, grass, a crowd. One call,
+     * one buffer, no per-copy work on this side.
+     */
+    void draw_elements_instanced(unsigned int primitive_type, unsigned int vao,
+                                 unsigned int ebo, size_t count, size_t instances);
+
     void set_depth_mask(bool mask);
+    void set_blending(blend_mode mode);
 
     void clear();
     const std::vector<render_command>& commands() const;
