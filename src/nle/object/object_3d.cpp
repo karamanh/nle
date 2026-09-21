@@ -192,11 +192,28 @@ namespace nle
     {
         m_transform_override = matrix;
         m_has_transform_override = true;
+
+        // Handed down, as position, rotation and scale are. A multimesh draws
+        // through its children rather than itself, so an override that stopped
+        // here would move nothing at all and would do it silently.
+        for(auto it : m_children)
+        {
+            it->set_transform_override(matrix);
+        }
+
+        update();
     }
 
     void object_3d::clear_transform_override()
     {
         m_has_transform_override = false;
+
+        for(auto it : m_children)
+        {
+            it->clear_transform_override();
+        }
+
+        update();
     }
 
     bool object_3d::has_transform_override() const
