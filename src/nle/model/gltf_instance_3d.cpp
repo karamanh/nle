@@ -39,6 +39,40 @@ bool gltf_instance_3d::auto_advance() const
     return m_auto_advance;
 }
 
+int gltf_instance_3d::node_index(const std::string& name) const
+{
+    if(!m_model || !m_model->skeleton())
+    {
+        return -1;
+    }
+
+    return m_model->skeleton()->find_node(name);
+}
+
+void gltf_instance_3d::set_node_visible(const std::string& name, bool visible)
+{
+    const int node = node_index(name);
+
+    if(node < 0)
+    {
+        return;
+    }
+
+    if(visible)
+    {
+        m_hidden_nodes.erase(node);
+    }
+    else
+    {
+        m_hidden_nodes.insert(node);
+    }
+}
+
+bool gltf_instance_3d::node_visible(int node) const
+{
+    return m_hidden_nodes.find(node) == m_hidden_nodes.end();
+}
+
 void gltf_instance_3d::render(render_command_buffer& command_buffer, const render_context& context)
 {
     if(!m_model || !m_animator)
@@ -66,6 +100,13 @@ void gltf_instance_3d::render(render_command_buffer& command_buffer, const rende
     for(const auto& primitive : m_model->primitives())
     {
         if(!primitive.mesh)
+        {
+            continue;
+        }
+
+        // Hidden geometry is skipped here rather than earlier, so the pose is
+        // still computed and anything hung off the node still follows it.
+        if(!node_visible(primitive.node))
         {
             continue;
         }

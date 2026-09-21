@@ -16,6 +16,9 @@
 #include "../animation/animator.h"
 #include "../mesh/multimesh_instance_3d.h"
 
+#include <set>
+#include <string>
+
 namespace nle
 {
 
@@ -51,12 +54,40 @@ public:
     void set_auto_advance(bool auto_advance);
     bool auto_advance() const;
 
+    /**
+     * @brief Stops drawing the primitives belonging to one node.
+     *
+     * For a model that ships a weapon welded into it. The character packs put
+     * the staff in the wizard's hand as a node of the same file, so putting a
+     * different staff there means not drawing the one that came with it --
+     * and that has to be per instance, since two wizards may be holding
+     * different things.
+     *
+     * The node is still posed and its children still follow it, so it
+     * remains a perfectly good place to hang something from. Only the
+     * geometry stops.
+     *
+     * A name the model has no node for is ignored.
+     */
+    void set_node_visible(const std::string& name, bool visible);
+
+    /// Whether a node is being drawn. True for anything never hidden.
+    bool node_visible(int node) const;
+
+    /// Index of a node by name, or -1. Handed on from the skeleton so that
+    /// callers attaching something to a bone need not reach through it.
+    int node_index(const std::string& name) const;
+
     void render(render_command_buffer& command_buffer, const render_context& context) override;
 
 private:
     ref<model_gltf> m_model;
     ref<class animator> m_animator;
     bool m_auto_advance = true;
+
+    /// Nodes whose geometry is not drawn. A set rather than a flag per node,
+    /// because hiding anything at all is the unusual case.
+    std::set<int> m_hidden_nodes;
 };
 
 } // namespace nle
