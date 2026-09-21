@@ -40,6 +40,7 @@ uniform float u_lifetime;
 uniform float u_speed;
 uniform float u_size;
 uniform float u_radius;
+uniform vec3  u_span;
 uniform int   u_count;
 uniform int   u_style;
 
@@ -108,6 +109,12 @@ void main()
     }
 
     vec3 centre = (u_model * vec4(local, 1.0)).xyz;
+
+    // Born along a line rather than at a point, for a thing that glows down
+    // its length. Added after the model transform because the span is given
+    // in world terms: only the birthplace moves, so a flame spread along a
+    // blade still rises rather than running along it.
+    centre += u_span * fract(r.z + phase);
 
     // Turned to face the camera by building the quad in view space, which is
     // the cheapest billboard there is: no per-particle matrix, no cross
@@ -272,6 +279,16 @@ void particle_emitter::set_radius(float radius)
     m_radius = radius;
 }
 
+void particle_emitter::set_span(const glm::vec3& span)
+{
+    m_span = span;
+}
+
+const glm::vec3& particle_emitter::span() const
+{
+    return m_span;
+}
+
 void particle_emitter::set_intensity(float intensity)
 {
     m_intensity = intensity;
@@ -305,6 +322,7 @@ void particle_emitter::render(render_command_buffer& command_buffer,
     command_buffer.set_uniform("u_speed", m_speed);
     command_buffer.set_uniform("u_size", m_size);
     command_buffer.set_uniform("u_radius", m_radius);
+    command_buffer.set_uniform("u_span", m_span);
     command_buffer.set_uniform("u_count", static_cast<int>(m_count));
     command_buffer.set_uniform("u_style", static_cast<int>(m_style));
 

@@ -108,6 +108,22 @@ void test_it_draws()
 
     check(gl_is_quiet("drawing every style"), "and so does every style of them");
 
+    // Born along a line rather than at a point, which is what a sword's
+    // blade wants. Drawn as well as set, since a uniform the shader does not
+    // declare is a uniform that silently does nothing.
+    emitter->set_count(64);
+    emitter->set_span(glm::vec3(0.0f, 1.4f, 0.0f));
+
+    commands.clear();
+    emitter->render(commands, context);
+
+    backend.begin_frame(context);
+    backend.execute_commands(commands);
+
+    check(gl_is_quiet("drawing a span of them"), "and a span of them draws too");
+
+    emitter->set_span(glm::vec3(0.0f));
+
     // An emitter of nothing should record nothing rather than a draw of zero
     // instances, which some drivers treat as an error.
     emitter->set_count(0);

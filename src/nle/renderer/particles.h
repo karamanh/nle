@@ -75,6 +75,20 @@ public:
     /// How far from the middle they are born.
     void set_radius(float radius);
 
+    /**
+     * @brief Spreads where they are born along a line rather than a point.
+     *
+     * For a thing that glows along its length -- a sword's blade -- rather
+     * than at one end of it. @p span is a world-space direction times how far
+     * it reaches; zero puts every particle at the emitter, which is where
+     * they were before this existed.
+     *
+     * Only where they are *born* moves. How they then travel is unchanged, so
+     * a flame spread along a blade still rises rather than running down it.
+     */
+    void set_span(const glm::vec3& span);
+    const glm::vec3& span() const;
+
     /// Overall brightness. Everything else being equal, this is the dial to
     /// turn when a thing should read as more enchanted.
     void set_intensity(float intensity);
@@ -96,6 +110,10 @@ private:
     float m_speed = 1.0f;
     float m_size = 0.18f;
     float m_radius = 0.1f;
+
+    /// Where they are born, spread along this from the emitter. Zero for a
+    /// point, which is the ordinary case.
+    glm::vec3 m_span = glm::vec3(0.0f);
     float m_intensity = 1.0f;
 
     /// Counts up, and is what the whole simulation is a function of.
