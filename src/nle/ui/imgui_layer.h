@@ -14,6 +14,8 @@
 #include "../core/ref.h"
 #include "../window/window_glfw.h"
 
+#include <string>
+
 namespace nle
 {
 
@@ -64,6 +66,19 @@ public:
      */
     bool frame_open() const;
 
+    /**
+     * @brief Where the window positions are remembered.
+     *
+     * Every imgui program writes "imgui.ini" beside itself by default, so two
+     * of them run from one directory overwrite each other's layouts -- and a
+     * layout written by one is nonsense to the other, since the panels are
+     * not the same. Give each its own name.
+     *
+     * Empty stops them being remembered at all, which is what a program with
+     * no windows worth keeping wants.
+     */
+    void set_layout_file(const std::string& path);
+
     /// True when the interface is using the mouse, so the world should not.
     bool wants_mouse() const;
 
@@ -73,6 +88,9 @@ public:
 private:
     ref<window_glfw> m_window;
     bool m_frame_open = false;
+
+    /// imgui keeps the pointer, not the string, so this has to outlive it.
+    std::string m_layout_file;
 };
 
 } // namespace nle

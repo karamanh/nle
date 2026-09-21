@@ -66,6 +66,16 @@ void imgui_layer::end_frame()
     m_frame_open = false;
 }
 
+void imgui_layer::set_layout_file(const std::string& path)
+{
+    m_layout_file = path;
+
+    // imgui holds the pointer rather than copying it, which is why the string
+    // is a member: handing it a temporary is a use-after-free that shows up
+    // as a corrupted layout file much later.
+    ImGui::GetIO().IniFilename = m_layout_file.empty() ? nullptr : m_layout_file.c_str();
+}
+
 bool imgui_layer::frame_open() const
 {
     return m_frame_open;
