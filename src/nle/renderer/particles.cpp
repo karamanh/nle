@@ -89,7 +89,13 @@ void main()
     else if(u_style == 1)
     {
         // Cloud: outward and gently down, keeping its size.
-        float out_by = u_radius + seconds * u_speed * 0.5;
+        //
+        // Born anywhere inside the radius rather than exactly on it. Born on
+        // it, a large emitter drew a ring with nothing in the middle -- fine
+        // for a puff of frost on a staff, where the radius is a few
+        // centimetres and nobody can tell, and obviously wrong the moment
+        // one is asked to fill a blizzard eight units across.
+        float out_by = u_radius * (0.3 + r.y * 0.7) + seconds * u_speed * 0.5;
 
         local = vec3(around.x * out_by,
                      (r.y - 0.65) * seconds * u_speed * 0.6,
@@ -99,11 +105,14 @@ void main()
     }
     else
     {
-        // Spark: straight out, fast, gone.
+        // Spark: straight out, fast, gone. Born inside the radius for the
+        // same reason a cloud is -- a ring of sparks around an empty middle
+        // is not a field of lightning.
         float reach = seconds * u_speed * 2.2;
         float up = (r.y - 0.4) * 1.6;
 
-        local = normalize(vec3(around.x, up, around.y)) * (u_radius + reach);
+        local = normalize(vec3(around.x, up, around.y))
+              * (u_radius * (0.25 + r.z * 0.75) + reach);
 
         size *= (0.25 + r.z * 0.4) * (1.0 - age) * (1.0 - age);
     }
