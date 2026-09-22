@@ -118,6 +118,36 @@ void main()
 
         size *= (0.5 + r.z * 0.6);
     }
+    else if(u_style == 4)
+    {
+        // Swirl: out from the middle and turning, arriving at the rim as it
+        // dies. An explosion is a front that travels, so every particle
+        // starts at the centre rather than somewhere inside the circle.
+        float out_by = u_radius * age;
+        float turn = age * 2.4 + r.z * 6.283;
+
+        vec2 spun = vec2(around.x * cos(turn) - around.y * sin(turn),
+                         around.x * sin(turn) + around.y * cos(turn));
+
+        local = vec3(spun.x * out_by,
+                     (0.15 + r.y * 0.85) * u_radius * 0.35 * age,
+                     spun.y * out_by);
+
+        size *= (0.5 + r.z * 0.7) * (1.0 - age * 0.6);
+    }
+    else if(u_style == 5)
+    {
+        // Bolt: a narrow column falling fast. Almost no spread, so it reads
+        // as one thing coming down rather than as weather.
+        float spread = u_radius * 0.07 * (r.y - 0.5);
+
+        local = vec3(around.x * u_radius * 0.05 + spread,
+                     u_radius * 1.6 - seconds * u_speed,
+                     around.y * u_radius * 0.05);
+
+        // Brightest as it arrives, which is where the eye ends up.
+        size *= (0.4 + r.z * 0.5) * (0.35 + age * 0.65);
+    }
     else
     {
         // Spark: straight out, fast, gone. Born inside the radius for the

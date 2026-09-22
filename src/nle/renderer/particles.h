@@ -48,7 +48,27 @@ enum class particle_style
      * long to arrive -- set the speed and the lifetime to match, or it will
      * either vanish in mid-air or pile through the floor.
      */
-    fall
+    fall,
+
+    /**
+     * @brief Thrown out from the middle, turning as it goes. An explosion.
+     *
+     * Everything starts at the centre and reaches the radius by the end of
+     * its life, so the whole circle is swept rather than filled: what you
+     * see is a front going outward, not a cloud sitting there. The turn is
+     * what stops it looking like a ring of dots moving in straight lines.
+     */
+    swirl,
+
+    /**
+     * @brief Falls hard and straight in a narrow column. A bolt.
+     *
+     * Where a fall is spread over the whole circle, this is spread over
+     * almost none of it: a handful of columns' worth of particles dropping
+     * fast down one line. The emitter is placed where the strike should
+     * land and the column arrives at it.
+     */
+    bolt
 };
 
 /**
