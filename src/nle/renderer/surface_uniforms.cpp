@@ -39,6 +39,15 @@ void record_surface_uniforms(render_command_buffer& command_buffer,
     command_buffer.set_uniform("u_lighting_enabled",
                                (accept_light && context.directional_light.enabled) ? 1 : 0);
     command_buffer.set_uniform("u_point_lighting_enabled", accept_light ? 1 : 0);
+
+    // What the sun could see, and where to look it up. Sent per surface
+    // like everything else here, so that a shader without these simply
+    // drops them as it drops any uniform it has no use for.
+    command_buffer.set_uniform("u_light_space", context.light_space);
+    command_buffer.set_uniform("u_shadows_enabled",
+                               (accept_light && context.shadows_enabled) ? 1 : 0);
+    command_buffer.set_uniform("u_shadow_map", context.shadow_texture_unit);
+    command_buffer.set_uniform("u_shadow_softness", context.shadow_softness);
 }
 
 } // namespace nle

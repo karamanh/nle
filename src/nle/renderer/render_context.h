@@ -81,6 +81,23 @@ struct render_context
     float delta_time = 0.0f;
 
     directional_light_data directional_light;
+
+    /**
+     * @brief Where the sun is looking from, for asking what it could see.
+     *
+     * Only meaningful when shadows are on; otherwise it is the identity and
+     * the shader is told not to look.
+     */
+    glm::mat4 light_space = glm::mat4(1.0f);
+
+    bool shadows_enabled = false;
+
+    /// Which texture unit the depth map is on. Fixed and high, so it cannot
+    /// collide with a material's own textures.
+    int shadow_texture_unit = 7;
+
+    /// How soft the edge is, in texels of the depth map.
+    float shadow_softness = 1.0f;
     std::vector<point_light_data> point_lights;
     fog_data fog;
 };

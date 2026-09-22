@@ -17,6 +17,7 @@
 #include "render_command.h"
 #include "render_context.h"
 #include "bloom.h"
+#include "shadow_map.h"
 #include "opengl_backend.h"
 
 namespace nle
@@ -62,6 +63,18 @@ public:
     /// Post-processing. Bright things bleed light into what is around them.
     class bloom& bloom();
 
+    /// What the sun can see. Off until something turns it on.
+    class shadow_map& shadows();
+
+    /**
+     * @brief The shader the depth pass draws everything with.
+     *
+     * Supplied rather than built here, because shaders are loaded from
+     * wherever the program keeps them and the renderer has never known
+     * where that is. Without one, shadows stay off however they are set.
+     */
+    void set_depth_shader(ref<class shader> shader);
+
 private:
     ref<window_glfw> m_render_target;
 
@@ -73,6 +86,13 @@ private:
     opengl_backend m_opengl_backend;
 
     class bloom m_bloom;
+    class shadow_map m_shadows;
+
+    ref<class shader> m_depth_shader;
+
+    /// A second buffer, so recording the depth pass does not disturb the
+    /// one the lit pass is about to use.
+    render_command_buffer m_shadow_commands;
 
     clock m_clock;
     int64_t m_last_frame_us = 0;

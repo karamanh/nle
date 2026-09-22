@@ -115,9 +115,70 @@ namespace nle
         return glm::distance(ro->position(), eye) < attribute.render_distance;
     }
 
+    class shadow_map& renderer_3d::shadows()
+    {
+        return m_shadows;
+    }
+
+    void renderer_3d::set_depth_shader(ref<class shader> shader)
+    {
+        m_depth_shader = std::move(shader);
+    }
+
     void renderer_3d::render_scene(ref<scene_3d> scene)
     {
-        const render_context context = build_render_context(scene);
+        render_context context = build_render_context(scene);
+
+        // What the sun can see, drawn first. Everything is recorded exactly
+        // as it would be for the lit pass -- same objects, same skinning,
+        // same model matrices -- and drawn with one shader that keeps only
+        // depth, so a character's shadow is the shape the character is
+        // actually in rather than the shape of its bind pose.
+        const bool casting = m_shadows.enabled() && m_depth_shader
+                          && context.directional_light.enabled;
+
+        if(casting)
+        {
+            context.light_space = m_shadows.aim(context.eye_position,
+                                                context.directional_light.direction);
+            context.shadows_enabled = true;
+
+            if(m_shadows.begin())
+            {
+                render_context from_the_sun = context;
+
+                // The light's box, as one matrix. The depth shader still
+                // multiplies projection by view, so one of them is enough
+                // and the other is nothing.
+                from_the_sun.projection = context.light_space;
+                from_the_sun.view = glm::mat4(1.0f);
+
+                m_shadow_commands.clear();
+
+                for(auto ro : scene->render_objects())
+                {
+                    // Everything casts, whatever the eye can see: a thing
+                    // behind you is exactly what puts a shadow in front of
+                    // you. The sky does not, having no shape to speak of.
+                    ro->render(m_shadow_commands, from_the_sun);
+                }
+
+                m_opengl_backend.force_shader(m_depth_shader);
+                m_opengl_backend.execute_commands(m_shadow_commands);
+                m_opengl_backend.force_shader(nullptr);
+
+                m_shadows.end(m_render_target->width(), m_render_target->height());
+            }
+            else
+            {
+                context.shadows_enabled = false;
+            }
+        }
+
+        if(context.shadows_enabled)
+        {
+            m_shadows.bind_for_reading(context.shadow_texture_unit);
+        }
 
         m_command_buffer.clear();
         m_opengl_backend.begin_frame(context);

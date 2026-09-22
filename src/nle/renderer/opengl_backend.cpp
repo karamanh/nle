@@ -172,6 +172,11 @@ void opengl_backend::upload_frame_uniforms(const ref<class shader>& shader)
     set_vec3("u_sky.distance_fog_color", m_context.fog.color);
 }
 
+void opengl_backend::force_shader(ref<class shader> shader)
+{
+    m_forced_shader = std::move(shader);
+}
+
 void opengl_backend::execute_commands(const render_command_buffer& command_buffer)
 {
     for (const auto& cmd : command_buffer.commands())

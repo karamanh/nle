@@ -6,6 +6,7 @@ in vec4 io_vertex_color;
 in vec2 io_texture_coordinates;
 in vec3 io_normal;
 in vec3 io_frag_position;
+in vec4 io_light_space_position;
 
 out vec4 io_color;
 
@@ -55,6 +56,11 @@ struct Sky
     float distance_fog_far;
     vec3 distance_fog_color;
 };
+
+uniform sampler2DShadow u_shadow_map;
+uniform int u_shadows_enabled;
+uniform float u_shadow_softness;
+
 
 uniform int u_lighting_enabled = 1;
 uniform int u_point_lighting_enabled = 1;
@@ -123,6 +129,57 @@ float fog_factor()
     return clamp(f, 0.0, 1.0);
 }
 
+/**
+ * How much of this fragment the sun can actually reach.
+ *
+ * One at full daylight, down towards a floor in shadow -- never nought,
+ * because a shadow that is pure black hides everything in it and reads as a
+ * hole in the world rather than as shade.
+ */
+float sunlight_reaching(vec3 normal)
+{
+    if (u_shadows_enabled != 1)
+    {
+        return 1.0;
+    }
+
+    vec3 projected = io_light_space_position.xyz / io_light_space_position.w;
+
+    projected = projected * 0.5 + 0.5;
+
+    // Past the far plane of the light's box: no opinion, so full daylight.
+    if (projected.z > 1.0)
+    {
+        return 1.0;
+    }
+
+    // Surfaces edge-on to the light need a larger bias, because one texel
+    // of the depth map covers a long way across them. Without the slope
+    // term every ground plane gets stripes at dawn and dusk.
+    float facing = max(dot(normalize(normal), normalize(-u_directional_light.direction)), 0.0);
+    float bias = max(0.0025 * (1.0 - facing), 0.0006);
+
+    vec2 texel = u_shadow_softness / vec2(textureSize(u_shadow_map, 0));
+
+    float lit = 0.0;
+
+    // Nine samples in a ring, which is enough to take the staircase off an
+    // edge without costing what a real blur would.
+    for (int x = -1; x <= 1; ++x)
+    {
+        for (int y = -1; y <= 1; ++y)
+        {
+            vec3 at = vec3(projected.xy + vec2(x, y) * texel, projected.z - bias);
+            lit += texture(u_shadow_map, at);
+        }
+    }
+
+    lit /= 9.0;
+
+    // A floor, so shade is shade rather than a void.
+    return mix(0.35, 1.0, lit);
+}
+
 void main() {
     vec3 normal = normalize(io_normal);
     vec3 view_direction = normalize(u_eye_position - io_frag_position);
@@ -140,7 +197,11 @@ void main() {
 
         if (u_lighting_enabled == 1)
         {
-            light_factor += directional_light_contribution(normal, view_direction);
+            // Only the sun is shadowed. A point light is a lamp in a room
+            // and casting shadows from every one of them would mean a depth
+            // map each; the sun is the one everybody can see the shadow of.
+            light_factor += directional_light_contribution(normal, view_direction)
+                          * sunlight_reaching(normal);
         }
 
         if (u_point_lighting_enabled == 1)

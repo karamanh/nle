@@ -55,11 +55,26 @@ public:
     /// Records the frame constants and drops all cached GL state.
     void begin_frame(const render_context& context);
 
+    /**
+     * @brief Draws everything with this shader instead of its own.
+     *
+     * For a pass that only wants depth. Every object still records the
+     * shader it would normally use and every uniform it would normally set;
+     * the ones this shader has no use for are dropped on the floor, as any
+     * uniform that does not exist already is.
+     *
+     * Null puts it back to each object using its own.
+     */
+    void force_shader(ref<class shader> shader);
+
     void execute_commands(const render_command_buffer& command_buffer);
 
     const frame_statistics& statistics() const;
 
 private:
+    /// Set while a pass wants everything drawn with one shader.
+    ref<class shader> m_forced_shader;
+
     void execute_command(const render_command& cmd);
 
     /// Uploads the render_context constants into @p shader, once per frame.

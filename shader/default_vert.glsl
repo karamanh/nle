@@ -6,10 +6,12 @@ out vec4 io_vertex_color;
 out vec2 io_texture_coordinates;
 out vec3 io_normal;
 out vec3 io_frag_position;
+out vec4 io_light_space_position;
 
 uniform mat4 u_model;
 uniform mat4 u_projection;
 uniform mat4 u_view;
+uniform mat4 u_light_space;
 
 // Skinning. u_joint_matrices holds, for the skin this draw belongs to,
 // joint_world_matrix * inverse_bind_matrix for every joint.
@@ -60,5 +62,11 @@ void main() {
     io_texture_coordinates = texture;
     io_normal = mat3(transpose(inverse(model))) * normal;
     io_frag_position = world_position.xyz;
+
+    // Where this ends up in the depth map the sun drew. Worked out here
+    // rather than in the fragment shader because it is a matrix multiply
+    // per vertex instead of one per pixel, and interpolating the result is
+    // exactly the same answer.
+    io_light_space_position = u_light_space * world_position;
     io_vertex_color = vec4(color, 1.0f);
 }
