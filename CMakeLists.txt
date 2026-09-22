@@ -50,6 +50,12 @@ endif()
 # a submodule but is no longer on the include path.
 pkg_check_modules(IMGUI IMPORTED_TARGET imgui)
 
+# Sound is optional. A machine without the mixer still builds and still
+# runs; nle::audio simply reports that it is not ready and everything it is
+# asked to play is silence. Refusing to build a game because the speakers are
+# missing would be the wrong trade.
+pkg_check_modules(SDL2MIXER IMPORTED_TARGET SDL2_mixer sdl2)
+
 find_library(STB_LIBRARY NAMES stb)
 if(NOT STB_LIBRARY)
     message(FATAL_ERROR "libstb not found; it provides the stb_image implementation")
@@ -96,6 +102,13 @@ if(IMGUI_FOUND)
 else()
     find_library(IMGUI_LIBRARY NAMES imgui REQUIRED)
     target_link_libraries(nle PUBLIC "${IMGUI_LIBRARY}")
+endif()
+
+if(SDL2MIXER_FOUND)
+    target_link_libraries(nle PUBLIC PkgConfig::SDL2MIXER)
+    target_compile_definitions(nle PUBLIC NLE_HAS_AUDIO)
+else()
+    message(STATUS "SDL2_mixer not found; nle is being built without sound")
 endif()
 
 # Shaders are read at runtime, so executables need to know where they live.
@@ -145,6 +158,14 @@ if(NLE_BUILD_TESTS)
 
     add_test(NAME particles COMMAND nle_particle_test)
     set_tests_properties(particles PROPERTIES SKIP_RETURN_CODE 77)
+
+    # Opens a real device and really plays, very quietly. Passes without one
+    # too, which is the case a build server actually runs.
+    add_executable(nle_audio_test "${CMAKE_CURRENT_SOURCE_DIR}/tests/audio_test.cpp")
+    target_link_libraries(nle_audio_test PRIVATE nle)
+    target_compile_options(nle_audio_test PRIVATE -Wall -Wextra)
+
+    add_test(NAME audio COMMAND nle_audio_test)
 
     # Building a terrain uploads a mesh, so this one needs a context too.
     add_executable(nle_terrain_sculpt_test
