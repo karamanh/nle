@@ -40,7 +40,32 @@ namespace nle
 
         command_buffer.set_uniform("u_model", this->transform_matrix());
 
+        // A material that says it is not fully opaque is drawn as though it
+        // means it. Without this, dissolve reaches the shader, comes out in
+        // the alpha channel, and is thrown away by a pipeline with blending
+        // off -- so a wash meant to be a third visible painted solid over
+        // whatever was underneath it.
+        //
+        // Depth writes go off with it, or a transparent thing hides what is
+        // behind it as effectively as an opaque one would.
+        const auto& used = this->material_override() ? this->material_override()
+                                                     : this->mesh()->material();
+
+        const bool see_through = used && used->dissolve() < 1.0f;
+
+        if(see_through)
+        {
+            command_buffer.set_blending(blend_mode::alpha);
+            command_buffer.set_depth_mask(false);
+        }
+
         // Draw the mesh
         command_buffer.draw_elements(static_cast<GLenum>(this->primitive_type()), this->mesh()->m_vao, this->mesh()->m_ebo, this->mesh()->indices().size());
+
+        if(see_through)
+        {
+            command_buffer.set_depth_mask(true);
+            command_buffer.set_blending(blend_mode::none);
+        }
     }
 } // namespace nle
