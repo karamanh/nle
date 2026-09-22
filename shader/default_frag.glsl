@@ -57,6 +57,104 @@ struct Sky
     vec3 distance_fog_color;
 };
 
+// The ground, when this surface is one. Off for everything else, which is
+// everything: a prop pays one comparison and never samples any of these.
+//
+// It lives here rather than in a shader of its own because a second copy of
+// all the lighting and fog below is a second copy that will disagree with
+// this one the first time either is touched.
+uniform sampler2D u_terrain_base;
+uniform sampler2D u_terrain_layer_0;
+uniform sampler2D u_terrain_layer_1;
+uniform sampler2D u_terrain_layer_2;
+uniform sampler2D u_terrain_layer_3;
+uniform sampler2D u_terrain_splat;
+
+// How many uv units the ground spans, which is also how many samples the
+// paint has across it. Nought means "this surface is not ground", and every
+// other surface is given nought, because a uniform belongs to the program
+// and the program is shared: without that, the first field of grass drawn
+// would go on to wallpaper every tree behind it.
+uniform float u_terrain_extent;
+
+uniform int u_terrain_base_enabled;
+uniform int u_terrain_layers_enabled;
+uniform int u_terrain_splat_enabled;
+
+uniform float u_terrain_base_tiling;
+uniform vec4 u_terrain_layer_tiling;
+
+/**
+ * The ground's own pictures: a base, and up to four painted over it, mixed
+ * by a splat map whose four channels are the weights the paint brush has
+ * been writing all along.
+ *
+ * Returns white when there is nothing to sample, so that multiplying by it
+ * leaves the vertex colour exactly as it was. Ground painted before there
+ * were any pictures is shaded the way it always was.
+ */
+vec3 ground_colour(vec2 uv)
+{
+    if (u_terrain_extent <= 0.0)
+    {
+        return vec3(1.0);
+    }
+
+    if (u_terrain_base_enabled != 1 && u_terrain_splat_enabled != 1)
+    {
+        return vec3(1.0);
+    }
+
+    // The ground's own uv counts tiles rather than running nought to one, so
+    // tiling is a multiple of the whole field only after this.
+    vec2 field = uv / u_terrain_extent;
+
+    vec3 result = vec3(1.0);
+
+    if (u_terrain_base_enabled == 1)
+    {
+        result = texture(u_terrain_base, field * u_terrain_base_tiling).rgb;
+    }
+
+    if (u_terrain_splat_enabled != 1)
+    {
+        return result;
+    }
+
+    // One texel to a sample, and there is one more sample than there are
+    // tiles, so uv lands on a texel index directly. The half puts the read at
+    // the texel's middle: without it the whole painting sits half a texel out.
+    vec4 weights = texture(u_terrain_splat, (uv + 0.5) / (u_terrain_extent + 1.0));
+
+    // Each over the last, in the order they are painted -- which is how the
+    // brush behaves, and so how a road laid over grass is expected to look.
+    if ((u_terrain_layers_enabled & 1) != 0)
+    {
+        result = mix(result, texture(u_terrain_layer_0, field * u_terrain_layer_tiling.x).rgb,
+                     weights.r);
+    }
+
+    if ((u_terrain_layers_enabled & 2) != 0)
+    {
+        result = mix(result, texture(u_terrain_layer_1, field * u_terrain_layer_tiling.y).rgb,
+                     weights.g);
+    }
+
+    if ((u_terrain_layers_enabled & 4) != 0)
+    {
+        result = mix(result, texture(u_terrain_layer_2, field * u_terrain_layer_tiling.z).rgb,
+                     weights.b);
+    }
+
+    if ((u_terrain_layers_enabled & 8) != 0)
+    {
+        result = mix(result, texture(u_terrain_layer_3, field * u_terrain_layer_tiling.w).rgb,
+                     weights.a);
+    }
+
+    return result;
+}
+
 uniform sampler2DShadow u_shadow_map;
 uniform int u_shadows_enabled;
 uniform float u_shadow_softness;
@@ -200,6 +298,11 @@ void main() {
     vec4 base_color = u_texture_enabled == 1
         ? texture(u_texture_0, io_texture_coordinates)
         : io_vertex_color;
+
+    // Ground with pictures on it. White for everything that is not ground,
+    // so this multiply changes nothing at all for a prop.
+    base_color = vec4(base_color.rgb * ground_colour(io_texture_coordinates),
+                      base_color.a);
 
     // Unlit surfaces (the sky, for one) keep their colour untouched.
     vec3 light_factor = vec3(1.0);

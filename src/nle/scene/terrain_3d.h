@@ -69,20 +69,29 @@ struct terrain_noise
 };
 
 /**
- * @brief A colour that can be painted onto the ground: a road, a path, sand.
+ * @brief Something that can be painted onto the ground: a road, a path, sand.
  *
- * Colour rather than a texture. The ground has no texture at all today -- it
- * is shaded from vertex colours, as the props are -- so painting colour is
- * what actually matches the art, and it needs no change to the shader, no
- * second set of samplers and no weight texture. Real splatting would want all
- * three, and would want this data anyway: the weights below are exactly what
- * a splat map holds, so that is a change of how they are drawn rather than a
- * change of what is stored.
+ * A colour, and optionally a texture to go with it. The weights were always
+ * exactly what a splat map holds, so adding pictures turned out to be a
+ * change of how they are drawn rather than of what is stored -- every level
+ * painted before there were any textures still paints the same.
+ *
+ * The texture is multiplied by the colour, so a layer with no texture is a
+ * flat colour exactly as it was, and a layer with one can be tinted without
+ * needing a second copy of the file.
  */
 struct terrain_paint_layer
 {
     std::string name;
     glm::vec3 color = glm::vec3(0.5f);
+
+    /// Path to a picture, or empty for a flat colour. Loaded by whoever
+    /// sets the layers; the terrain is handed the texture itself.
+    std::string texture;
+
+    /// How many times it repeats across the whole terrain. Ground textures
+    /// are small and tile, so this is usually a good deal more than one.
+    float tiling = 24.0f;
 };
 
 /// What a brush stroke does to the ground under it.
@@ -252,6 +261,29 @@ public:
     void set_paint_layers(std::vector<terrain_paint_layer> layers);
     const std::vector<terrain_paint_layer>& paint_layers() const;
 
+    /**
+     * @brief The picture under everything, before anything is painted on.
+     *
+     * Null for ground shaded by colour alone, which is what every terrain
+     * was before this existed and what one still is until given something.
+     */
+    void set_base_texture(ref<class texture> picture, float tiling = 24.0f);
+    ref<class texture> base_texture() const;
+
+    /**
+     * @brief The picture for one paint layer.
+     *
+     * Kept beside the layers rather than inside them because a
+     * terrain_paint_layer is data a level file holds, and a texture is a
+     * thing on a graphics card. The file says which picture; this is the
+     * picture.
+     */
+    void set_layer_texture(size_t layer, ref<class texture> picture);
+
+    /// The most layers that can have pictures. Four, because the weights
+    /// ride in the four channels of one splat map.
+    static constexpr size_t MOST_TEXTURED_LAYERS = 4;
+
     /// One weight per sample per layer, 0 to 255, layer-major within a sample.
     const std::vector<uint8_t>& paintmap() const;
     bool set_paintmap(std::vector<uint8_t> weights);
@@ -283,6 +315,25 @@ public:
 
     /// Whether the current surface came from set_noise().
     bool generated() const;
+
+    /**
+     * @brief Draws the ground, with its own pictures if it has any.
+     *
+     * Everything a mesh instance does, and then the handful of uniforms and
+     * samplers that turn the ground's half of the shader on. Nothing else
+     * sets them, so nothing else pays for them.
+     */
+    void render(render_command_buffer& command_buffer, const render_context& context) override;
+
+    /**
+     * @brief The painting as a sampler reads it: one texel per sample, one
+     *        layer per channel, in the layers' own order.
+     *
+     * Built on demand, because a brush stroke touches the same ground many
+     * times a second and only the last of those is ever seen. Null when no
+     * layer has a picture, since then nothing would read it.
+     */
+    ref<class texture> splatmap();
 
     /// Alternating tile colours. Used only while no layers are set.
     void set_colors(const glm::vec3& first, const glm::vec3& second);
@@ -371,6 +422,11 @@ protected:
     void set_scene(ref<render_object_3d> scene) override;
 
 private:
+    /// The weights as a picture the shader can read: one channel per
+    /// textured layer. Rebuilt when the painting changes, and only when
+    /// there is something textured to draw with it.
+    void refresh_splatmap();
+
     float m_size;
     int m_resolution;
 
@@ -393,6 +449,18 @@ private:
 
     /// (samples * samples * layers) weights, layer-major within a sample.
     std::vector<uint8_t> m_paint;
+
+    /// The pictures. Separate from m_paint_layers, which is level data.
+    ref<class texture> m_base_texture;
+    ref<class texture> m_layer_textures[MOST_TEXTURED_LAYERS];
+
+    /// The weights, uploaded. Null until something textured wants it.
+    ref<class texture> m_splatmap;
+
+    float m_base_tiling = 24.0f;
+
+    /// Set when the painting has moved on from what the splat map holds.
+    bool m_splat_stale = true;
 
     /// Index of the first weight of a sample, or a size when given the count.
     size_t paint_index(int x, int z) const;

@@ -11,6 +11,8 @@
  */
 
 #include "nle/scene/terrain_3d.h"
+#include "nle/mesh/mesh_3d.h"
+#include "nle/renderer/texture.h"
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -20,6 +22,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <vector>
 
 namespace
 {
@@ -345,6 +348,147 @@ void test_nonsense_coordinates()
     check(!ground->raycast(nowhere, hit), "a ray made of nothing hits nothing");
 }
 
+/// A one-texel picture, so a layer can have one without a file to load.
+nle::ref<nle::texture> a_picture(uint8_t red, uint8_t green, uint8_t blue)
+{
+    const uint8_t pixel[4] = { red, green, blue, 255 };
+    return nle::make_ref<nle::texture>(pixel, 1, 1, 4, false);
+}
+
+/// The colour baked into the mesh nearest a spot, which is what the ground
+/// is tinted with before any picture is sampled over it.
+glm::vec3 colour_under(const nle::ref<nle::terrain_3d>& ground, float x, float z)
+{
+    const auto& vertices = ground->mesh()->vertices();
+
+    glm::vec3 colour(0.0f);
+    float nearest = std::numeric_limits<float>::max();
+
+    for(const auto& one : vertices)
+    {
+        const float dx = one.position.x - x;
+        const float dz = one.position.z - z;
+        const float gap = dx * dx + dz * dz;
+
+        if(gap < nearest)
+        {
+            nearest = gap;
+            colour = one.color;
+        }
+    }
+
+    return colour;
+}
+
+/// Every texel of a splat map, straight off the card.
+std::vector<uint8_t> read_back(const nle::ref<nle::texture>& picture, int side)
+{
+    std::vector<uint8_t> texels(static_cast<size_t>(side) * static_cast<size_t>(side) * 4u, 0u);
+
+    glBindTexture(GL_TEXTURE_2D, picture->id());
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, texels.data());
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    return texels;
+}
+
+void test_the_splatmap()
+{
+    std::cout << "\nthe painting as the shader reads it\n";
+
+    auto ground = make_ground();
+
+    ground->set_paint_layers({ { "grass", { 0.2f, 0.5f, 0.2f } },
+                               { "road", { 0.45f, 0.38f, 0.28f } } });
+    ground->paint({ 0.0f, 0.0f, 0.0f }, 12.0f, 1, 0.4f, 1.0f);
+
+    check(!ground->splatmap(), "no picture on any layer, so nothing would read a splat map");
+
+    ground->set_layer_texture(1, a_picture(200, 120, 60));
+
+    auto splat = ground->splatmap();
+    check(static_cast<bool>(splat), "a layer with a picture is a reason to build one");
+
+    if(!splat)
+    {
+        return;
+    }
+
+    const int n = ground->samples();
+
+    // The whole point: channel g of texel (x, z) is layer one's weight at
+    // sample (x, z). Were these ever to disagree, the ground would be painted
+    // in one place and textured in another.
+    std::vector<uint8_t> texels = read_back(splat, n);
+    const auto& weights = ground->paintmap();
+
+    bool same = true;
+    bool anything = false;
+
+    for(size_t sample = 0; sample < static_cast<size_t>(n) * static_cast<size_t>(n); ++sample)
+    {
+        for(size_t layer = 0; layer < 2u; ++layer)
+        {
+            const uint8_t painted = weights[sample * 2u + layer];
+
+            same = same && texels[sample * 4u + layer] == painted;
+            anything = anything || painted != 0u;
+        }
+    }
+
+    check(anything, "the stroke left weights worth checking");
+    check(same, "and every texel is the weight painted at that sample");
+
+    // A texture is not a snapshot: paint again and the next read has it.
+    ground->paint({ 20.0f, 0.0f, 20.0f }, 10.0f, 0, 0.6f, 1.0f);
+
+    texels = read_back(ground->splatmap(), n);
+
+    const auto& now = ground->paintmap();
+
+    bool caught_up = true;
+    bool moved = false;
+
+    for(size_t sample = 0; sample < static_cast<size_t>(n) * static_cast<size_t>(n); ++sample)
+    {
+        caught_up = caught_up && texels[sample * 4u] == now[sample * 2u];
+        moved = moved || now[sample * 2u] != 0u;
+    }
+
+    check(moved, "the second stroke painted the other layer");
+    check(caught_up, "and the splat map followed it onto its own channel");
+}
+
+void test_pictures_are_not_tinted()
+{
+    std::cout << "\nwhat the mesh leaves for the pictures\n";
+
+    auto plain = make_ground();
+    plain->set_paint_layers({ { "grass", { 0.2f, 0.5f, 0.2f } },
+                              { "road", { 0.45f, 0.38f, 0.28f } } });
+    plain->paint({ 0.0f, 0.0f, 0.0f }, 12.0f, 1, 0.4f, 1.0f);
+
+    auto pictured = make_ground();
+    pictured->set_paint_layers({ { "grass", { 0.2f, 0.5f, 0.2f } },
+                                 { "road", { 0.45f, 0.38f, 0.28f } } });
+    pictured->paint({ 0.0f, 0.0f, 0.0f }, 12.0f, 1, 0.4f, 1.0f);
+    pictured->set_layer_texture(1, a_picture(200, 120, 60));
+
+    const glm::vec3 tinted = colour_under(plain, 0.0f, 0.0f);
+    const glm::vec3 left_alone = colour_under(pictured, 0.0f, 0.0f);
+
+    check(glm::length(tinted - left_alone) > 0.01f,
+          "a layer with a picture stops tinting the mesh under it");
+
+    // A base picture is a colour of ground, so the checkerboard under it has
+    // to go, or it shows through everything painted on top.
+    auto based = make_ground();
+    based->set_base_texture(a_picture(90, 140, 70), 12.0f);
+
+    check(glm::length(colour_under(based, 0.0f, 0.0f) - glm::vec3(1.0f)) < 0.01f,
+          "and a base picture leaves the ground under it white");
+}
+
 } // namespace
 
 int main()
@@ -382,6 +526,8 @@ int main()
     test_flatten_and_smooth();
     test_what_is_drawn_is_what_is_walked_on();
     test_painting();
+    test_the_splatmap();
+    test_pictures_are_not_tinted();
     test_nonsense_coordinates();
 
     std::cout << "\n" << (g_checks - g_failures) << "/" << g_checks << " checks passed\n";

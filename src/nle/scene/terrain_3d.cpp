@@ -438,6 +438,169 @@ void terrain_3d::set_paint_layers(std::vector<terrain_paint_layer> layers)
     rebuild();
 }
 
+void terrain_3d::set_base_texture(ref<class texture> picture, float tiling)
+{
+    m_base_texture = std::move(picture);
+    m_base_tiling = std::max(0.01f, tiling);
+
+    // The ground is drawn by the material now, so the mesh has to carry it.
+    rebuild();
+}
+
+ref<class texture> terrain_3d::base_texture() const
+{
+    return m_base_texture;
+}
+
+void terrain_3d::set_layer_texture(size_t layer, ref<class texture> picture)
+{
+    if(layer >= MOST_TEXTURED_LAYERS)
+    {
+        return;
+    }
+
+    m_layer_textures[layer] = std::move(picture);
+    m_splat_stale = true;
+
+    rebuild();
+}
+
+ref<class texture> terrain_3d::splatmap()
+{
+    if(m_splat_stale)
+    {
+        refresh_splatmap();
+    }
+
+    return m_splatmap;
+}
+
+void terrain_3d::render(render_command_buffer& command_buffer, const render_context& context)
+{
+    const ref<class texture> splat = splatmap();
+
+    // Everything below has to be recorded before the base class, because the
+    // base class ends by recording the draw, and a uniform set after the draw
+    // is a uniform for the next frame. The shader is bound here for the same
+    // reason: the backend looks a uniform's name up in whatever shader is
+    // current when the command runs. The base binds it again; that second bind
+    // costs nothing, the state cache drops it.
+    command_buffer.use_shader(shader());
+
+    // Nought is the mesh's own texture and the shadow map sits at seven, so
+    // the ground's pictures start at two and there is room between.
+    constexpr unsigned int BASE_UNIT = 2;
+    constexpr unsigned int SPLAT_UNIT = 3;
+    constexpr unsigned int FIRST_LAYER_UNIT = 4;
+
+    // Says "this surface is ground", and carries the one number the shader
+    // needs to read the ground's uv: how many uv units span the field.
+    command_buffer.set_uniform("u_terrain_extent", static_cast<float>(m_resolution));
+
+    if(m_base_texture)
+    {
+        command_buffer.use_texture(m_base_texture, BASE_UNIT);
+        command_buffer.set_uniform("u_terrain_base", static_cast<int>(BASE_UNIT));
+        command_buffer.set_uniform("u_terrain_base_enabled", 1);
+        command_buffer.set_uniform("u_terrain_base_tiling", m_base_tiling);
+    }
+    else
+    {
+        command_buffer.set_uniform("u_terrain_base_enabled", 0);
+    }
+
+    int which = 0;
+    glm::vec4 tiling(24.0f);
+
+    for(size_t layer = 0; layer < MOST_TEXTURED_LAYERS; ++layer)
+    {
+        if(!m_layer_textures[layer])
+        {
+            continue;
+        }
+
+        const unsigned int unit = FIRST_LAYER_UNIT + static_cast<unsigned int>(layer);
+
+        command_buffer.use_texture(m_layer_textures[layer], unit);
+
+        const std::string name = "u_terrain_layer_" + std::to_string(layer);
+
+        command_buffer.set_uniform(name, static_cast<int>(unit));
+
+        which |= 1 << layer;
+
+        if(layer < m_paint_layers.size())
+        {
+            tiling[static_cast<int>(layer)] = std::max(0.01f, m_paint_layers[layer].tiling);
+        }
+    }
+
+    command_buffer.set_uniform("u_terrain_layers_enabled", which);
+    command_buffer.set_uniform("u_terrain_layer_tiling", tiling);
+
+    if(splat && which != 0)
+    {
+        command_buffer.use_texture(splat, SPLAT_UNIT);
+        command_buffer.set_uniform("u_terrain_splat", static_cast<int>(SPLAT_UNIT));
+        command_buffer.set_uniform("u_terrain_splat_enabled", 1);
+    }
+    else
+    {
+        command_buffer.set_uniform("u_terrain_splat_enabled", 0);
+    }
+
+    mesh_instance_3d::render(command_buffer, context);
+}
+
+void terrain_3d::refresh_splatmap()
+{
+    // Only worth building when something textured is going to read it.
+    bool wanted = false;
+
+    for(const auto& one : m_layer_textures)
+    {
+        if(one)
+        {
+            wanted = true;
+            break;
+        }
+    }
+
+    if(!wanted || m_paint.empty() || m_paint_layers.empty())
+    {
+        m_splatmap = nullptr;
+        m_splat_stale = false;
+        return;
+    }
+
+    const int side = m_resolution + 1;
+    const size_t layers = m_paint_layers.size();
+
+    // One texel per sample, four channels, one layer to a channel. The same
+    // numbers the paint brush already writes -- this is only them arranged
+    // the way a sampler wants to read them.
+    std::vector<uint8_t> pixels(static_cast<size_t>(side) * side * 4, 0);
+
+    for(int z = 0; z < side; ++z)
+    {
+        for(int x = 0; x < side; ++x)
+        {
+            const size_t sample = static_cast<size_t>(z) * side + x;
+            const size_t from = sample * layers;
+            const size_t to = sample * 4;
+
+            for(size_t layer = 0; layer < MOST_TEXTURED_LAYERS && layer < layers; ++layer)
+            {
+                pixels[to + layer] = m_paint[from + layer];
+            }
+        }
+    }
+
+    m_splatmap = make_ref<class texture>(pixels.data(), side, side, 4, false);
+
+    m_splat_stale = false;
+}
+
 const std::vector<terrain_paint_layer>& terrain_3d::paint_layers() const
 {
     return m_paint_layers;
@@ -670,7 +833,14 @@ glm::vec3 terrain_3d::surface_color(int tile_x, int tile_z, float local_y, const
 {
     glm::vec3 color;
 
-    if(m_layers.empty())
+    if(m_base_texture)
+    {
+        // A picture of ground is a colour of ground. Tinting it with the
+        // checkerboard as well would show the checkerboard through it, which
+        // is the one thing a picture is chosen to be rid of.
+        color = glm::vec3(1.0f);
+    }
+    else if(m_layers.empty())
     {
         color = ((tile_x + tile_z) % 2 == 0) ? m_first_color : m_second_color;
     }
@@ -722,6 +892,14 @@ glm::vec3 terrain_3d::surface_color(int tile_x, int tile_z, float local_y, const
 
         for(size_t layer = 0; layer < m_paint_layers.size(); ++layer)
         {
+            // A layer with a picture is mixed in by the shader, from the same
+            // weights. Mixing its flat colour here as well would show through
+            // its picture and tint it.
+            if(layer < MOST_TEXTURED_LAYERS && m_layer_textures[layer])
+            {
+                continue;
+            }
+
             const float weight = static_cast<float>(m_paint[base + layer]) / 255.0f;
 
             if(weight > 0.0f)
@@ -862,6 +1040,13 @@ ref<class mesh_3d> terrain_3d::build_grid_mesh() const
 
 void terrain_3d::refresh_region(int min_x, int max_x, int min_z, int max_z)
 {
+    // Anything that redraws the ground may have repainted it, and the splat
+    // map is that painting arranged for a sampler. Marked rather than rebuilt:
+    // a brush stroke is a drag of the mouse and touches the same ground many
+    // times a second, and uploading a texture nobody has seen yet each time is
+    // work for its own sake. The next draw pays for it, once.
+    m_splat_stale = true;
+
     if(!m_mesh || !m_mesh_is_grid)
     {
         rebuild();
@@ -924,6 +1109,13 @@ void terrain_3d::refresh_region(int min_x, int max_x, int min_z, int max_z)
 
 void terrain_3d::rebuild()
 {
+    // Anything that redraws the ground may have repainted it, and the splat
+    // map is that painting arranged for a sampler. Marked rather than rebuilt:
+    // a brush stroke is a drag of the mouse and touches the same ground many
+    // times a second, and uploading a texture nobody has seen yet each time is
+    // work for its own sake. The next draw pays for it, once.
+    m_splat_stale = true;
+
     // The checkerboard is the only thing that needs a vertex per tile corner,
     // since its colour changes across an edge. Everything else -- which is to
     // say anything anyone would ship -- shares them, and rebuilds an order of

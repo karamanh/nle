@@ -40,6 +40,12 @@ void record_surface_uniforms(render_command_buffer& command_buffer,
                                (accept_light && context.directional_light.enabled) ? 1 : 0);
     command_buffer.set_uniform("u_point_lighting_enabled", accept_light ? 1 : 0);
 
+    // Not ground. The terrain says otherwise for itself, after this; every
+    // other surface has to say it, because uniforms belong to the program and
+    // the program is shared, so a value left behind by the last draw is a
+    // value this one inherits.
+    command_buffer.set_uniform("u_terrain_extent", 0.0f);
+
     // What the sun could see, and where to look it up. Sent per surface
     // like everything else here, so that a shader without these simply
     // drops them as it drops any uniform it has no use for.
