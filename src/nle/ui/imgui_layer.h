@@ -82,8 +82,22 @@ public:
     /// True when the interface is using the mouse, so the world should not.
     bool wants_mouse() const;
 
-    /// True when the interface has keyboard focus, such as a text field.
+    /**
+     * @brief True when any interface window has keyboard focus.
+     *
+     * Broader than it sounds, and usually not what a game wants: with
+     * keyboard navigation on, this is true for as long as a panel is merely
+     * open, so a bag left up would stop somebody walking. See wants_text().
+     */
     bool wants_keyboard() const;
+
+    /**
+     * @brief True only when something is actually being typed into.
+     *
+     * The question a game usually means: a w typed into a name should not
+     * walk anyone, but a w pressed while the bag happens to be open should.
+     */
+    bool wants_text() const;
 
 private:
     ref<window_glfw> m_window;

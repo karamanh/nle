@@ -91,4 +91,9 @@ bool imgui_layer::wants_keyboard() const
     return ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantCaptureKeyboard;
 }
 
+bool imgui_layer::wants_text() const
+{
+    return ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantTextInput;
+}
+
 } // namespace nle
