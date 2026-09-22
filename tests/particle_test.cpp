@@ -95,7 +95,7 @@ void test_it_draws()
     // Every style, since each is a different branch of the same shader and a
     // mistake in one would never be reached by testing another.
     for(const auto style : { nle::particle_style::flame, nle::particle_style::cloud,
-                             nle::particle_style::spark })
+                             nle::particle_style::spark, nle::particle_style::fall })
     {
         emitter->set_style(style);
 

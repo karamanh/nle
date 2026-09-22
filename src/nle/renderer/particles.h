@@ -37,7 +37,18 @@ enum class particle_style
     cloud,
 
     /// Darts out and dies almost at once. Sparks, lightning.
-    spark
+    spark,
+
+    /**
+     * @brief Comes down from above, across the whole circle. Snow, ash.
+     *
+     * The one style that starts somewhere other than the emitter: particles
+     * are born high and spread over the area, and fall. How high is the
+     * radius and a half, so a wider fall starts higher and takes about as
+     * long to arrive -- set the speed and the lifetime to match, or it will
+     * either vanish in mid-air or pile through the floor.
+     */
+    fall
 };
 
 /**

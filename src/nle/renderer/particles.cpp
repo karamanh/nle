@@ -103,6 +103,21 @@ void main()
 
         size *= (0.6 + r.z * 0.8) * (1.0 - age * 0.3);
     }
+    else if(u_style == 3)
+    {
+        // Falling: born high and spread across the whole circle, coming
+        // down with a little sway. The square root is what spreads them
+        // evenly over a disc -- without it they bunch in the middle, since
+        // there is far more circle near the rim than near the centre.
+        float spread = u_radius * sqrt(r.y);
+        float sway = sin(seconds * 2.3 + r.z * 6.283) * u_radius * 0.06;
+
+        local = vec3(around.x * spread + sway,
+                     u_radius * 1.5 - seconds * u_speed,
+                     around.y * spread);
+
+        size *= (0.5 + r.z * 0.6);
+    }
     else
     {
         // Spark: straight out, fast, gone. Born inside the radius for the
