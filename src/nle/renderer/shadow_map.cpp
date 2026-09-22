@@ -182,6 +182,13 @@ bool shadow_map::begin()
         return false;
     }
 
+    // Whatever was being drawn into before this, so it can be put back.
+    // Bloom renders the scene into a target of its own, and binding the
+    // window afterwards sent the whole scene somewhere bloom then painted
+    // an empty buffer over -- a grey screen with the interface still on it.
+    m_was_bound = 0;
+    glGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_was_bound);
+
     glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer);
     glViewport(0, 0, m_resolution, m_resolution);
     glClear(GL_DEPTH_BUFFER_BIT);
@@ -200,7 +207,7 @@ void shadow_map::end(int window_width, int window_height)
     glCullFace(GL_BACK);
     glDisable(GL_CULL_FACE);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, static_cast<unsigned int>(m_was_bound));
     glViewport(0, 0, window_width, window_height);
 }
 

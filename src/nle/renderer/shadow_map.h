@@ -62,7 +62,8 @@ public:
     /// the caller can skip it entirely rather than drawing into nowhere.
     bool begin();
 
-    /// Ends it and puts the viewport back where it was.
+    /// Ends it, putting back both the viewport and whatever framebuffer was
+    /// bound before -- which is not always the window.
     void end(int window_width, int window_height);
 
     /// Binds the depth texture for the lit pass to sample.
@@ -81,6 +82,10 @@ private:
 
     unsigned int m_framebuffer = 0;
     unsigned int m_depth = 0;
+
+    /// What was bound when the pass started. Bloom draws the scene into a
+    /// target of its own, so assuming the window here blanked the world.
+    int m_was_bound = 0;
 
     int m_built_at = 0;
 
