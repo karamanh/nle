@@ -76,7 +76,18 @@ uniform Sky u_sky;
 uniform vec3 u_eye_position;
 uniform float u_time;
 
-vec3 directional_light_contribution(vec3 normal, vec3 view_direction)
+/**
+ * The sun's contribution, with what a shadow may take away kept apart from
+ * what it may not.
+ *
+ * @param shaded how much of the sun reaches here, from sunlight_reaching.
+ *
+ * Ambient is the light that gets everywhere by definition, so a shadow does
+ * not touch it. Shadowing it as well simply dims the whole world -- which
+ * is exactly what happened on a level with its ambient at full white: every
+ * surface went down by the same amount and nothing read as a shadow at all.
+ */
+vec3 directional_light_contribution(vec3 normal, vec3 view_direction, float shaded)
 {
     vec3 direction = normalize(u_directional_light.direction);
 
@@ -92,7 +103,7 @@ vec3 directional_light_contribution(vec3 normal, vec3 view_direction)
     float specular_factor = pow(max(dot(view_direction, reflect_direction), 0.0), max(u_material.shininess, 1.0));
     vec3 specular = u_material.specular * u_directional_light.specular * specular_factor;
 
-    return ambient + diffuse + specular;
+    return ambient + (diffuse + specular) * shaded;
 }
 
 vec3 point_light_contribution(PointLight light, vec3 normal, vec3 view_direction)
@@ -176,8 +187,10 @@ float sunlight_reaching(vec3 normal)
 
     lit /= 9.0;
 
-    // A floor, so shade is shade rather than a void.
-    return mix(0.35, 1.0, lit);
+    // A floor, so shade is shade rather than a void. It can be lower than
+    // it was now that this only takes the sun away and leaves the ambient
+    // light alone -- nothing goes black, whatever this says.
+    return mix(0.1, 1.0, lit);
 }
 
 void main() {
@@ -200,8 +213,8 @@ void main() {
             // Only the sun is shadowed. A point light is a lamp in a room
             // and casting shadows from every one of them would mean a depth
             // map each; the sun is the one everybody can see the shadow of.
-            light_factor += directional_light_contribution(normal, view_direction)
-                          * sunlight_reaching(normal);
+            light_factor += directional_light_contribution(normal, view_direction,
+                                                           sunlight_reaching(normal));
         }
 
         if (u_point_lighting_enabled == 1)
