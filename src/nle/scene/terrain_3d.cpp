@@ -477,25 +477,28 @@ ref<class texture> terrain_3d::splatmap()
 
 void terrain_3d::render(render_command_buffer& command_buffer, const render_context& context)
 {
-    const ref<class texture> splat = splatmap();
+    // Built here rather than on every brush stroke: painting is a drag of the
+    // mouse and touches the same ground many times a second, and only the last
+    // of those is ever seen.
+    splatmap();
 
-    // Everything below has to be recorded before the base class, because the
-    // base class ends by recording the draw, and a uniform set after the draw
-    // is a uniform for the next frame. The shader is bound here for the same
-    // reason: the backend looks a uniform's name up in whatever shader is
-    // current when the command runs. The base binds it again; that second bind
-    // costs nothing, the state cache drops it.
-    command_buffer.use_shader(shader());
+    mesh_instance_3d::render(command_buffer, context);
+}
+
+void terrain_3d::record_extra_uniforms(render_command_buffer& command_buffer,
+                                       const render_context&)
+{
+    // Here rather than around render(), because the shared surface uniforms
+    // are recorded inside it and one of them is this one: every other surface
+    // says it is not ground, and a value set before them would be overwritten
+    // by the surface that comes after it. This runs between them and the draw.
+    command_buffer.set_uniform("u_terrain_extent", static_cast<float>(m_resolution));
 
     // Nought is the mesh's own texture and the shadow map sits at seven, so
-    // the ground's pictures start at two and there is room between.
+    // the ground's pictures start at two, with room between.
     constexpr unsigned int BASE_UNIT = 2;
     constexpr unsigned int SPLAT_UNIT = 3;
     constexpr unsigned int FIRST_LAYER_UNIT = 4;
-
-    // Says "this surface is ground", and carries the one number the shader
-    // needs to read the ground's uv: how many uv units span the field.
-    command_buffer.set_uniform("u_terrain_extent", static_cast<float>(m_resolution));
 
     if(m_base_texture)
     {
@@ -522,10 +525,8 @@ void terrain_3d::render(render_command_buffer& command_buffer, const render_cont
         const unsigned int unit = FIRST_LAYER_UNIT + static_cast<unsigned int>(layer);
 
         command_buffer.use_texture(m_layer_textures[layer], unit);
-
-        const std::string name = "u_terrain_layer_" + std::to_string(layer);
-
-        command_buffer.set_uniform(name, static_cast<int>(unit));
+        command_buffer.set_uniform("u_terrain_layer_" + std::to_string(layer),
+                                   static_cast<int>(unit));
 
         which |= 1 << layer;
 
@@ -538,9 +539,9 @@ void terrain_3d::render(render_command_buffer& command_buffer, const render_cont
     command_buffer.set_uniform("u_terrain_layers_enabled", which);
     command_buffer.set_uniform("u_terrain_layer_tiling", tiling);
 
-    if(splat && which != 0)
+    if(m_splatmap && which != 0)
     {
-        command_buffer.use_texture(splat, SPLAT_UNIT);
+        command_buffer.use_texture(m_splatmap, SPLAT_UNIT);
         command_buffer.set_uniform("u_terrain_splat", static_cast<int>(SPLAT_UNIT));
         command_buffer.set_uniform("u_terrain_splat_enabled", 1);
     }
@@ -548,8 +549,6 @@ void terrain_3d::render(render_command_buffer& command_buffer, const render_cont
     {
         command_buffer.set_uniform("u_terrain_splat_enabled", 0);
     }
-
-    mesh_instance_3d::render(command_buffer, context);
 }
 
 void terrain_3d::refresh_splatmap()

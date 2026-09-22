@@ -27,6 +27,16 @@ public:
 
     void render(render_command_buffer& command_buffer, const render_context& context) override;
 protected:
+    /**
+     * @brief Uniforms recorded after the shared ones and before the draw.
+     *
+     * A subclass that sets uniforms around render() finds them overwritten:
+     * the shared surface uniforms are recorded inside it, and the draw is the
+     * last thing recorded. This is the gap between the two, and so the only
+     * place a subclass's own uniforms survive to reach the draw.
+     */
+    virtual void record_extra_uniforms(render_command_buffer&, const render_context&) {}
+
     /// Subclasses such as terrain_3d rebuild their own geometry.
     ref<class mesh_3d> m_mesh;
 };

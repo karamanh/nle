@@ -325,6 +325,9 @@ public:
      */
     void render(render_command_buffer& command_buffer, const render_context& context) override;
 
+    void record_extra_uniforms(render_command_buffer& command_buffer,
+                               const render_context& context) override;
+
     /**
      * @brief The painting as a sampler reads it: one texel per sample, one
      *        layer per channel, in the layers' own order.

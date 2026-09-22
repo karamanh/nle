@@ -59,6 +59,10 @@ namespace nle
             command_buffer.set_depth_mask(false);
         }
 
+        // The last word before the draw, for whatever a subclass needs to say
+        // that the shared surface uniforms above would otherwise overwrite.
+        record_extra_uniforms(command_buffer, context);
+
         // Draw the mesh
         command_buffer.draw_elements(static_cast<GLenum>(this->primitive_type()), this->mesh()->m_vao, this->mesh()->m_ebo, this->mesh()->indices().size());
 
