@@ -13,6 +13,8 @@
 
 #include <glm/glm.hpp>
 
+#include "render_command.h"
+
 #include <string>
 
 namespace nle
@@ -42,6 +44,18 @@ public:
     void set_accept_light(bool accept);
     bool accept_light() const;
 
+    /**
+     * @brief How this surface is mixed with what is already there.
+     *
+     * Only consulted for a surface that is not fully opaque, since an opaque
+     * one covers what is behind it whatever the mode says. alpha is the
+     * default and is what glass or a decal wants; additive is what a glow
+     * wants, and has the property that black is invisible -- which is how a
+     * mesh fades out without a per-vertex alpha channel to fade.
+     */
+    void set_blending(blend_mode mode);
+    blend_mode blending() const;
+
     void set_id(const std::string& id);
     std::string id() const;
 
@@ -54,6 +68,7 @@ private:
     float m_shininess;
     float m_dissolve;
     bool m_accept_light;
+    blend_mode m_blending = blend_mode::alpha;
 };
 
 } // namespace nle

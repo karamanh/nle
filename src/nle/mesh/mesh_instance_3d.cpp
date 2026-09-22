@@ -55,7 +55,7 @@ namespace nle
 
         if(see_through)
         {
-            command_buffer.set_blending(blend_mode::alpha);
+            command_buffer.set_blending(used->blending());
             command_buffer.set_depth_mask(false);
         }
 

@@ -88,4 +88,15 @@ namespace nle
         return m_id;
     }
 
+
+    void material::set_blending(blend_mode mode)
+    {
+        m_blending = mode;
+    }
+
+    blend_mode material::blending() const
+    {
+        return m_blending;
+    }
+
 } // namespace nle
