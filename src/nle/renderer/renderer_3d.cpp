@@ -155,13 +155,37 @@ namespace nle
 
                 m_shadow_commands.clear();
 
+                // Only what is inside the light's box. Drawing the whole
+                // level here cost more than the lit pass did -- it ignored
+                // every render distance the game had set and redrew four
+                // hundred props a frame at map resolution.
+                //
+                // The test is against the eye rather than the camera's
+                // frustum, because something behind you is exactly what
+                // puts a shadow in front of you.
+                const float reach = m_shadows.distance();
+
                 for(auto ro : scene->render_objects())
                 {
-                    // Everything casts, whatever the eye can see: a thing
-                    // behind you is exactly what puts a shadow in front of
-                    // you. The sky does not, having no shape to speak of.
+                    if(!ro->visible())
+                    {
+                        continue;
+                    }
+
+                    if(glm::distance(ro->position(), context.eye_position) > reach)
+                    {
+                        continue;
+                    }
+
                     ro->render(m_shadow_commands, from_the_sun);
                 }
+
+                // The light's own view and projection, which are uploaded
+                // when a shader is bound and so have to be in place before
+                // anything is drawn. Without this the depth map was the
+                // scene from the camera, which casts no shadows anybody
+                // would recognise.
+                m_opengl_backend.begin_frame(from_the_sun);
 
                 m_opengl_backend.force_shader(m_depth_shader);
                 m_opengl_backend.execute_commands(m_shadow_commands);

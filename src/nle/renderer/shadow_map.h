@@ -77,7 +77,10 @@ private:
 
     bool m_enabled = false;
 
-    int m_resolution = 2048;
+    /// A thousand and twenty-four, not two thousand. A shadow map is a
+    /// second pass over everything in the box; the sharper one costs four
+    /// times the fill for a difference most people do not look for.
+    int m_resolution = 1024;
     float m_distance = 120.0f;
 
     unsigned int m_framebuffer = 0;
