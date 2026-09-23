@@ -114,6 +114,13 @@ endif()
 # Shaders are read at runtime, so executables need to know where they live.
 set(NLE_SHADER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shader" CACHE PATH "runtime shader directory")
 
+# And the engine's own handful of pictures, of which there is currently one.
+set(NLE_ASSET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets" CACHE PATH "runtime engine asset directory")
+
+target_compile_definitions(nle PUBLIC
+    NLE_SHADER_DIR="${NLE_SHADER_DIR}"
+    NLE_ASSET_DIR="${NLE_ASSET_DIR}")
+
 # ---------------------------------------------------------------------------
 # tests
 # ---------------------------------------------------------------------------

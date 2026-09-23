@@ -14,6 +14,9 @@
 #include "core/ref.h"
 #include "window/window_glfw.h"
 #include "renderer/renderer_3d.h"
+#include "splash.h"
+
+#include <memory>
 
 #include <string>
 
@@ -42,11 +45,24 @@ public:
 
     ref<class renderer_3d> renderer_3d(); 
 
+    /**
+     * @brief Changes the card shown at startup, or turns it off.
+     *
+     * Nought seconds is off. Called before run(), which is when the card is
+     * set up -- after that the loop already has it.
+     */
+    void set_splash(const std::string& picture, float seconds);
+
     void run();
 
 private:
     ref<class window_glfw> m_window;
     ref<class renderer_3d> m_renderer;
+
+    std::string m_splash_picture;
+    float m_splash_seconds = 2.2f;
+
+    std::unique_ptr<class splash> m_splash;
 };
 
 } // namespace nle

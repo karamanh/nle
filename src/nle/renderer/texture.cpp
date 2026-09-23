@@ -130,6 +130,16 @@ namespace nle
         glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
     }
 
+    int texture::width() const
+    {
+        return m_width;
+    }
+
+    int texture::height() const
+    {
+        return m_height;
+    }
+
     void texture::upload(const unsigned char *pixels, int format)
     {
         glGenTextures(1, &m_id);

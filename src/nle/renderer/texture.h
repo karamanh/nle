@@ -35,6 +35,10 @@ public:
     virtual ~texture();
 
     uint32_t id() const;
+
+    /// The picture's own size, for anything that has to keep its shape.
+    int width() const;
+    int height() const;
     void use(uint8_t unit = 0) const;
     void unuse(uint8_t unit = 0) const;
 private:
