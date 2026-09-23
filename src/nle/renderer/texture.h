@@ -18,10 +18,32 @@
 namespace nle
 {
 
+/**
+ * @brief How a picture is sampled when it is smaller on screen than on disk.
+ *
+ * crisp keeps one texel one texel. It is what a palette belongs in: the
+ * character packs paint a whole model from a picture a few dozen pixels
+ * across, where the skin and the robe are neighbouring texels, and anything
+ * that blends between texels blends the robe onto the face. Which is exactly
+ * what happened the day this was not a choice.
+ *
+ * smooth uses the mipmaps, and is what anything tiled across a landscape
+ * wants: with a texture repeating two hundred times, one screen pixel covers
+ * many texels, and picking one of them at random is a surface that boils as
+ * the camera moves.
+ */
+enum class texture_filter
+{
+    crisp,
+    smooth
+};
+
 class texture
 {
 public:
-    texture(const std::string& path, bool flip = true);
+    texture(const std::string& path, bool flip = true,
+            texture_filter filtering = texture_filter::crisp);
+
     texture(const uint8_t *blob, size_t size, bool flip = true);
 
     /**
@@ -46,6 +68,8 @@ private:
     int m_width;
     int m_height;
     int m_bit_depth;
+
+    texture_filter m_filtering = texture_filter::crisp;
 
     void load_from_file(const std::string& path, bool flip);
     void load_from_memory(const unsigned char *blob, size_t size, bool flip);

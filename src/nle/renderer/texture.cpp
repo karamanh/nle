@@ -8,7 +8,8 @@
 
 namespace nle
 {
-    texture::texture(const std::string &path, bool flip)
+    texture::texture(const std::string &path, bool flip, texture_filter filtering)
+        : m_filtering(filtering)
     {
         load_from_file(path, flip);
     }
@@ -148,11 +149,14 @@ namespace nle
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-        // Mipmaps were always generated below and never used, which is why
-        // ground seen at a distance boiled: a texel a pixel wide picked at
-        // random every frame the camera moved. Magnification stays linear,
-        // which is what the interface is drawn at.
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        // Only where it was asked for. Turning this on for everything fixed
+        // the ground boiling in the distance and broke every character in the
+        // game: they are painted from a palette a few dozen pixels across,
+        // and blending between its texels paints the robe onto the face.
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                        m_filtering == texture_filter::smooth ? GL_LINEAR_MIPMAP_LINEAR
+                                                              : GL_NEAREST);
+
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
         glTexImage2D(GL_TEXTURE_2D, 0, format, m_width, m_height, 0, format, GL_UNSIGNED_BYTE, pixels);
