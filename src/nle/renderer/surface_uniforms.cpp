@@ -9,8 +9,7 @@ namespace nle
 void record_surface_uniforms(render_command_buffer& command_buffer,
                              const render_context& context,
                              const ref<class texture>& texture,
-                             const ref<class material>& material,
-                             const glm::vec3& where)
+                             const ref<class material>& material)
 {
     if(texture)
     {
@@ -35,38 +34,11 @@ void record_surface_uniforms(render_command_buffer& command_buffer,
         accept_light = material->accept_light();
     }
 
+    // Only whether to consult the lights is per-draw; their values are frame
+    // constants uploaded by the backend.
     command_buffer.set_uniform("u_lighting_enabled",
                                (accept_light && context.directional_light.enabled) ? 1 : 0);
     command_buffer.set_uniform("u_point_lighting_enabled", accept_light ? 1 : 0);
-
-    // Which lamps reach this surface, chosen here rather than once a frame.
-    // A lamp matters to a surface within its range and to no other, so this
-    // is what the surface is actually lit by -- and, unlike a set chosen by
-    // where the camera is, it is the same set on everybody's screen.
-    if(accept_light && !context.point_lights.empty())
-    {
-        std::vector<point_light_data> reaching;
-        reaching.reserve(static_cast<size_t>(MAX_POINT_LIGHTS));
-
-        for(const auto& light : context.point_lights)
-        {
-            if(glm::distance(light.position, where) <= light.range)
-            {
-                reaching.push_back(light);
-
-                if(reaching.size() == static_cast<size_t>(MAX_POINT_LIGHTS))
-                {
-                    break;
-                }
-            }
-        }
-
-        command_buffer.set_point_lights(std::move(reaching));
-    }
-    else
-    {
-        command_buffer.set_point_lights({});
-    }
 
     // Not ground. The terrain says otherwise for itself, after this; every
     // other surface has to say it, because uniforms belong to the program and

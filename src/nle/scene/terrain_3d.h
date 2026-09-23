@@ -328,8 +328,6 @@ public:
     void record_extra_uniforms(render_command_buffer& command_buffer,
                                const render_context& context) override;
 
-    glm::vec3 lighting_reference(const render_context& context) const override;
-
     /**
      * @brief The painting as a sampler reads it: one texel per sample, one
      *        layer per channel, in the layers' own order.

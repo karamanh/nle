@@ -21,11 +21,6 @@ namespace nle
         return m_mesh;
     }
 
-    glm::vec3 mesh_instance_3d::lighting_reference(const render_context&) const
-    {
-        return glm::vec3(this->transform_matrix()[3]);
-    }
-
     void mesh_instance_3d::set_mesh(ref<class mesh_3d> mesh)
     {
         m_mesh = std::move(mesh);
@@ -43,8 +38,7 @@ namespace nle
         command_buffer.use_shader(this->shader());
 
         record_surface_uniforms(command_buffer, context, this->mesh()->texture(),
-                                this->material_override() ? this->material_override() : this->mesh()->material(),
-                                lighting_reference(context));
+                                this->material_override() ? this->material_override() : this->mesh()->material());
 
         // this mesh is not skinned.
         command_buffer.set_uniform("u_skinning_enabled", 0);

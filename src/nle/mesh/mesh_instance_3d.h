@@ -46,15 +46,6 @@ protected:
      */
     virtual void record_extra_uniforms(render_command_buffer&, const render_context&) {}
 
-    /**
-     * @brief Where to stand when asking which lamps reach this surface.
-     *
-     * Its own position, for anything of ordinary size. The ground is one
-     * mesh as big as the map and its middle says nothing about the corner
-     * you are standing in, so it answers with the eye instead.
-     */
-    virtual glm::vec3 lighting_reference(const render_context& context) const;
-
     /// Subclasses such as terrain_3d rebuild their own geometry.
     ref<class mesh_3d> m_mesh;
 };

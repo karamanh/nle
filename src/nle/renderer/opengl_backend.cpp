@@ -35,33 +35,6 @@ void opengl_backend::begin_frame(const render_context& context)
     invalidate_state_cache();
 }
 
-bool opengl_backend::same_lights(const std::vector<point_light_data>& lights) const
-{
-    if (lights.size() != m_uploaded_lights.size())
-    {
-        return false;
-    }
-
-    for (size_t i = 0; i < lights.size(); ++i)
-    {
-        const auto& a = lights[i];
-        const auto& b = m_uploaded_lights[i];
-
-        // Compared by what is uploaded rather than by identity: two lamps
-        // with the same numbers are the same lamp as far as the card is
-        // concerned, and a light that has not moved has not changed.
-        if (a.position != b.position || a.color != b.color || a.ambient != b.ambient
-            || a.diffuse != b.diffuse || a.specular != b.specular
-            || a.constant != b.constant || a.linear != b.linear
-            || a.quadratic != b.quadratic || a.range != b.range)
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
-
 void opengl_backend::invalidate_state_cache()
 {
     m_current_shader.reset();
@@ -71,9 +44,6 @@ void opengl_backend::invalidate_state_cache()
     m_current_polygon_mode = -1;
     m_current_depth_mask = -1;
     m_current_blend_mode = blend_mode::none;
-
-    m_uploaded_lights.clear();
-    m_lights_uploaded_to = 0;
 }
 
 const opengl_backend::frame_statistics& opengl_backend::statistics() const
@@ -177,12 +147,24 @@ void opengl_backend::upload_frame_uniforms(const ref<class shader>& shader)
     set_vec3("u_directional_light.diffuse", dl.diffuse);
     set_vec3("u_directional_light.specular", dl.specular);
 
-    // The lamps are not here. Which ones reach a surface depends on where the
-    // surface is, so they arrive per draw instead -- see set_point_lights.
-    // Binding a program forgets which set it is holding, since a program's
-    // uniforms are its own.
-    m_uploaded_lights.clear();
-    m_lights_uploaded_to = 0;
+    const int count = static_cast<int>(std::min<size_t>(m_context.point_lights.size(), MAX_POINT_LIGHTS));
+    set_int("u_point_light_count", count);
+
+    for (int i = 0; i < count; ++i)
+    {
+        const auto& pl = m_context.point_lights[static_cast<size_t>(i)];
+        const std::string base = "u_point_lights[" + std::to_string(i) + "].";
+
+        set_vec3(base + "position", pl.position);
+        set_vec3(base + "color", pl.color);
+        set_vec3(base + "ambient", pl.ambient);
+        set_vec3(base + "diffuse", pl.diffuse);
+        set_vec3(base + "specular", pl.specular);
+        set_float(base + "constant", pl.constant);
+        set_float(base + "linear", pl.linear);
+        set_float(base + "quadratic", pl.quadratic);
+        set_float(base + "range", pl.range);
+    }
 
     set_int("u_sky.distance_fog_enabled", m_context.fog.enabled ? 1 : 0);
     set_float("u_sky.distance_fog_near", m_context.fog.near_distance);
@@ -353,56 +335,6 @@ void opengl_backend::execute_command(const render_command& cmd)
                                     static_cast<GLsizei>(data.instances));
 
             ++m_statistics.draw_calls;
-            break;
-        }
-
-        case command_type::set_point_lights:
-        {
-            const auto& lights = std::get<std::vector<point_light_data>>(cmd.data);
-
-            // Almost always the same set as the last draw: everything
-            // standing in one part of a town is reached by the same lamps.
-            if (m_lights_uploaded_to == m_current_program && same_lights(lights))
-            {
-                ++m_statistics.redundant_commands_dropped;
-                break;
-            }
-
-            const int count = static_cast<int>(std::min<size_t>(lights.size(), MAX_POINT_LIGHTS));
-
-            auto uniform_int = [&](const std::string& name, int value) {
-                const int loc = location(name);
-                if (loc != -1) { glUniform1i(loc, value); ++m_statistics.uniform_uploads; }
-            };
-            auto uniform_vec3 = [&](const std::string& name, const glm::vec3& value) {
-                const int loc = location(name);
-                if (loc != -1) { glUniform3f(loc, value.x, value.y, value.z); ++m_statistics.uniform_uploads; }
-            };
-            auto uniform_float = [&](const std::string& name, float value) {
-                const int loc = location(name);
-                if (loc != -1) { glUniform1f(loc, value); ++m_statistics.uniform_uploads; }
-            };
-
-            uniform_int("u_point_light_count", count);
-
-            for (int i = 0; i < count; ++i)
-            {
-                const auto& pl = lights[static_cast<size_t>(i)];
-                const std::string base = "u_point_lights[" + std::to_string(i) + "].";
-
-                uniform_vec3(base + "position", pl.position);
-                uniform_vec3(base + "color", pl.color);
-                uniform_vec3(base + "ambient", pl.ambient);
-                uniform_vec3(base + "diffuse", pl.diffuse);
-                uniform_vec3(base + "specular", pl.specular);
-                uniform_float(base + "constant", pl.constant);
-                uniform_float(base + "linear", pl.linear);
-                uniform_float(base + "quadratic", pl.quadratic);
-                uniform_float(base + "range", pl.range);
-            }
-
-            m_uploaded_lights = lights;
-            m_lights_uploaded_to = m_current_program;
             break;
         }
 

@@ -83,17 +83,16 @@ std::vector<point_light_data> scene_3d::collect_point_lights(const glm::vec3& ey
         candidates.emplace_back(glm::distance(pl->position(), eye), pl->to_point_light_data());
     }
 
-    // Every one of them, and the choosing is done per surface further on.
-    // This used to keep the nearest few to the eye, which made which lamps
-    // existed a property of where the camera was standing: two players
-    // looking at the same third player saw them lit differently, because
-    // each of their cameras kept a different handful of the same lamps.
-    //
-    // Sorted by distance to the eye all the same, so that when a surface has
-    // more lamps reaching it than there are slots, the ones nearest the
-    // viewer are the ones that make it -- and so the order is stable.
+    /// Nearest lights win the limited slots. Sorting by distance to the eye
+    /// rather than to each object is an approximation, but it keeps the set
+    /// stable across the frame, which avoids lights popping between draws.
     std::sort(candidates.begin(), candidates.end(),
               [](const auto& a, const auto& b) { return a.first < b.first; });
+
+    if(candidates.size() > static_cast<size_t>(MAX_POINT_LIGHTS))
+    {
+        candidates.resize(static_cast<size_t>(MAX_POINT_LIGHTS));
+    }
 
     std::vector<point_light_data> result;
     result.reserve(candidates.size());
