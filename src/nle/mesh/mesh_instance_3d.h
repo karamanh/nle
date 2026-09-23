@@ -25,6 +25,15 @@ public:
 
     ref<class mesh_3d> mesh(); 
 
+    /**
+     * @brief Swaps the geometry, keeping the transform and the material.
+     *
+     * For something whose shape is one of a small set built in advance --
+     * the same circle in each school's colour, say -- where rebuilding the
+     * instance would lose where it was and whether it was showing.
+     */
+    void set_mesh(ref<class mesh_3d> mesh);
+
     void render(render_command_buffer& command_buffer, const render_context& context) override;
 protected:
     /**

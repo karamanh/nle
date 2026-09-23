@@ -21,6 +21,11 @@ namespace nle
         return m_mesh;
     }
 
+    void mesh_instance_3d::set_mesh(ref<class mesh_3d> mesh)
+    {
+        m_mesh = std::move(mesh);
+    }
+
     void mesh_instance_3d::render(render_command_buffer& command_buffer, const render_context& context)
     {
         if(!m_mesh)
