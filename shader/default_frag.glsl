@@ -68,7 +68,14 @@ uniform sampler2D u_terrain_layer_0;
 uniform sampler2D u_terrain_layer_1;
 uniform sampler2D u_terrain_layer_2;
 uniform sampler2D u_terrain_layer_3;
+uniform sampler2D u_terrain_layer_4;
+uniform sampler2D u_terrain_layer_5;
+uniform sampler2D u_terrain_layer_6;
+uniform sampler2D u_terrain_layer_7;
+
+// One splat map to every four layers, a channel to a layer.
 uniform sampler2D u_terrain_splat;
+uniform sampler2D u_terrain_splat_b;
 
 // How many uv units the ground spans, which is also how many samples the
 // paint has across it. Nought means "this surface is not ground", and every
@@ -80,9 +87,11 @@ uniform float u_terrain_extent;
 uniform int u_terrain_base_enabled;
 uniform int u_terrain_layers_enabled;
 uniform int u_terrain_splat_enabled;
+uniform int u_terrain_splat_b_enabled;
 
 uniform float u_terrain_base_tiling;
 uniform vec4 u_terrain_layer_tiling;
+uniform vec4 u_terrain_layer_tiling_b;
 
 /**
  * The ground's own pictures: a base, and up to four painted over it, mixed
@@ -100,7 +109,9 @@ vec3 ground_colour(vec2 uv)
         return vec3(1.0);
     }
 
-    if (u_terrain_base_enabled != 1 && u_terrain_splat_enabled != 1)
+    if (u_terrain_base_enabled != 1
+        && u_terrain_splat_enabled != 1
+        && u_terrain_splat_b_enabled != 1)
     {
         return vec3(1.0);
     }
@@ -116,15 +127,14 @@ vec3 ground_colour(vec2 uv)
         result = texture(u_terrain_base, field * u_terrain_base_tiling).rgb;
     }
 
-    if (u_terrain_splat_enabled != 1)
-    {
-        return result;
-    }
-
     // One texel to a sample, and there is one more sample than there are
     // tiles, so uv lands on a texel index directly. The half puts the read at
     // the texel's middle: without it the whole painting sits half a texel out.
-    vec4 weights = texture(u_terrain_splat, (uv + 0.5) / (u_terrain_extent + 1.0));
+    vec2 splat_uv = (uv + 0.5) / (u_terrain_extent + 1.0);
+
+    vec4 weights = u_terrain_splat_enabled == 1
+        ? texture(u_terrain_splat, splat_uv)
+        : vec4(0.0);
 
     // Each over the last, in the order they are painted -- which is how the
     // brush behaves, and so how a road laid over grass is expected to look.
@@ -150,6 +160,39 @@ vec3 ground_colour(vec2 uv)
     {
         result = mix(result, texture(u_terrain_layer_3, field * u_terrain_layer_tiling.w).rgb,
                      weights.a);
+    }
+
+    // The next four, from the second map. Skipped entirely when there is no
+    // second map, which is the usual case and costs one comparison.
+    if (u_terrain_splat_b_enabled != 1)
+    {
+        return result;
+    }
+
+    vec4 more = texture(u_terrain_splat_b, splat_uv);
+
+    if ((u_terrain_layers_enabled & 16) != 0)
+    {
+        result = mix(result, texture(u_terrain_layer_4, field * u_terrain_layer_tiling_b.x).rgb,
+                     more.r);
+    }
+
+    if ((u_terrain_layers_enabled & 32) != 0)
+    {
+        result = mix(result, texture(u_terrain_layer_5, field * u_terrain_layer_tiling_b.y).rgb,
+                     more.g);
+    }
+
+    if ((u_terrain_layers_enabled & 64) != 0)
+    {
+        result = mix(result, texture(u_terrain_layer_6, field * u_terrain_layer_tiling_b.z).rgb,
+                     more.b);
+    }
+
+    if ((u_terrain_layers_enabled & 128) != 0)
+    {
+        result = mix(result, texture(u_terrain_layer_7, field * u_terrain_layer_tiling_b.w).rgb,
+                     more.a);
     }
 
     return result;

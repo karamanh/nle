@@ -539,6 +539,72 @@ void test_the_map_of_it()
 }
 } // namespace
 
+void test_the_second_splatmap()
+{
+    std::cout << "\nthe layers past the fourth\n";
+
+    auto ground = make_ground();
+
+    // Six, which is two more than one splat map can carry.
+    std::vector<nle::terrain_paint_layer> layers;
+
+    for(int i = 0; i < 6; ++i)
+    {
+        nle::terrain_paint_layer one;
+        one.name = "layer " + std::to_string(i);
+        one.color = { 0.1f * i, 0.5f, 0.2f };
+        layers.push_back(one);
+    }
+
+    ground->set_paint_layers(layers);
+
+    // Painted on the fifth, which lives in the second map's first channel.
+    ground->paint({ 0.0f, 0.0f, 0.0f }, 12.0f, 4, 1.0f, 1.0f);
+
+    check(!ground->splatmap(1), "no picture on any of them, so no second map");
+
+    const uint8_t pixel[4] = { 200, 120, 60, 255 };
+    ground->set_layer_texture(4, nle::make_ref<nle::texture>(pixel, 1, 1, 4, false));
+
+    check(static_cast<bool>(ground->splatmap(1)),
+          "a picture on the fifth builds the second map");
+
+    check(!ground->splatmap(0),
+          "and the first stays unbuilt while nothing in it has one");
+
+    const int n = ground->samples();
+    const auto texels = read_back(ground->splatmap(1), n);
+
+    const auto& weights = ground->paintmap();
+
+    // The fifth layer is the second map's red channel: layer four of six,
+    // which is channel nought of the map that starts at four.
+    bool same = true;
+    bool anything = false;
+
+    for(size_t sample = 0; sample < static_cast<size_t>(n) * static_cast<size_t>(n); ++sample)
+    {
+        const uint8_t painted = weights[sample * 6u + 4u];
+
+        same = same && texels[sample * 4u] == painted;
+        anything = anything || painted != 0u;
+    }
+
+    check(anything, "the stroke left weights on the fifth layer");
+    check(same, "and each is in the second map's first channel");
+
+    // Nothing was painted on the sixth, so its channel is empty -- if the
+    // packing were off by one, the fifth's weights would be sitting here.
+    bool sixth_is_clear = true;
+
+    for(size_t sample = 0; sample < static_cast<size_t>(n) * static_cast<size_t>(n); ++sample)
+    {
+        sixth_is_clear = sixth_is_clear && texels[sample * 4u + 1u] == 0u;
+    }
+
+    check(sixth_is_clear, "and the channel after it is untouched");
+}
+
 int main()
 {
     if(!glfwInit())
@@ -576,6 +642,7 @@ int main()
     test_painting();
     test_the_splatmap();
     test_the_map_of_it();
+    test_the_second_splatmap();
     test_pictures_are_not_tinted();
     test_nonsense_coordinates();
 

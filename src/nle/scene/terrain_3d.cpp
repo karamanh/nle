@@ -465,14 +465,14 @@ void terrain_3d::set_layer_texture(size_t layer, ref<class texture> picture)
     rebuild();
 }
 
-ref<class texture> terrain_3d::splatmap()
+ref<class texture> terrain_3d::splatmap(size_t which)
 {
     if(m_splat_stale)
     {
         refresh_splatmap();
     }
 
-    return m_splatmap;
+    return which < SPLATMAPS ? m_splatmap[which] : nullptr;
 }
 
 void terrain_3d::render(render_command_buffer& command_buffer, const render_context& context)
@@ -496,8 +496,10 @@ void terrain_3d::record_extra_uniforms(render_command_buffer& command_buffer,
 
     // Nought is the mesh's own texture and the shadow map sits at seven, so
     // the ground's pictures start at two, with room between.
-    constexpr unsigned int BASE_UNIT = 2;
-    constexpr unsigned int SPLAT_UNIT = 3;
+    // Nought is the mesh's own picture. The ground takes one up to eleven,
+    // and the shadow map sits well above all of them.
+    constexpr unsigned int BASE_UNIT = 1;
+    constexpr unsigned int SPLAT_UNIT = 2;
     constexpr unsigned int FIRST_LAYER_UNIT = 4;
 
     if(m_base_texture)
@@ -513,7 +515,7 @@ void terrain_3d::record_extra_uniforms(render_command_buffer& command_buffer,
     }
 
     int which = 0;
-    glm::vec4 tiling(24.0f);
+    glm::vec4 tiling[SPLATMAPS] = { glm::vec4(24.0f), glm::vec4(24.0f) };
 
     for(size_t layer = 0; layer < MOST_TEXTURED_LAYERS; ++layer)
     {
@@ -532,72 +534,101 @@ void terrain_3d::record_extra_uniforms(render_command_buffer& command_buffer,
 
         if(layer < m_paint_layers.size())
         {
-            tiling[static_cast<int>(layer)] = std::max(0.01f, m_paint_layers[layer].tiling);
+            tiling[layer / LAYERS_TO_A_SPLATMAP][static_cast<int>(layer % LAYERS_TO_A_SPLATMAP)] =
+                std::max(0.01f, m_paint_layers[layer].tiling);
         }
     }
 
     command_buffer.set_uniform("u_terrain_layers_enabled", which);
-    command_buffer.set_uniform("u_terrain_layer_tiling", tiling);
 
-    if(m_splatmap && which != 0)
+    command_buffer.set_uniform("u_terrain_layer_tiling", tiling[0]);
+    command_buffer.set_uniform("u_terrain_layer_tiling_b", tiling[1]);
+
+    // One splat map to every four layers. The second is usually absent,
+    // which is what the enabled flags are for: a map nothing reads is a map
+    // that is never built.
+    for(size_t map = 0; map < SPLATMAPS; ++map)
     {
-        command_buffer.use_texture(m_splatmap, SPLAT_UNIT);
-        command_buffer.set_uniform("u_terrain_splat", static_cast<int>(SPLAT_UNIT));
-        command_buffer.set_uniform("u_terrain_splat_enabled", 1);
-    }
-    else
-    {
-        command_buffer.set_uniform("u_terrain_splat_enabled", 0);
+        const int mine = 0xF << (map * LAYERS_TO_A_SPLATMAP);
+
+        const std::string name = map == 0 ? "u_terrain_splat" : "u_terrain_splat_b";
+        const std::string flag = name + "_enabled";
+
+        if(m_splatmap[map] && (which & mine) != 0)
+        {
+            const unsigned int unit = SPLAT_UNIT + static_cast<unsigned int>(map);
+
+            command_buffer.use_texture(m_splatmap[map], unit);
+            command_buffer.set_uniform(name, static_cast<int>(unit));
+            command_buffer.set_uniform(flag, 1);
+        }
+        else
+        {
+            command_buffer.set_uniform(flag, 0);
+        }
     }
 }
 
 void terrain_3d::refresh_splatmap()
 {
-    // Only worth building when something textured is going to read it.
-    bool wanted = false;
-
-    for(const auto& one : m_layer_textures)
-    {
-        if(one)
-        {
-            wanted = true;
-            break;
-        }
-    }
-
-    if(!wanted || m_paint.empty() || m_paint_layers.empty())
-    {
-        m_splatmap = nullptr;
-        m_splat_stale = false;
-        return;
-    }
+    m_splat_stale = false;
 
     const int side = m_resolution + 1;
     const size_t layers = m_paint_layers.size();
 
-    // One texel per sample, four channels, one layer to a channel. The same
-    // numbers the paint brush already writes -- this is only them arranged
-    // the way a sampler wants to read them.
-    std::vector<uint8_t> pixels(static_cast<size_t>(side) * side * 4, 0);
-
-    for(int z = 0; z < side; ++z)
+    for(size_t which = 0; which < SPLATMAPS; ++which)
     {
-        for(int x = 0; x < side; ++x)
-        {
-            const size_t sample = static_cast<size_t>(z) * side + x;
-            const size_t from = sample * layers;
-            const size_t to = sample * 4;
+        const size_t first = which * LAYERS_TO_A_SPLATMAP;
 
-            for(size_t layer = 0; layer < MOST_TEXTURED_LAYERS && layer < layers; ++layer)
+        // Only worth building when something textured is going to read it.
+        // A map whose four layers all have flat colours is a map nothing
+        // samples, and the second one is usually exactly that.
+        bool wanted = false;
+
+        for(size_t layer = first;
+            layer < first + LAYERS_TO_A_SPLATMAP && layer < MOST_TEXTURED_LAYERS;
+            ++layer)
+        {
+            if(m_layer_textures[layer])
             {
-                pixels[to + layer] = m_paint[from + layer];
+                wanted = true;
+                break;
             }
         }
+
+        if(!wanted || m_paint.empty() || m_paint_layers.empty())
+        {
+            m_splatmap[which] = nullptr;
+            continue;
+        }
+
+        // One texel per sample, four channels, one layer to a channel. The
+        // same numbers the paint brush already writes -- this is only them
+        // arranged the way a sampler wants to read them.
+        std::vector<uint8_t> pixels(static_cast<size_t>(side) * side * 4, 0);
+
+        for(int z = 0; z < side; ++z)
+        {
+            for(int x = 0; x < side; ++x)
+            {
+                const size_t sample = static_cast<size_t>(z) * side + x;
+                const size_t from = sample * layers;
+                const size_t to = sample * 4;
+
+                for(size_t channel = 0; channel < LAYERS_TO_A_SPLATMAP; ++channel)
+                {
+                    const size_t layer = first + channel;
+
+                    if(layer < layers)
+                    {
+                        pixels[to + channel] = m_paint[from + layer];
+                    }
+                }
+            }
+        }
+
+        m_splatmap[which] = make_ref<class texture>(pixels.data(), side, side, 4, false);
     }
-
-    m_splatmap = make_ref<class texture>(pixels.data(), side, side, 4, false);
-
-    m_splat_stale = false;
 }
 
 const std::vector<terrain_paint_layer>& terrain_3d::paint_layers() const

@@ -94,7 +94,11 @@ struct render_context
 
     /// Which texture unit the depth map is on. Fixed and high, so it cannot
     /// collide with a material's own textures.
-    int shadow_texture_unit = 7;
+    /// Well clear of the ground's own, which run from one up to eleven. It
+    /// used to be seven, which is also where the ground's fourth picture
+    /// goes -- the two were reading each other's texture, and only having
+    /// shadows switched off kept it quiet.
+    int shadow_texture_unit = 12;
 
     /// How soft the edge is, in texels of the depth map.
     float shadow_softness = 1.0f;

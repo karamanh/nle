@@ -280,9 +280,17 @@ public:
      */
     void set_layer_texture(size_t layer, ref<class texture> picture);
 
-    /// The most layers that can have pictures. Four, because the weights
-    /// ride in the four channels of one splat map.
-    static constexpr size_t MOST_TEXTURED_LAYERS = 4;
+    /// How many layers one splat map can carry: four, one to a channel.
+    static constexpr size_t LAYERS_TO_A_SPLATMAP = 4;
+
+    /// How many splat maps there are, and so how many pictures the ground
+    /// can wear. Two is not a limit anybody chose -- it is what fits in the
+    /// texture units left over once the mesh, the base and the shadow map
+    /// have theirs -- and a third would cost only another sampler.
+    static constexpr size_t SPLATMAPS = 2;
+
+    /// The most layers that can have pictures.
+    static constexpr size_t MOST_TEXTURED_LAYERS = LAYERS_TO_A_SPLATMAP * SPLATMAPS;
 
     /// One weight per sample per layer, 0 to 255, layer-major within a sample.
     const std::vector<uint8_t>& paintmap() const;
@@ -336,7 +344,13 @@ public:
      * times a second and only the last of those is ever seen. Null when no
      * layer has a picture, since then nothing would read it.
      */
-    ref<class texture> splatmap();
+    /**
+     * @brief The painting as a sampler reads it.
+     *
+     * @p which selects the map: the first carries layers nought to three and
+     * the second the four after that, a channel to a layer.
+     */
+    ref<class texture> splatmap(size_t which = 0);
 
     /**
      * @brief The ground seen from above, as RGBA pixels, @p side to a side.
@@ -473,7 +487,7 @@ private:
     ref<class texture> m_layer_textures[MOST_TEXTURED_LAYERS];
 
     /// The weights, uploaded. Null until something textured wants it.
-    ref<class texture> m_splatmap;
+    ref<class texture> m_splatmap[SPLATMAPS];
 
     float m_base_tiling = 24.0f;
 
