@@ -12,6 +12,7 @@
 
 #include "../core/ref.h"
 #include <glm/glm.hpp>
+#include "render_context.h"
 #include <string>
 #include <vector>
 #include <variant>
@@ -38,7 +39,12 @@ enum class command_type
     draw_elements,
     draw_elements_instanced,
     set_depth_mask,
-    set_blending
+    set_blending,
+
+    /// Which lamps reach this surface. Per draw rather than per frame,
+    /// because which eight lamps matter depends on where the surface is and
+    /// not on where the camera happens to be standing.
+    set_point_lights
 };
 
 struct uniform_data
@@ -98,7 +104,8 @@ struct render_command
         texture_bind_data,         // use_texture
         draw_elements_data,        // draw_elements, draw_elements_instanced
         bool,                      // set_depth_mask
-        blend_mode                 // set_blending
+        blend_mode,                // set_blending
+        std::vector<point_light_data>  // set_point_lights
     > data;
 };
 
@@ -116,6 +123,15 @@ public:
     void set_uniform(const std::string& name, const glm::vec4& value);
     void set_uniform(const std::string& name, float value);
     void set_uniform(const std::string& name, int value);
+
+    /**
+     * @brief The lamps that reach the surface about to be drawn.
+     *
+     * Recorded per draw. The backend drops it when the set is the one already
+     * uploaded, which it usually is: everything standing in the same part of
+     * a town is reached by the same lamps.
+     */
+    void set_point_lights(std::vector<point_light_data> lights);
     void use_texture(ref<texture> texture, unsigned int unit = 0);
     void draw_elements(unsigned int primitive_type, unsigned int vao, unsigned int ebo, size_t count);
 

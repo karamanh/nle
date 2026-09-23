@@ -112,7 +112,8 @@ void gltf_instance_3d::render(render_command_buffer& command_buffer, const rende
         }
 
         record_surface_uniforms(command_buffer, context, primitive.mesh->texture(),
-                                override_material ? override_material : primitive.mesh->material());
+                                override_material ? override_material : primitive.mesh->material(),
+                                glm::vec3(this->transform_matrix()[3]));
 
         if(primitive.skin >= 0)
         {

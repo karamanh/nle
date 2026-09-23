@@ -485,6 +485,14 @@ void terrain_3d::render(render_command_buffer& command_buffer, const render_cont
     mesh_instance_3d::render(command_buffer, context);
 }
 
+glm::vec3 terrain_3d::lighting_reference(const render_context& context) const
+{
+    // The ground is one mesh the size of the map, so its middle says nothing
+    // about which lamps reach the corner anybody is standing in. The part of
+    // it worth lighting is the part under the camera.
+    return context.eye_position;
+}
+
 void terrain_3d::record_extra_uniforms(render_command_buffer& command_buffer,
                                        const render_context&)
 {

@@ -34,6 +34,7 @@ class texture;
 void record_surface_uniforms(render_command_buffer& command_buffer,
                              const render_context& context,
                              const ref<class texture>& texture,
-                             const ref<class material>& material);
+                             const ref<class material>& material,
+                             const glm::vec3& where = glm::vec3(0.0f));
 
 } // namespace nle

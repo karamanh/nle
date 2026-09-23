@@ -78,6 +78,14 @@ void render_command_buffer::set_uniform(const std::string& name, float value)
     m_commands.push_back(cmd);
 }
 
+void render_command_buffer::set_point_lights(std::vector<point_light_data> lights)
+{
+    render_command command;
+    command.type = command_type::set_point_lights;
+    command.data = std::move(lights);
+    m_commands.push_back(std::move(command));
+}
+
 void render_command_buffer::set_uniform(const std::string& name, int value)
 {
     render_command cmd;

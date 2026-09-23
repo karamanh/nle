@@ -100,6 +100,11 @@ private:
     /// What is currently blended and how, so that a hundred particle draws in
     /// a row set it once.
     blend_mode m_current_blend_mode = blend_mode::none;
+    
+    /// The lamps currently uploaded, and to which program. A program's
+    /// uniforms are its own, so a different program holds a different set.
+    std::vector<point_light_data> m_uploaded_lights;
+    unsigned int m_lights_uploaded_to = 0;
 
     /// programs that already have this frame's constants.
     std::unordered_set<GLuint> m_frame_uniform_programs;
@@ -107,6 +112,9 @@ private:
     frame_statistics m_statistics;
 
     void invalidate_state_cache();
+
+    /// Whether that set is the one already uploaded to the bound program.
+    bool same_lights(const std::vector<point_light_data>& lights) const;
 };
 
 } // namespace nle
