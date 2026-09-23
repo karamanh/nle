@@ -340,6 +340,21 @@ public:
      */
     ref<class texture> splatmap();
 
+    /**
+     * @brief The ground seen from above, as RGBA pixels, @p side to a side.
+     *
+     * For a map. Every paint layer is mixed in by its colour, pictures
+     * included, so a gravel road and a painted one both read as a road --
+     * a map is made of colours, and telling one place from another is the
+     * whole of what it is for. Shaded a little by how the ground faces, or a
+     * hilly place comes out as one flat wash.
+     *
+     * Built on demand and not kept: it is wanted once, when a level is
+     * entered, and holding it would be holding a picture of ground that can
+     * be sculpted under it.
+     */
+    std::vector<uint8_t> overhead_image(int side) const;
+
     /// Alternating tile colours. Used only while no layers are set.
     void set_colors(const glm::vec3& first, const glm::vec3& second);
 
@@ -520,6 +535,21 @@ private:
 
     /// Colour of the surface at a local position, from the layers and the cliff.
     glm::vec3 surface_color(int tile_x, int tile_z, float local_y, const glm::vec3& normal) const;
+
+    /// The ground's colour before any paint: the checkerboard, or the height
+    /// layers, with the cliff colour worked in.
+    glm::vec3 ground_tone(int tile_x, int tile_z, float local_y, const glm::vec3& normal) const;
+
+    /**
+     * @brief The paint at a sample, mixed over @p over in the layers' order.
+     *
+     * @param skip_textured leaves out layers drawn as pictures, which is what
+     *        the mesh wants -- their colour would show through the picture.
+     *        A map wants them in: it is made of colours and has no picture
+     *        for them to show through.
+     */
+    glm::vec3 painted_tone(int tile_x, int tile_z, const glm::vec3& over,
+                           bool skip_textured) const;
 
     /// Adds a prop to the scene, or holds it until there is one.
     void attach(ref<render_object_3d> prop);

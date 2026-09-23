@@ -489,6 +489,54 @@ void test_pictures_are_not_tinted()
           "and a base picture leaves the ground under it white");
 }
 
+void test_the_map_of_it()
+{
+    std::cout << "\nthe ground seen from above\n";
+
+    auto ground = make_ground();
+
+    ground->set_paint_layers({ { "grass", { 0.15f, 0.55f, 0.15f } },
+                               { "road", { 0.60f, 0.35f, 0.10f } } });
+
+    // A road across the middle, painted hard enough to cover what is under it.
+    ground->paint({ 0.0f, 0.0f, 0.0f }, 14.0f, 1, 1.0f, 1.0f);
+
+    const int side = 64;
+    const auto picture = ground->overhead_image(side);
+
+    check(picture.size() == static_cast<size_t>(side) * side * 4u,
+          "the map is the size it was asked for");
+
+    auto pixel = [&](int x, int y) {
+        const size_t at = (static_cast<size_t>(y) * side + x) * 4u;
+        return glm::vec3(picture[at] / 255.0f, picture[at + 1] / 255.0f,
+                         picture[at + 2] / 255.0f);
+    };
+
+    const glm::vec3 middle = pixel(side / 2, side / 2);
+    const glm::vec3 corner = pixel(2, 2);
+
+    // The road is redder than what it was painted over, and the corner was
+    // never painted at all. If these ever match, the map is not showing paint.
+    check(middle.r > corner.r + 0.05f, "the road shows on the map");
+    check(middle.r > middle.b, "and reads as the colour it was painted");
+
+    check(picture[3] == 255, "every pixel is opaque");
+
+    // The point of it: a layer drawn as a picture is still a colour on the
+    // map. Painting is unchanged, only how it is drawn, so the map must not
+    // change when a picture is put on the layer.
+    const uint8_t pixel_before = picture[(static_cast<size_t>(side / 2) * side + side / 2) * 4u];
+
+    const uint8_t one[4] = { 200, 120, 60, 255 };
+    ground->set_layer_texture(1, nle::make_ref<nle::texture>(one, 1, 1, 4, false));
+
+    const auto after = ground->overhead_image(side);
+    const uint8_t pixel_after = after[(static_cast<size_t>(side / 2) * side + side / 2) * 4u];
+
+    check(pixel_before == pixel_after,
+          "and a layer given a picture still reads as its colour on the map");
+}
 } // namespace
 
 int main()
@@ -527,6 +575,7 @@ int main()
     test_what_is_drawn_is_what_is_walked_on();
     test_painting();
     test_the_splatmap();
+    test_the_map_of_it();
     test_pictures_are_not_tinted();
     test_nonsense_coordinates();
 

@@ -836,18 +836,12 @@ glm::vec3 terrain_3d::place_on_surface(const glm::vec3& p) const
     return { p.x, height_at(p.x, p.z), p.z };
 }
 
-glm::vec3 terrain_3d::surface_color(int tile_x, int tile_z, float local_y, const glm::vec3& normal) const
+glm::vec3 terrain_3d::ground_tone(int tile_x, int tile_z, float local_y,
+                                  const glm::vec3& normal) const
 {
     glm::vec3 color;
 
-    if(m_base_texture)
-    {
-        // A picture of ground is a colour of ground. Tinting it with the
-        // checkerboard as well would show the checkerboard through it, which
-        // is the one thing a picture is chosen to be rid of.
-        color = glm::vec3(1.0f);
-    }
-    else if(m_layers.empty())
+    if(m_layers.empty())
     {
         color = ((tile_x + tile_z) % 2 == 0) ? m_first_color : m_second_color;
     }
@@ -889,6 +883,14 @@ glm::vec3 terrain_3d::surface_color(int tile_x, int tile_z, float local_y, const
                          smooth01((slope - lower) / (m_cliff_blend * 2.0f)));
     }
 
+    return color;
+}
+
+glm::vec3 terrain_3d::painted_tone(int tile_x, int tile_z, const glm::vec3& over,
+                                   bool skip_textured) const
+{
+    glm::vec3 color = over;
+
     // Paint goes over everything else, in order, so a road laid after grass
     // covers it. tile_x and tile_z are sample indices in the grid builder,
     // which is the only builder painting is shown by.
@@ -901,8 +903,10 @@ glm::vec3 terrain_3d::surface_color(int tile_x, int tile_z, float local_y, const
         {
             // A layer with a picture is mixed in by the shader, from the same
             // weights. Mixing its flat colour here as well would show through
-            // its picture and tint it.
-            if(layer < MOST_TEXTURED_LAYERS && m_layer_textures[layer])
+            // its picture and tint it. A map wants the opposite -- it is made
+            // of colours and has no pictures to show through -- which is what
+            // skip_textured is for.
+            if(skip_textured && layer < MOST_TEXTURED_LAYERS && m_layer_textures[layer])
             {
                 continue;
             }
@@ -917,6 +921,73 @@ glm::vec3 terrain_3d::surface_color(int tile_x, int tile_z, float local_y, const
     }
 
     return color;
+}
+
+glm::vec3 terrain_3d::surface_color(int tile_x, int tile_z, float local_y,
+                                    const glm::vec3& normal) const
+{
+    // A picture of ground is a colour of ground. Tinting it with the
+    // checkerboard as well would show the checkerboard through it, which is
+    // the one thing a picture is chosen to be rid of.
+    const glm::vec3 under = m_base_texture ? glm::vec3(1.0f)
+                                           : ground_tone(tile_x, tile_z, local_y, normal);
+
+    return painted_tone(tile_x, tile_z, under, true);
+}
+
+std::vector<uint8_t> terrain_3d::overhead_image(int side) const
+{
+    side = std::clamp(side, 16, 1024);
+
+    std::vector<uint8_t> pixels(static_cast<size_t>(side) * side * 4, 0);
+
+    const int n = samples();
+    const float half = m_size * 0.5f;
+    const float step = m_size / static_cast<float>(m_resolution);
+
+    for(int y = 0; y < side; ++y)
+    {
+        for(int x = 0; x < side; ++x)
+        {
+            // Nearest sample rather than a filtered one: the map is small,
+            // the samples are many, and a road one sample wide should stay a
+            // road rather than be averaged away.
+            const int sx = std::clamp(x * n / side, 0, n - 1);
+            const int sz = std::clamp(y * n / side, 0, n - 1);
+
+            const float px = static_cast<float>(sx) * step - half;
+            const float pz = static_cast<float>(sz) * step - half;
+
+            const float height = local_height(px, pz);
+            const glm::vec3 normal = local_normal(px, pz);
+
+            // Always the ground's own colours, never white: a base picture
+            // leaves the mesh white because the shader puts the picture back,
+            // and there is no shader here to put anything back.
+            glm::vec3 colour = ground_tone(sx, sz, height, normal);
+
+            // And every paint layer, pictures included. That is the whole
+            // point of a map: a road is a road whether it is drawn as a
+            // colour or as gravel.
+            colour = painted_tone(sx, sz, colour, false);
+
+            // A little relief, from how the ground faces. Without it a map of
+            // a hilly place is a flat wash the same colour throughout, and
+            // the one thing a map is for is telling one place from another.
+            const float lit = std::clamp(0.62f + 0.38f * normal.y, 0.0f, 1.0f);
+
+            colour *= lit;
+
+            const size_t at = (static_cast<size_t>(y) * side + x) * 4;
+
+            pixels[at + 0] = static_cast<uint8_t>(std::clamp(colour.r, 0.0f, 1.0f) * 255.0f);
+            pixels[at + 1] = static_cast<uint8_t>(std::clamp(colour.g, 0.0f, 1.0f) * 255.0f);
+            pixels[at + 2] = static_cast<uint8_t>(std::clamp(colour.b, 0.0f, 1.0f) * 255.0f);
+            pixels[at + 3] = 255;
+        }
+    }
+
+    return pixels;
 }
 
 ref<class mesh_3d> terrain_3d::build_mesh() const
