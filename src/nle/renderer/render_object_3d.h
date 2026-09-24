@@ -75,6 +75,17 @@ public:
      */
     virtual bool see_through() { return false; }
 
+    /**
+     * @brief The radius of a sphere around this, in world units.
+     *
+     * For asking whether the camera could see it at all. Zero means it does
+     * not know its own size, and nothing that says zero is ever culled by
+     * shape -- which is the safe way round, since drawing something need-
+     * lessly costs a draw and skipping something wrongly is a hole in the
+     * world.
+     */
+    virtual float bounding_radius() const { return 0.0f; }
+
     virtual void set_render_mode(enum render_mode rm);
     virtual enum render_mode render_mode() const;
 

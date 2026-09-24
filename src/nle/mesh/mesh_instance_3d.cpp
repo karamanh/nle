@@ -2,6 +2,9 @@
 
 #include "../renderer/surface_uniforms.h"
 
+#include <algorithm>
+#include <cmath>
+
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -27,6 +30,21 @@ namespace nle
                          : (m_mesh ? m_mesh->material() : nullptr);
 
         return used && used->dissolve() < 1.0f;
+    }
+
+    float mesh_instance_3d::bounding_radius() const
+    {
+        if(!m_mesh)
+        {
+            return 0.0f;
+        }
+
+        // The largest of the three, because a sphere has one radius and the
+        // geometry has to fit inside it however the scale stretches it.
+        const glm::vec3 size = scale();
+        const float most = std::max({ std::abs(size.x), std::abs(size.y), std::abs(size.z) });
+
+        return m_mesh->bounding_radius() * most;
     }
 
     void mesh_instance_3d::set_mesh(ref<class mesh_3d> mesh)

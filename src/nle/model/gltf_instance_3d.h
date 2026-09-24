@@ -80,6 +80,18 @@ public:
 
     void render(render_command_buffer& command_buffer, const render_context& context) override;
 
+    /**
+     * @brief The sphere around the whole model, posed as it is now.
+     *
+     * A glTF model is a tree, and a part of it can sit a long way from the
+     * thing's own origin -- a sword held out at arm's length, a roof over a
+     * doorway. Measuring the pieces alone would draw the sphere around the
+     * largest piece rather than around the model, and the model would
+     * vanish at the edge of the screen while the part nearest the camera
+     * was still on it.
+     */
+    float bounding_radius() const override;
+
 private:
     ref<model_gltf> m_model;
     ref<class animator> m_animator;

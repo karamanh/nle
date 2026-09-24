@@ -57,6 +57,16 @@ public:
     /// GL object names, for recording draw commands.
     unsigned int vao() const;
     unsigned int ebo() const;
+
+    /**
+     * @brief How far the furthest vertex is from the mesh's own origin.
+     *
+     * The radius of a sphere around the geometry, in the mesh's own space,
+     * for asking whether the camera could see it before going to the
+     * trouble of drawing it. Worked out on the first ask and kept, since
+     * geometry is built far more rarely than it is looked at.
+     */
+    float bounding_radius() const;
 private:
 
     /// vertices
@@ -82,6 +92,9 @@ private:
     ref<class material> m_material;
 
     ref<class material> m_material_override;
+
+    /// Negative until somebody asks. Sculpting the vertices puts it back.
+    mutable float m_bounding_radius = -1.0f;
 
     void load();
 

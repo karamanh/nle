@@ -68,7 +68,8 @@ const std::vector<ref<class point_light>>& scene_3d::point_lights() const
     return m_point_lights;
 }
 
-std::vector<point_light_data> scene_3d::collect_point_lights(const glm::vec3& eye) const
+std::vector<point_light_data> scene_3d::collect_point_lights(const glm::vec3& eye,
+                                                             const frustum& view) const
 {
     std::vector<std::pair<float, point_light_data>> candidates;
     candidates.reserve(m_point_lights.size());
@@ -76,6 +77,15 @@ std::vector<point_light_data> scene_3d::collect_point_lights(const glm::vec3& ey
     for(const auto& pl : m_point_lights)
     {
         if(!pl || !pl->enabled())
+        {
+            continue;
+        }
+
+        // Nothing it could light is on screen. The shader would work this
+        // out too -- it refuses any fragment past the range -- but only
+        // after the light had taken one of the eight slots there are and
+        // been tested against every fragment in the frame.
+        if(!view.holds(pl->position(), pl->range()))
         {
             continue;
         }

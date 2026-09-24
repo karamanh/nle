@@ -11,6 +11,8 @@
 
 #pragma once
 
+#include "frustum.h"
+
 #include <glm/glm.hpp>
 
 #include <vector>
@@ -104,6 +106,10 @@ struct render_context
     float shadow_softness = 1.0f;
     std::vector<point_light_data> point_lights;
     fog_data fog;
+
+    /// What the camera can see, from the two matrices above. Kept here so
+    /// that everything asking the question asks it of the same answer.
+    struct frustum view_frustum;
 };
 
 } // namespace nle

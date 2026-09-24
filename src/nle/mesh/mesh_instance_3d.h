@@ -37,6 +37,8 @@ public:
     void render(render_command_buffer& command_buffer, const render_context& context) override;
 
     bool see_through() override;
+
+    float bounding_radius() const override;
 protected:
     /**
      * @brief Uniforms recorded after the shared ones and before the draw.

@@ -28,6 +28,8 @@ public:
 
     void render(render_command_buffer& command_buffer, const render_context& context) override;
 
+    float bounding_radius() const override;
+
 private:
     ref<class multimesh_3d> m_multimesh;
 

@@ -14,4 +14,9 @@ namespace nle
     {
         return m_meshes;
     }
+
+    const std::vector<ref<mesh_3d>> &multimesh_3d::meshes() const
+    {
+        return m_meshes;
+    }
 } // namespace nle

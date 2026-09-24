@@ -141,6 +141,13 @@ if(NLE_BUILD_TESTS)
 
     # This one does not: the camera is a transform and some arithmetic, and
     # what it collides with arrives through a callback a stub can supply.
+    # Six planes and some arithmetic; no context needed.
+    add_executable(nle_frustum_test "${CMAKE_CURRENT_SOURCE_DIR}/tests/frustum_test.cpp")
+    target_link_libraries(nle_frustum_test PRIVATE nle)
+    target_compile_options(nle_frustum_test PRIVATE -Wall -Wextra)
+
+    add_test(NAME frustum COMMAND nle_frustum_test)
+
     add_executable(nle_third_person_camera_test
         "${CMAKE_CURRENT_SOURCE_DIR}/tests/third_person_camera_test.cpp")
     target_link_libraries(nle_third_person_camera_test PRIVATE nle)

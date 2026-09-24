@@ -23,6 +23,7 @@ public:
     virtual ~multimesh_3d();
 
     std::vector<ref<mesh_3d>>& meshes();
+    const std::vector<ref<mesh_3d>>& meshes() const;
 private:
     std::vector<ref<mesh_3d>> m_meshes;
 };

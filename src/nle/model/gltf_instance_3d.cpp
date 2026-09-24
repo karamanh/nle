@@ -2,6 +2,9 @@
 
 #include "../renderer/surface_uniforms.h"
 
+#include <algorithm>
+#include <cmath>
+
 namespace nle
 {
 
@@ -71,6 +74,55 @@ void gltf_instance_3d::set_node_visible(const std::string& name, bool visible)
 bool gltf_instance_3d::node_visible(int node) const
 {
     return m_hidden_nodes.find(node) == m_hidden_nodes.end();
+}
+
+float gltf_instance_3d::bounding_radius() const
+{
+    if(!m_model || !m_animator)
+    {
+        return 0.0f;
+    }
+
+    float furthest = 0.0f;
+
+    for(const auto& primitive : m_model->primitives())
+    {
+        if(!primitive.mesh)
+        {
+            continue;
+        }
+
+        const float own = primitive.mesh->bounding_radius();
+
+        if(primitive.skin >= 0)
+        {
+            // A skinned piece is posed entirely by its joints, which work in
+            // the model's own space, so it is already measured from the
+            // right origin.
+            furthest = std::max(furthest, own);
+            continue;
+        }
+
+        // An unskinned piece is drawn through its node, so how far it reaches
+        // is how far the node stands from the origin plus how big the piece
+        // is once that node has scaled it.
+        const glm::mat4& node = m_animator->node_world_matrix(primitive.node);
+
+        const float stretch = std::max({ glm::length(glm::vec3(node[0])),
+                                         glm::length(glm::vec3(node[1])),
+                                         glm::length(glm::vec3(node[2])) });
+
+        furthest = std::max(furthest, glm::length(glm::vec3(node[3])) + own * stretch);
+    }
+
+    const glm::vec3 size = scale();
+    const float most = std::max({ std::abs(size.x), std::abs(size.y), std::abs(size.z) });
+
+    // Room to spare, because a skin moves its vertices away from the pose
+    // they were saved in and nothing here has looked at where they went.
+    constexpr float ROOM_TO_MOVE = 1.35f;
+
+    return furthest * most * ROOM_TO_MOVE;
 }
 
 void gltf_instance_3d::render(render_command_buffer& command_buffer, const render_context& context)

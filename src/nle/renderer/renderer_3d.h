@@ -104,7 +104,14 @@ private:
     /// Gathers the camera, lights and fog for this frame.
     render_context build_render_context(ref<scene_3d> scene);
 
-    bool is_visible(const ref<render_object_3d>& ro, const glm::vec3& eye);
+    /**
+     * @brief Whether this is worth recording a draw for.
+     *
+     * Its layer, then how far away it is, then whether the camera is
+     * pointing at it.
+     */
+    bool is_visible(const ref<render_object_3d>& ro, const glm::vec3& eye,
+                    const frustum& view);
 
     void render_scene(ref<scene_3d> scene);
 

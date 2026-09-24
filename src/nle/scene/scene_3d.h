@@ -53,11 +53,20 @@ public:
     /**
      * @brief The point lights that actually matter for a viewer at @p eye.
      *
-     * Disabled lights and lights whose range cannot reach @p eye's neighbourhood
-     * are dropped, and the remainder are sorted nearest-first and truncated to
-     * MAX_POINT_LIGHTS so the shader's fixed-size array is never overrun.
+     * A light reaches only as far as its range, so one whose reach falls
+     * entirely outside @p view cannot light anything anybody can see, and is
+     * dropped -- along with the ones switched off. What is left is sorted
+     * nearest-first and truncated to MAX_POINT_LIGHTS, so the shader's
+     * fixed-size array is never overrun and the nearest lights are the ones
+     * that fill it.
+     *
+     * Dropping by reach rather than by distance alone is what stops a
+     * campfire on the other side of the map taking a slot from the one at
+     * your feet -- and what stops the shader testing eight lights a fragment
+     * when seven of them were never going to reach it.
      */
-    std::vector<point_light_data> collect_point_lights(const glm::vec3& eye) const;
+    std::vector<point_light_data> collect_point_lights(const glm::vec3& eye,
+                                                       const frustum& view) const;
 
     void set_sky(ref<class sky> sky);
     ref<class sky> sky();

@@ -1,6 +1,7 @@
 #include "mesh_3d.h"
 
 #include <algorithm>
+#include <cmath>
 
 namespace nle
 {
@@ -85,6 +86,32 @@ namespace nle
         return m_ebo;
     }
 
+    float mesh_3d::bounding_radius() const
+    {
+        if(m_bounding_radius >= 0.0f)
+        {
+            return m_bounding_radius;
+        }
+
+        float furthest = 0.0f;
+
+        // Squared while looking, rooted once at the end: the comparison does
+        // not need the root and a mesh has a great many vertices.
+        for(const auto& one : m_vertices)
+        {
+            const float away = glm::dot(one.position, one.position);
+
+            if(away > furthest)
+            {
+                furthest = away;
+            }
+        }
+
+        m_bounding_radius = std::sqrt(furthest);
+
+        return m_bounding_radius;
+    }
+
     bool mesh_3d::update_vertices(size_t first, const struct vertex* data, size_t count)
     {
         if(data == nullptr || count == 0 || first + count > m_vertices.size())
@@ -93,6 +120,11 @@ namespace nle
         }
 
         std::copy(data, data + count, m_vertices.begin() + static_cast<long>(first));
+
+        // The shape has changed, so what was worked out about its size no
+        // longer holds. Sculpting terrain is exactly this, and a radius kept
+        // from before the hill was raised would cull the hill.
+        m_bounding_radius = -1.0f;
 
         if(m_vbo == 0)
         {

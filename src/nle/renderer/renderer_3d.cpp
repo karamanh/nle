@@ -93,15 +93,21 @@ namespace nle
         context.time = m_time;
         context.delta_time = m_delta_time;
 
+        // Worked out before the lights, because which lights are worth
+        // uploading is the same question as what the camera can see.
+        context.view_frustum = frustum::of(context.projection * context.view);
+
         context.directional_light = scene->light()->to_directional_light_data();
-        context.point_lights = scene->collect_point_lights(context.eye_position);
+        context.point_lights = scene->collect_point_lights(context.eye_position,
+                                                           context.view_frustum);
 
         context.fog = scene->fog();
 
         return context;
     }
 
-    bool renderer_3d::is_visible(const ref<render_object_3d>& ro, const glm::vec3& eye)
+    bool renderer_3d::is_visible(const ref<render_object_3d>& ro, const glm::vec3& eye,
+                                 const frustum& view)
     {
         if(!ro->visible())
         {
@@ -114,7 +120,23 @@ namespace nle
             return false;
         }
 
-        return glm::distance(ro->position(), eye) < attribute.render_distance;
+        if(glm::distance(ro->position(), eye) >= attribute.render_distance)
+        {
+            return false;
+        }
+
+        // And whether the camera is pointing at it at all. A render distance
+        // on its own keeps a ball around the eye, and most of a ball is
+        // behind you: at any one moment the screen holds a wedge of it, and
+        // the rest was drawn so that nobody could see it.
+        //
+        // Something that does not know its own size says nothing here and is
+        // drawn. The terrain is the case that matters -- it is one object
+        // the size of the map, and there is no answer to "is the ground on
+        // screen" other than yes.
+        const float radius = ro->bounding_radius();
+
+        return radius <= 0.0f || view.holds(ro->position(), radius);
     }
 
     class shadow_map& renderer_3d::shadows()
@@ -229,7 +251,7 @@ namespace nle
 
         for(auto ro : scene->render_objects())
         {
-            if(!is_visible(ro, context.eye_position))
+            if(!is_visible(ro, context.eye_position, context.view_frustum))
             {
                 continue;
             }
