@@ -410,6 +410,26 @@ public:
     glm::vec3 place_on_surface(const glm::vec3& position) const;
 
     /**
+     * @brief How far from the middle anybody may walk, or nought for no limit.
+     *
+     * A circle rather than the square the mesh is, because the ground worth
+     * playing on is the flat middle and what is past it is scenery. A square
+     * edge means the corners are three quarters as far away again as the
+     * sides, and a player who walks into one has found the end of the world
+     * at a different distance depending which way they set off.
+     */
+    void set_bounds_radius(float radius);
+    float bounds_radius() const;
+
+    /**
+     * @brief @p position, brought inside the edge if it is outside it.
+     *
+     * Height is left alone: what this decides is where somebody may stand,
+     * not how high the ground is there.
+     */
+    glm::vec3 inside_bounds(const glm::vec3& position) const;
+
+    /**
      * @brief Sits @p prop on the ground at @p position and adds it to the scene.
      *
      * The prop's Y is taken from the surface; its X and Z are used as given.
@@ -490,6 +510,10 @@ private:
     ref<class texture> m_splatmap[SPLATMAPS];
 
     float m_base_tiling = 24.0f;
+
+    /// Nought means the whole square, which is what every level said before
+    /// there was an edge.
+    float m_bounds_radius = 0.0f;
 
     /// Set when the painting has moved on from what the splat map holds.
     bool m_splat_stale = true;

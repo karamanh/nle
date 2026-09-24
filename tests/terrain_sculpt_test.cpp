@@ -605,6 +605,50 @@ void test_the_second_splatmap()
     check(sixth_is_clear, "and the channel after it is untouched");
 }
 
+void test_the_edge_of_the_world()
+{
+    std::cout << "\nthe edge of the world\n";
+
+    auto ground = make_ground();
+
+    check_near(ground->bounds_radius(), 0.0f, "no edge to begin with");
+
+    // With none, anywhere is somewhere, including well outside the mesh.
+    const glm::vec3 far_away(9000.0f, 3.0f, -9000.0f);
+
+    check(ground->inside_bounds(far_away) == far_away, "and nothing is brought back");
+
+    ground->set_bounds_radius(30.0f);
+
+    check_near(ground->bounds_radius(), 30.0f, "an edge can be set");
+
+    // Inside is left exactly alone, height and all.
+    const glm::vec3 within(10.0f, 4.5f, -10.0f);
+
+    check(ground->inside_bounds(within) == within, "somewhere inside is left where it is");
+
+    // Outside is brought to the edge, in the direction it went.
+    const glm::vec3 out(100.0f, 7.0f, 0.0f);
+    const glm::vec3 held = ground->inside_bounds(out);
+
+    check_near(glm::length(glm::vec2(held.x, held.z)), 30.0f, "outside is brought to the edge");
+    check_near(held.z, 0.0f, "along the way it was heading");
+    check_near(held.y, 7.0f, "and its height is not the edge's business");
+
+    // The corners are the point of a circle: every direction ends the same
+    // distance out, which a square edge cannot do.
+    const glm::vec3 corner = ground->inside_bounds({ 500.0f, 0.0f, 500.0f });
+
+    check_near(glm::length(glm::vec2(corner.x, corner.z)), 30.0f,
+               "and a corner is no further than a side");
+
+    // Dead centre has no direction to be held in, and must not divide by it.
+    const glm::vec3 middle = ground->inside_bounds({ 0.0f, 1.0f, 0.0f });
+
+    check(std::isfinite(middle.x) && std::isfinite(middle.z),
+          "the very middle is not a division by nothing");
+}
+
 int main()
 {
     if(!glfwInit())
@@ -643,6 +687,7 @@ int main()
     test_the_splatmap();
     test_the_map_of_it();
     test_the_second_splatmap();
+    test_the_edge_of_the_world();
     test_pictures_are_not_tinted();
     test_nonsense_coordinates();
 

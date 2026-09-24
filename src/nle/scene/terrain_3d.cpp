@@ -859,6 +859,40 @@ glm::vec3 terrain_3d::place_on_surface(const glm::vec3& p) const
     return { p.x, height_at(p.x, p.z), p.z };
 }
 
+void terrain_3d::set_bounds_radius(float radius)
+{
+    m_bounds_radius = std::max(0.0f, radius);
+}
+
+float terrain_3d::bounds_radius() const
+{
+    return m_bounds_radius;
+}
+
+glm::vec3 terrain_3d::inside_bounds(const glm::vec3& p) const
+{
+    if(m_bounds_radius <= 0.0f)
+    {
+        return p;
+    }
+
+    const glm::vec3 middle = position();
+
+    const glm::vec2 from(p.x - middle.x, p.z - middle.z);
+    const float out = glm::length(from);
+
+    if(out <= m_bounds_radius || out <= 0.0f)
+    {
+        return p;
+    }
+
+    // Held at the edge rather than stopped dead, so walking into it slides
+    // along it the way walking into a wall does.
+    const glm::vec2 held = from * (m_bounds_radius / out);
+
+    return { middle.x + held.x, p.y, middle.z + held.y };
+}
+
 glm::vec3 terrain_3d::ground_tone(int tile_x, int tile_z, float local_y,
                                   const glm::vec3& normal) const
 {
