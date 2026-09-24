@@ -21,6 +21,14 @@ namespace nle
         return m_mesh;
     }
 
+    bool mesh_instance_3d::see_through()
+    {
+        const auto& used = this->material_override() ? this->material_override()
+                         : (m_mesh ? m_mesh->material() : nullptr);
+
+        return used && used->dissolve() < 1.0f;
+    }
+
     void mesh_instance_3d::set_mesh(ref<class mesh_3d> mesh)
     {
         m_mesh = std::move(mesh);

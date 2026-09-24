@@ -1,5 +1,7 @@
 #include "renderer_3d.h"
 
+#include <algorithm>
+
 #include <glm/gtc/matrix_transform.hpp>
 
 namespace nle
@@ -213,12 +215,45 @@ namespace nle
             scene->sky()->render(m_command_buffer, context);
         }
 
+        // Solid things first, then the see-through ones.
+        //
+        // Something see-through does not write depth, and must not: it would
+        // hide what is behind it. The cost is that anything opaque drawn
+        // afterwards paints straight over it, and the order these arrive in
+        // is the order of their addresses -- so whether a portal or a spell's
+        // circle survived the frame depended on where the allocator had put
+        // the ground. Travelling to another level shuffled that, which is why
+        // they went missing on arriving somewhere rather than at any
+        // particular place.
+        std::vector<ref<render_object_3d>> see_through;
+
         for(auto ro : scene->render_objects())
         {
-            if(is_visible(ro, context.eye_position))
+            if(!is_visible(ro, context.eye_position))
             {
-                ro->render(m_command_buffer, context);
+                continue;
             }
+
+            if(ro->see_through())
+            {
+                see_through.push_back(ro);
+                continue;
+            }
+
+            ro->render(m_command_buffer, context);
+        }
+
+        // Far to near among themselves, so two that overlap blend in the
+        // order the eye expects rather than the order they were made in.
+        std::sort(see_through.begin(), see_through.end(),
+                  [&](const ref<render_object_3d>& a, const ref<render_object_3d>& b) {
+                      return glm::distance(a->position(), context.eye_position)
+                           > glm::distance(b->position(), context.eye_position);
+                  });
+
+        for(auto& ro : see_through)
+        {
+            ro->render(m_command_buffer, context);
         }
 
         // Execute all commands through OpenGL backend

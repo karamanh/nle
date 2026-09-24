@@ -35,6 +35,8 @@ public:
     void set_mesh(ref<class mesh_3d> mesh);
 
     void render(render_command_buffer& command_buffer, const render_context& context) override;
+
+    bool see_through() override;
 protected:
     /**
      * @brief Uniforms recorded after the shared ones and before the draw.

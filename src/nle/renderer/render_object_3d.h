@@ -61,6 +61,20 @@ public:
      */
     virtual void render(render_command_buffer& command_buffer, const render_context& context) = 0;
 
+    /**
+     * @brief Whether anything it draws is see-through.
+     *
+     * Something see-through does not write depth -- it must not, or it would
+     * hide what is behind it -- which means anything opaque drawn after it
+     * paints straight over it. So the renderer draws these last, and this is
+     * how it knows which they are.
+     *
+     * False by default: a thing that says nothing is drawn as though it were
+     * solid, which is the safe way round. Drawing an opaque thing late costs
+     * nothing; drawing a see-through one early loses it.
+     */
+    virtual bool see_through() { return false; }
+
     virtual void set_render_mode(enum render_mode rm);
     virtual enum render_mode render_mode() const;
 
