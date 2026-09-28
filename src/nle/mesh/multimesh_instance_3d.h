@@ -28,6 +28,13 @@ public:
 
     void render(render_command_buffer& command_buffer, const render_context& context) override;
 
+    /// Handed down to every part, since each part draws itself: without
+    /// this an override on a model made of several meshes changed nothing.
+    void set_material_override(ref<class material> material_override) override;
+
+    /// See-through when its override says so, like a single mesh.
+    bool see_through() override;
+
     float bounding_radius() const override;
 
 private:

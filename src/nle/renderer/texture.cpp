@@ -55,6 +55,14 @@ namespace nle
         stbi_set_flip_vertically_on_load(flip);
 
         unsigned char *data = stbi_load(path.c_str(), &m_width, &m_height, &m_bit_depth, STBI_rgb_alpha);
+
+        // The flag is stb's, not this texture's: one switch for the whole
+        // program. Left on, it flipped whatever stb decoded next -- which
+        // includes every glTF image, since tinygltf decodes through the same
+        // stb -- so a model loaded after any picture came out with its
+        // texture upside down and its UVs pointing at the wrong islands.
+        stbi_set_flip_vertically_on_load(false);
+
         if (!data)
         {
             utils::prerror("Texture::load_from_file(): nothing here", path);
@@ -76,6 +84,10 @@ namespace nle
         stbi_set_flip_vertically_on_load(flip);
 
         unsigned char *data = stbi_load_from_memory(blob, size, &m_width, &m_height, &m_bit_depth, STBI_rgb_alpha);
+
+        // Off again at once, for the reason given in load_from_file.
+        stbi_set_flip_vertically_on_load(false);
+
         if(!data)
         {
             utils::prerror("Texture::load_from_memory(): error loading from memory");

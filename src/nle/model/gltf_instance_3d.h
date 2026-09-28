@@ -92,6 +92,16 @@ public:
      */
     float bounding_radius() const override;
 
+    /**
+     * @brief Whether it is drawn see-through: when a material override
+     *        says it is not fully opaque.
+     *
+     * So a character can be made translucent as a whole -- somebody hidden,
+     * seen by those who may -- and is then blended, sorted with everything
+     * else see-through and drawn after the solid world, as a mesh would be.
+     */
+    bool see_through() override;
+
 private:
     ref<model_gltf> m_model;
     ref<class animator> m_animator;

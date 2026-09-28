@@ -70,6 +70,22 @@ namespace nle
         }
     }
 
+    void multimesh_instance_3d::set_material_override(ref<class material> material_override)
+    {
+        render_object_3d::set_material_override(material_override);
+
+        for(auto ro : render_objects())
+        {
+            ro->set_material_override(material_override);
+        }
+    }
+
+    bool multimesh_instance_3d::see_through()
+    {
+        const auto& used = this->material_override();
+        return used && used->dissolve() < 1.0f;
+    }
+
     void multimesh_instance_3d::update()
     {
         object_3d::update();

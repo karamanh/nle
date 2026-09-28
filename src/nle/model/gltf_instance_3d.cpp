@@ -197,11 +197,35 @@ void gltf_instance_3d::render(render_command_buffer& command_buffer, const rende
                                        instance_transform * m_animator->node_world_matrix(primitive.node));
         }
 
+        // Translucent as a whole when an override says so: blended, and not
+        // writing depth, or a see-through body hides what is behind it as
+        // well as a solid one would.
+        const bool faint = override_material && override_material->dissolve() < 1.0f;
+
+        if(faint)
+        {
+            command_buffer.set_blending(override_material->blending());
+            command_buffer.set_depth_mask(false);
+        }
+
         command_buffer.draw_elements(static_cast<GLenum>(this->primitive_type()),
                                      primitive.mesh->vao(),
                                      primitive.mesh->ebo(),
                                      primitive.mesh->indices().size());
+
+        if(faint)
+        {
+            command_buffer.set_depth_mask(true);
+            command_buffer.set_blending(blend_mode::none);
+        }
     }
+}
+
+bool gltf_instance_3d::see_through()
+{
+    const auto& override_material = this->material_override();
+
+    return override_material && override_material->dissolve() < 1.0f;
 }
 
 } // namespace nle

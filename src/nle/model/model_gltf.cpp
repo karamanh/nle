@@ -423,6 +423,14 @@ void model_gltf::load(const std::string& path)
 
     const bool binary = path.size() >= 4 && path.compare(path.size() - 4, 4, ".glb") == 0;
 
+    // glTF images are decoded by stb, whose flip-on-load is one global
+    // switch that anything else loading a picture may have left on. glTF
+    // wants its rows exactly as stored, so it is said here rather than
+    // trusted: a texture decoded upside down is a model whose every UV lands
+    // on the wrong part of its atlas, and it only happened to models loaded
+    // after some other picture had been.
+    stbi_set_flip_vertically_on_load(false);
+
     const bool loaded = binary
         ? loader.LoadBinaryFromFile(&gltf, &error, &warning, path)
         : loader.LoadASCIIFromFile(&gltf, &error, &warning, path);
