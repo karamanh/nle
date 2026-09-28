@@ -1,6 +1,8 @@
 #include "model_gltf.h"
 #include "gltf_instance_3d.h"
 
+#include "../animation/retarget.h"
+
 #include "../core/utils.h"
 
 // tinygltf pulls in stb_image and nlohmann's json. The stb implementation comes
@@ -321,6 +323,61 @@ std::vector<std::string> model_gltf::animation_names() const
     return names;
 }
 
+size_t model_gltf::borrow_animations(const model_gltf& donor, bool replace)
+{
+    if(&donor == this || !donor.m_skeleton || !m_skeleton)
+    {
+        return 0;
+    }
+
+    const std::vector<int> bones = match_humanoid_bones(*donor.m_skeleton, *m_skeleton);
+
+    if(std::none_of(bones.begin(), bones.end(), [](int b) { return b >= 0; }))
+    {
+        utils::prerror("model_gltf:", m_path, "and", donor.m_path,
+                       "are not rigs this can match; no clips borrowed");
+        return 0;
+    }
+
+    size_t borrowed = 0;
+
+    for(const auto& clip : donor.m_animations)
+    {
+        if(!clip)
+        {
+            continue;
+        }
+
+        auto mine = std::find_if(m_animations.begin(), m_animations.end(),
+                                 [&](const ref<animation_clip>& c) { return c && c->name() == clip->name(); });
+
+        if(mine != m_animations.end() && !replace)
+        {
+            continue;
+        }
+
+        auto converted = retarget_clip(*clip, *donor.m_skeleton, *m_skeleton, bones);
+
+        if(!converted)
+        {
+            continue;
+        }
+
+        if(mine != m_animations.end())
+        {
+            *mine = converted;
+        }
+        else
+        {
+            m_animations.push_back(converted);
+        }
+
+        ++borrowed;
+    }
+
+    return borrowed;
+}
+
 bool model_gltf::skinned() const
 {
     for(const auto& skin : m_skeleton->skins())
@@ -412,10 +469,24 @@ void model_gltf::load(const std::string& path)
         ref<class texture> result;
         if(!image.image.empty() && image.width > 0 && image.height > 0)
         {
+            // Small textures are palettes: a few dozen texels across, each a
+            // flat colour a whole face is painted from, and blending between
+            // them paints the robe onto the face. Large ones are baked
+            // atlases -- an auto-unwrapped model is hundreds of small islands
+            // packed into one picture -- and sampled without mipmaps, a
+            // character across a field picks one texel in a hundred from
+            // whichever island happens to be nearest. That reads as a texture
+            // mapped onto the wrong model.
+            constexpr int LARGEST_PALETTE = 512;
+
+            const texture_filter filtering = std::max(image.width, image.height) > LARGEST_PALETTE
+                                                 ? texture_filter::smooth
+                                                 : texture_filter::crisp;
+
             // glTF texture space has its origin at the top left, which is
             // where glTexImage2D puts the first row, so no flip is wanted.
             result = make_ref<class texture>(image.image.data(), image.width, image.height,
-                                             image.component, false);
+                                             image.component, false, filtering);
         }
         else
         {

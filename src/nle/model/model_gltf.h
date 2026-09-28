@@ -75,6 +75,24 @@ public:
     const std::vector<ref<animation_clip>>& animations() const;
     std::vector<std::string> animation_names() const;
 
+    /**
+     * @brief Takes on another model's clips, retargeted onto this rig.
+     *
+     * For a family of models rigged alike but animated only once -- five
+     * suits of armour on one body, of which only the first came with more
+     * than a walk. Bones are matched by the shape of the two rigs (see
+     * match_humanoid_bones), so the two need not agree about names.
+     *
+     * Only affects instances created afterwards: an instance copies the
+     * clip list when it is made.
+     *
+     * @param replace  whether a clip this model already has is replaced by
+     *                 the donor's. Off by default: a model's own clip was
+     *                 made for it, and is the better of the two.
+     * @return how many clips were added or replaced.
+     */
+    size_t borrow_animations(const model_gltf& donor, bool replace = false);
+
     /// True when the file contains at least one skin with joints.
     bool skinned() const;
 

@@ -19,7 +19,9 @@ namespace nle
         load_from_memory(blob, size, flip);
     }
 
-    texture::texture(const uint8_t *pixels, int width, int height, int channels, bool flip)
+    texture::texture(const uint8_t *pixels, int width, int height, int channels, bool flip,
+                     texture_filter filtering)
+        : m_filtering(filtering)
     {
         load_from_pixels(pixels, width, height, channels, flip);
     }

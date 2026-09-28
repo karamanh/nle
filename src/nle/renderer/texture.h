@@ -52,7 +52,8 @@ public:
      * glTF hands back decoded images rather than encoded files, so there is
      * nothing for stb to do. @p channels may be 1, 2, 3 or 4.
      */
-    texture(const uint8_t *pixels, int width, int height, int channels, bool flip = false);
+    texture(const uint8_t *pixels, int width, int height, int channels, bool flip = false,
+            texture_filter filtering = texture_filter::crisp);
 
     virtual ~texture();
 
