@@ -72,6 +72,21 @@ public:
     void draw_outline(const glm::vec2& position, const glm::vec2& size, float thickness,
                       const glm::vec4& color);
 
+    /**
+     * @brief A rectangle with rounded corners.
+     *
+     * Made of rectangles -- a block for the middle and one strip per pixel
+     * row where the corners curve -- so it needs nothing the quad pipeline
+     * does not already have. The strips never overlap, so a translucent
+     * colour stays even.
+     */
+    void draw_rounded_rect(const glm::vec2& position, const glm::vec2& size,
+                           const glm::vec4& color, float radius);
+
+    /// The frame of one, drawn just inside the given bounds.
+    void draw_rounded_outline(const glm::vec2& position, const glm::vec2& size, float thickness,
+                              const glm::vec4& color, float radius);
+
     void draw_texture(const glm::vec2& position, const glm::vec2& size, ref<class texture> texture,
                       const glm::vec4& tint = glm::vec4(1.0f),
                       const glm::vec2& uv_min = glm::vec2(0.0f),

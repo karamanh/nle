@@ -1,5 +1,7 @@
 #include "renderer_2d.h"
 
+#include <cmath>
+
 #include <GL/glew.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -200,6 +202,97 @@ void renderer_2d::draw_rect(const glm::vec2& position, const glm::vec2& size, co
 {
     use_texture(m_white_texture);
     push_quad(position, size, glm::vec2(0.0f), glm::vec2(1.0f), color);
+}
+
+namespace
+{
+    /// How far in from the side a corner of @p radius is, @p from_edge
+    /// pixels in from the top or bottom -- at the middle of that pixel row.
+    float corner_inset(float radius, float from_edge)
+    {
+        const float dy = radius - (from_edge + 0.5f);
+
+        return radius - std::sqrt(std::max(0.0f, radius * radius - dy * dy));
+    }
+}
+
+void renderer_2d::draw_rounded_rect(const glm::vec2& position, const glm::vec2& size,
+                                    const glm::vec4& color, float radius)
+{
+    radius = std::floor(std::clamp(radius, 0.0f, std::min(size.x, size.y) * 0.5f));
+
+    if(radius < 1.0f)
+    {
+        draw_rect(position, size, color);
+        return;
+    }
+
+    // The middle, between the two curved bands.
+    draw_rect({ position.x, position.y + radius }, { size.x, size.y - 2.0f * radius }, color);
+
+    // A row at a time where the corners curve, top and bottom together.
+    for(int row = 0; row < static_cast<int>(radius); ++row)
+    {
+        const float in = corner_inset(radius, static_cast<float>(row));
+        const float wide = size.x - 2.0f * in;
+
+        draw_rect({ position.x + in, position.y + static_cast<float>(row) }, { wide, 1.0f }, color);
+        draw_rect({ position.x + in, position.y + size.y - 1.0f - static_cast<float>(row) },
+                  { wide, 1.0f }, color);
+    }
+}
+
+void renderer_2d::draw_rounded_outline(const glm::vec2& position, const glm::vec2& size,
+                                       float thickness, const glm::vec4& color, float radius)
+{
+    radius = std::floor(std::clamp(radius, 0.0f, std::min(size.x, size.y) * 0.5f));
+
+    if(radius < 1.0f || thickness <= 0.0f)
+    {
+        draw_outline(position, size, thickness, color);
+        return;
+    }
+
+    thickness = std::min(thickness, radius);
+
+    // The straight sides, between the corners.
+    draw_rect({ position.x + radius, position.y }, { size.x - 2.0f * radius, thickness }, color);
+    draw_rect({ position.x + radius, position.y + size.y - thickness },
+              { size.x - 2.0f * radius, thickness }, color);
+    draw_rect({ position.x, position.y + radius }, { thickness, size.y - 2.0f * radius }, color);
+    draw_rect({ position.x + size.x - thickness, position.y + radius },
+              { thickness, size.y - 2.0f * radius }, color);
+
+    // The corners, a row at a time: from the outer curve in to the inner
+    // one, which is the same curve a thickness further in.
+    const float inner_radius = radius - thickness;
+
+    for(int row = 0; row < static_cast<int>(radius); ++row)
+    {
+        const float outer = corner_inset(radius, static_cast<float>(row));
+
+        // Past the inner curve's rows the band is solid out to the straight
+        // part; within them it stops where the inner curve starts.
+        const float inner = static_cast<float>(row) < thickness
+            ? radius
+            : thickness + corner_inset(inner_radius, static_cast<float>(row) - thickness);
+
+        const float span = std::max(0.0f, std::min(inner, radius) - outer);
+
+        if(span <= 0.0f)
+        {
+            continue;
+        }
+
+        const float top = position.y + static_cast<float>(row);
+        const float bottom = position.y + size.y - 1.0f - static_cast<float>(row);
+
+        for(const float y : { top, bottom })
+        {
+            draw_rect({ position.x + outer, y }, { span, 1.0f }, color);
+            draw_rect({ position.x + size.x - outer - span, y }, { span, 1.0f }, color);
+        }
+    }
 }
 
 void renderer_2d::draw_outline(const glm::vec2& position, const glm::vec2& size, float thickness,
