@@ -107,7 +107,7 @@ namespace nle
                 {
                     if (fs::exists(texpath))
                     {
-                        tex = make_ref<class texture>(texpath);
+                        tex = make_ref<class texture>(texpath.string());
                     }
                 }
                 else if (texpath.is_relative())
@@ -116,7 +116,7 @@ namespace nle
                     {
                         if (dir_entry.path().filename() == texpath.filename())
                         {
-                            tex = make_ref<class texture>(dir_entry.path());
+                            tex = make_ref<class texture>(dir_entry.path().string());
                         }
                     }
                 }

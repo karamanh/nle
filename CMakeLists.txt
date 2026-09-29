@@ -26,39 +26,89 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(NLE_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}" CACHE INTERNAL "nle source root")
 
 option(NLE_BUILD_TESTS "Build the test executables" ON)
+
+# For a program that is installed rather than run from a source tree: shaders
+# and the engine's own pictures are looked for beside it, in "shader" and
+# "nle-assets", instead of where this tree keeps them.
+option(NLE_RELATIVE_RUNTIME_DIRS "Look for shaders and engine assets beside the program" OFF)
 option(NLE_ENABLE_DEBUG_OUTPUT "Define DEBUG for verbose engine logging" ON)
 
 # ---------------------------------------------------------------------------
 # dependencies
 # ---------------------------------------------------------------------------
 
-find_package(OpenGL REQUIRED)
-find_package(GLEW REQUIRED)
-find_package(glfw3 QUIET)
-
-find_package(PkgConfig REQUIRED)
-
-if(NOT glfw3_FOUND)
-    pkg_check_modules(GLFW REQUIRED IMPORTED_TARGET glfw3)
+# From the system on a Linux working copy; downloaded, pinned and built here
+# for anything that has to run elsewhere -- which is every Windows build.
+if(WIN32 OR CMAKE_CROSSCOMPILING)
+    set(NLE_BUNDLED_DEFAULT ON)
+else()
+    set(NLE_BUNDLED_DEFAULT OFF)
 endif()
 
-# imgui and stb come from the system. The headers come from there too, which
-# they did not use to: vendor/imgui is pinned at 1.86 while the system library
-# here is 1.90.1, and ImGuiIO does not have the same layout in both. Compiling
-# against one and linking the other is undefined behaviour that happens to
-# start by silently reading the wrong fields. vendor/imgui is left in place as
-# a submodule but is no longer on the include path.
-pkg_check_modules(IMGUI IMPORTED_TARGET imgui)
+option(NLE_BUNDLED_DEPENDENCIES "Download and build the libraries the engine uses rather than use the system's"
+       ${NLE_BUNDLED_DEFAULT})
 
-# Sound is optional. A machine without the mixer still builds and still
-# runs; nle::audio simply reports that it is not ready and everything it is
-# asked to play is silence. Refusing to build a game because the speakers are
-# missing would be the wrong trade.
-pkg_check_modules(SDL2MIXER IMPORTED_TARGET SDL2_mixer sdl2)
+find_package(OpenGL REQUIRED)
 
-find_library(STB_LIBRARY NAMES stb)
-if(NOT STB_LIBRARY)
-    message(FATAL_ERROR "libstb not found; it provides the stb_image implementation")
+if(NLE_BUNDLED_DEPENDENCIES)
+    include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/bundled_dependencies.cmake")
+else()
+    find_package(GLEW REQUIRED)
+    find_package(glfw3 QUIET)
+
+    find_package(PkgConfig REQUIRED)
+
+    if(NOT glfw3_FOUND)
+        pkg_check_modules(GLFW REQUIRED IMPORTED_TARGET glfw3)
+    endif()
+
+    # imgui and stb come from the system. The headers come from there too,
+    # which they did not use to: vendor/imgui is pinned at 1.86 while the
+    # system library here is 1.90.1, and ImGuiIO does not have the same layout
+    # in both. Compiling against one and linking the other is undefined
+    # behaviour that happens to start by silently reading the wrong fields.
+    # vendor/imgui is left in place as a submodule but is no longer on the
+    # include path.
+    pkg_check_modules(IMGUI IMPORTED_TARGET imgui)
+
+    # Sound is optional. A machine without the mixer still builds and still
+    # runs; nle::audio simply reports that it is not ready and everything it
+    # is asked to play is silence. Refusing to build a game because the
+    # speakers are missing would be the wrong trade.
+    pkg_check_modules(SDL2MIXER IMPORTED_TARGET SDL2_mixer sdl2)
+
+    find_library(STB_LIBRARY NAMES stb)
+    if(NOT STB_LIBRARY)
+        message(FATAL_ERROR "libstb not found; it provides the stb_image implementation")
+    endif()
+
+    add_library(nle_dependencies INTERFACE)
+
+    target_link_libraries(nle_dependencies INTERFACE
+        OpenGL::GL
+        OpenGL::GLU
+        GLEW::GLEW
+        "${STB_LIBRARY}")
+
+    if(glfw3_FOUND)
+        target_link_libraries(nle_dependencies INTERFACE glfw)
+    else()
+        target_link_libraries(nle_dependencies INTERFACE PkgConfig::GLFW)
+    endif()
+
+    if(IMGUI_FOUND)
+        target_link_libraries(nle_dependencies INTERFACE PkgConfig::IMGUI)
+    else()
+        find_library(IMGUI_LIBRARY NAMES imgui REQUIRED)
+        target_link_libraries(nle_dependencies INTERFACE "${IMGUI_LIBRARY}")
+    endif()
+
+    if(SDL2MIXER_FOUND)
+        target_link_libraries(nle_dependencies INTERFACE PkgConfig::SDL2MIXER)
+        target_compile_definitions(nle_dependencies INTERFACE NLE_HAS_AUDIO)
+    else()
+        message(STATUS "SDL2_mixer not found; nle is being built without sound")
+    endif()
 endif()
 
 # ---------------------------------------------------------------------------
@@ -66,6 +116,11 @@ endif()
 # ---------------------------------------------------------------------------
 
 file(GLOB_RECURSE NLE_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/nle/*.cpp")
+
+# stb's implementation, which a Linux system supplies as a library.
+if(NLE_BUNDLED_DEPENDENCIES)
+    list(APPEND NLE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/vendor/include-shim/stb_implementation.cpp")
+endif()
 
 add_library(nle STATIC ${NLE_SOURCES})
 add_library(nle::nle ALIAS nle)
@@ -85,37 +140,18 @@ if(NLE_ENABLE_DEBUG_OUTPUT)
     target_compile_definitions(nle PUBLIC DEBUG)
 endif()
 
-target_link_libraries(nle PUBLIC
-    OpenGL::GL
-    OpenGL::GLU
-    GLEW::GLEW
-    "${STB_LIBRARY}")
-
-if(glfw3_FOUND)
-    target_link_libraries(nle PUBLIC glfw)
-else()
-    target_link_libraries(nle PUBLIC PkgConfig::GLFW)
-endif()
-
-if(IMGUI_FOUND)
-    target_link_libraries(nle PUBLIC PkgConfig::IMGUI)
-else()
-    find_library(IMGUI_LIBRARY NAMES imgui REQUIRED)
-    target_link_libraries(nle PUBLIC "${IMGUI_LIBRARY}")
-endif()
-
-if(SDL2MIXER_FOUND)
-    target_link_libraries(nle PUBLIC PkgConfig::SDL2MIXER)
-    target_compile_definitions(nle PUBLIC NLE_HAS_AUDIO)
-else()
-    message(STATUS "SDL2_mixer not found; nle is being built without sound")
-endif()
+target_link_libraries(nle PUBLIC nle_dependencies)
 
 # Shaders are read at runtime, so executables need to know where they live.
 set(NLE_SHADER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shader" CACHE PATH "runtime shader directory")
 
 # And the engine's own handful of pictures, of which there is currently one.
 set(NLE_ASSET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets" CACHE PATH "runtime engine asset directory")
+
+if(NLE_RELATIVE_RUNTIME_DIRS)
+    set(NLE_SHADER_DIR "shader")
+    set(NLE_ASSET_DIR "nle-assets")
+endif()
 
 target_compile_definitions(nle PUBLIC
     NLE_SHADER_DIR="${NLE_SHADER_DIR}"

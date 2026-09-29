@@ -9,20 +9,10 @@
 #include <iostream>
 #include <algorithm>
 
-#ifdef __GNUC__
-#  include <features.h>
-#  if __GNUC_PREREQ(8,0)
-	#include <filesystem>
-	namespace fs = std::filesystem;
-#  elif __GNUC_PREREQ(6,0)
-	#include <experimental/filesystem>
-	namespace fs = std::experimental::filesystem;
-#  else
-//       Else
-#  endif
-#else
-//    If not gcc
-#endif
+// C++20 throughout, so the standard one on every compiler. The old test for
+// which filesystem a GCC had read glibc's <features.h>, which only glibc has.
+#include <filesystem>
+namespace fs = std::filesystem;
 
 namespace nle::utils
 {
