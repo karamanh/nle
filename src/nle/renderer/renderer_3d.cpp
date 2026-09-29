@@ -1,4 +1,5 @@
 #include "renderer_3d.h"
+#include "render_texture.h"
 
 #include <algorithm>
 
@@ -149,7 +150,7 @@ namespace nle
         m_depth_shader = std::move(shader);
     }
 
-    void renderer_3d::render_scene(ref<scene_3d> scene)
+    void renderer_3d::render_scene(ref<scene_3d> scene, bool with_shadows)
     {
         render_context context = build_render_context(scene);
 
@@ -158,7 +159,7 @@ namespace nle
         // same model matrices -- and drawn with one shader that keeps only
         // depth, so a character's shadow is the shape the character is
         // actually in rather than the shape of its bind pose.
-        const bool casting = m_shadows.enabled() && m_depth_shader
+        const bool casting = with_shadows && m_shadows.enabled() && m_depth_shader
                           && context.directional_light.enabled;
 
         if(casting)
@@ -280,6 +281,62 @@ namespace nle
 
         // Execute all commands through OpenGL backend
         m_opengl_backend.execute_commands(m_command_buffer);
+    }
+
+    void renderer_3d::render_to(ref<scene_3d> scene, render_texture& target, const glm::vec4& clear)
+    {
+        if(!scene || target.framebuffer() == 0)
+        {
+            return;
+        }
+
+        GLint was_bound = 0;
+        GLint viewport[4] = { 0, 0, 0, 0 };
+        GLfloat was_clear[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+        GLboolean depth_mask = GL_TRUE;
+
+        glGetIntegerv(GL_FRAMEBUFFER_BINDING, &was_bound);
+        glGetIntegerv(GL_VIEWPORT, viewport);
+        glGetFloatv(GL_COLOR_CLEAR_VALUE, was_clear);
+        glGetBooleanv(GL_DEPTH_WRITEMASK, &depth_mask);
+
+        GLint blend[4] = { GL_ONE, GL_ZERO, GL_ONE, GL_ZERO };
+        glGetIntegerv(GL_BLEND_SRC_RGB, &blend[0]);
+        glGetIntegerv(GL_BLEND_DST_RGB, &blend[1]);
+        glGetIntegerv(GL_BLEND_SRC_ALPHA, &blend[2]);
+        glGetIntegerv(GL_BLEND_DST_ALPHA, &blend[3]);
+
+        const GLboolean blending = glIsEnabled(GL_BLEND);
+        const GLboolean depth_test = glIsEnabled(GL_DEPTH_TEST);
+        const GLboolean scissor = glIsEnabled(GL_SCISSOR_TEST);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, target.framebuffer());
+        glViewport(0, 0, target.width(), target.height());
+
+        // The state the scene's own drawing assumes it starts from; the
+        // interface in the middle of whose frame this may be has its own.
+        glDisable(GL_BLEND);
+        glDisable(GL_SCISSOR_TEST);
+        glEnable(GL_DEPTH_TEST);
+        glDepthMask(GL_TRUE);
+
+        glClearColor(clear.r, clear.g, clear.b, clear.a);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        scene->set_target_resolution(glm::vec2(target.width(), target.height()));
+        render_scene(scene, false);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, static_cast<GLuint>(was_bound));
+        glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+        glClearColor(was_clear[0], was_clear[1], was_clear[2], was_clear[3]);
+        glDepthMask(depth_mask);
+
+        if(blending) { glEnable(GL_BLEND); } else { glDisable(GL_BLEND); }
+        if(depth_test) { glEnable(GL_DEPTH_TEST); } else { glDisable(GL_DEPTH_TEST); }
+        if(scissor) { glEnable(GL_SCISSOR_TEST); } else { glDisable(GL_SCISSOR_TEST); }
+
+        // The blend function too: see-through things change it.
+        glBlendFuncSeparate(blend[0], blend[1], blend[2], blend[3]);
     }
 
     void renderer_3d::main_routine()

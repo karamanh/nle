@@ -79,6 +79,14 @@ public:
      */
     void set_layout_file(const std::string& path);
 
+    /**
+     * @brief Has the font texture made again before the next frame.
+     *
+     * For fonts added to the atlas after it was first built. Before the
+     * first frame there is nothing to rebuild and adding them is enough.
+     */
+    void rebuild_fonts();
+
     /// True when the interface is using the mouse, so the world should not.
     bool wants_mouse() const;
 

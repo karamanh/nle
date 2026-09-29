@@ -68,6 +68,16 @@ namespace nle
         return m_dissolve;
     }
 
+    void material::set_fog_limit(float limit)
+    {
+        m_fog_limit = limit < 0.0f ? 0.0f : (limit > 1.0f ? 1.0f : limit);
+    }
+
+    float material::fog_limit() const
+    {
+        return m_fog_limit;
+    }
+
     void material::set_accept_light(bool accept)
     {
         m_accept_light = accept;

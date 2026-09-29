@@ -76,6 +76,13 @@ void imgui_layer::set_layout_file(const std::string& path)
     ImGui::GetIO().IniFilename = m_layout_file.empty() ? nullptr : m_layout_file.c_str();
 }
 
+void imgui_layer::rebuild_fonts()
+{
+    // The backend makes its objects again, font texture included, on the
+    // next new frame once they are gone.
+    ImGui_ImplOpenGL3_DestroyDeviceObjects();
+}
+
 bool imgui_layer::frame_open() const
 {
     return m_frame_open;

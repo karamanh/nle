@@ -41,6 +41,16 @@ public:
     void set_dissolve(float dissolve);
     float dissolve() const;
 
+    /**
+     * @brief The most distance fog may take of this surface, nought to one.
+     *
+     * One, the default, lets the fog take all of it past its far distance.
+     * Less keeps a faded silhouette however far off it is -- for scenery on
+     * the horizon, which fog would otherwise simply erase.
+     */
+    void set_fog_limit(float limit);
+    float fog_limit() const;
+
     void set_accept_light(bool accept);
     bool accept_light() const;
 
@@ -67,6 +77,7 @@ private:
     float m_specular_intensity;
     float m_shininess;
     float m_dissolve;
+    float m_fog_limit = 1.0f;
     bool m_accept_light;
     blend_mode m_blending = blend_mode::alpha;
 };

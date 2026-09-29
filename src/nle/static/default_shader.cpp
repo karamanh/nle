@@ -124,6 +124,7 @@ struct Material
     vec3 diffuse;
     vec3 specular;
     int accept_light;
+    float fog_limit;
 };
 
 struct Sky
@@ -234,7 +235,8 @@ void main() {
 
     if (u_sky.distance_fog_enabled == 1)
     {
-        io_color.rgb = mix(io_color.rgb, u_sky.distance_fog_color, fog_factor());
+        io_color.rgb = mix(io_color.rgb, u_sky.distance_fog_color,
+                           min(fog_factor(), u_material.fog_limit));
     }
 }
 )GLSL";

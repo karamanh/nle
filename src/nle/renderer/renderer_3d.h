@@ -75,6 +75,21 @@ public:
      */
     void set_depth_shader(ref<class shader> shader);
 
+    /**
+     * @brief Draws @p scene into @p target rather than the window.
+     *
+     * For a second, small scene shown somewhere in the interface -- the
+     * character on the character screen -- while the window keeps its own.
+     * Cleared to @p clear first, which with an alpha of nought leaves what
+     * nothing covers see-through. No shadows and no bloom: it is a picture,
+     * not the world.
+     *
+     * Leaves whatever framebuffer, viewport and blending were current as
+     * they were, so it may be called in the middle of drawing the interface.
+     */
+    void render_to(ref<scene_3d> scene, class render_texture& target,
+                   const glm::vec4& clear = glm::vec4(0.0f));
+
 private:
     ref<window_glfw> m_render_target;
 
@@ -113,7 +128,7 @@ private:
     bool is_visible(const ref<render_object_3d>& ro, const glm::vec3& eye,
                     const frustum& view);
 
-    void render_scene(ref<scene_3d> scene);
+    void render_scene(ref<scene_3d> scene, bool with_shadows = true);
 
     void main_routine();
 };
