@@ -204,7 +204,9 @@ void opengl_backend::execute_command(const render_command& cmd)
         }
         case command_type::use_shader:
         {
-            bind_shader(std::get<ref<class shader>>(cmd.data));
+            // Whatever the thing asked for, unless one shader is drawing
+            // everything just now.
+            bind_shader(m_forced_shader ? m_forced_shader : std::get<ref<class shader>>(cmd.data));
             break;
         }
         case command_type::set_uniform_matrix4:

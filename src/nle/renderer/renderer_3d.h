@@ -76,6 +76,16 @@ public:
     void set_depth_shader(ref<class shader> shader);
 
     /**
+     * @brief The shader outlines are drawn with: anything given an outline
+     *        is drawn again with it, swollen along its normals and only its
+     *        back faces, so what shows is a rim round its edge.
+     *
+     * Supplied for the same reason as the depth shader. Without one, an
+     * outline asked for is simply not drawn.
+     */
+    void set_outline_shader(ref<class shader> shader);
+
+    /**
      * @brief Draws @p scene into @p target rather than the window.
      *
      * For a second, small scene shown somewhere in the interface -- the
@@ -104,6 +114,11 @@ private:
     class shadow_map m_shadows;
 
     ref<class shader> m_depth_shader;
+    ref<class shader> m_outline_shader;
+
+    /// Recorded one outlined thing at a time, since each may want its own
+    /// width and colour and those are said once per draw.
+    render_command_buffer m_outline_commands;
 
     /// A second buffer, so recording the depth pass does not disturb the
     /// one the lit pass is about to use.
@@ -125,6 +140,9 @@ private:
      * Its layer, then how far away it is, then whether the camera is
      * pointing at it.
      */
+    /// The outline pass, after everything else: see set_outline_shader.
+    void draw_outlines(const ref<scene_3d>& scene, const render_context& context);
+
     bool is_visible(const ref<render_object_3d>& ro, const glm::vec3& eye,
                     const frustum& view);
 

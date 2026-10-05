@@ -75,8 +75,9 @@ bool render_texture::resize(int width, int height)
 
     glGenRenderbuffers(1, &m_depth);
     glBindRenderbuffer(GL_RENDERBUFFER, m_depth);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_depth);
+    // With a stencil, which outlines are masked with.
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_depth);
 
     const GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 

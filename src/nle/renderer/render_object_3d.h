@@ -104,6 +104,21 @@ public:
     virtual void set_material_override(ref<class material> material_override);
     virtual ref<class material> material_override();
 
+    /**
+     * @brief Drawn again round its silhouette in a flat colour: the outline
+     *        a game puts on whatever the pointer is over.
+     *
+     * @param width how far the outline stands out, as a share of the
+     *              distance to the eye, so it is the same few pixels near
+     *              and far. Nought for none, which is the default.
+     *
+     * Needs the renderer to have an outline shader; see
+     * renderer_3d::set_outline_shader.
+     */
+    void set_outline(float width, const glm::vec3& colour = glm::vec3(1.0f));
+    float outline_width() const;
+    const glm::vec3& outline_colour() const;
+
     ref<class render_object_3d> scene();
 
     std::set<ref<class render_object_3d>, std::owner_less<ref<class render_object_3d>>> render_objects();
@@ -128,6 +143,9 @@ private:
     ref<class shader> m_shader;
     ref<class render_object_3d> m_scene;
     ref<class material> m_material_override;
+
+    float m_outline_width = 0.0f;
+    glm::vec3 m_outline_colour = glm::vec3(1.0f);
 
     std::set<ref<class render_object_3d>, std::owner_less<ref<class render_object_3d>>> m_render_objects;
 

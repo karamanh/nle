@@ -71,6 +71,10 @@ public:
 
     const frame_statistics& statistics() const;
 
+    /// Forgets what it believes is bound, for after something has bound a
+    /// program or a buffer without going through here.
+    void invalidate_state_cache();
+
 private:
     /// Set while a pass wants everything drawn with one shader.
     ref<class shader> m_forced_shader;
@@ -105,8 +109,6 @@ private:
     std::unordered_set<GLuint> m_frame_uniform_programs;
 
     frame_statistics m_statistics;
-
-    void invalidate_state_cache();
 };
 
 } // namespace nle

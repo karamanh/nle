@@ -218,8 +218,9 @@ bool bloom::make_target(target& t, int width, int height, bool with_depth)
     {
         glGenRenderbuffers(1, &t.depth);
         glBindRenderbuffer(GL_RENDERBUFFER, t.depth);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, t.width, t.height);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, t.depth);
+        // With a stencil, which outlines are masked with.
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, t.width, t.height);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, t.depth);
     }
 
     const GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);

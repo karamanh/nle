@@ -95,6 +95,22 @@ namespace nle
         return m_material_override;
     }
 
+    void render_object_3d::set_outline(float width, const glm::vec3& colour)
+    {
+        m_outline_width = width > 0.0f ? width : 0.0f;
+        m_outline_colour = colour;
+    }
+
+    float render_object_3d::outline_width() const
+    {
+        return m_outline_width;
+    }
+
+    const glm::vec3& render_object_3d::outline_colour() const
+    {
+        return m_outline_colour;
+    }
+
     nlohmann::json render_object_3d::to_json() const
     {
         auto j = object_3d::to_json();

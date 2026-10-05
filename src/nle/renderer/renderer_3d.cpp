@@ -150,6 +150,11 @@ namespace nle
         m_depth_shader = std::move(shader);
     }
 
+    void renderer_3d::set_outline_shader(ref<class shader> shader)
+    {
+        m_outline_shader = std::move(shader);
+    }
+
     void renderer_3d::render_scene(ref<scene_3d> scene, bool with_shadows)
     {
         render_context context = build_render_context(scene);
@@ -212,9 +217,12 @@ namespace nle
                 // would recognise.
                 m_opengl_backend.begin_frame(from_the_sun);
 
-                m_opengl_backend.force_shader(m_depth_shader);
+                // Each with its own shader, as it has always been drawn: the
+                // depth shader was asked for here, but the backend did not
+                // honour forcing until outlines needed it, and turning it on
+                // for this pass as well would change every shadow in the game
+                // -- particles, which are laid out differently, among them.
                 m_opengl_backend.execute_commands(m_shadow_commands);
-                m_opengl_backend.force_shader(nullptr);
 
                 m_shadows.end(m_render_target->width(), m_render_target->height());
             }
@@ -281,6 +289,88 @@ namespace nle
 
         // Execute all commands through OpenGL backend
         m_opengl_backend.execute_commands(m_command_buffer);
+
+        draw_outlines(scene, context);
+    }
+
+    void renderer_3d::draw_outlines(const ref<scene_3d>& scene, const render_context& context)
+    {
+        if(!m_outline_shader)
+        {
+            return;
+        }
+
+        auto set_uniforms = [&](float width, const glm::vec3& c) {
+            m_outline_shader->use();
+
+            if(const int at = m_outline_shader->uniform_location("u_outline_width"); at != -1)
+            {
+                glUniform1f(at, width);
+            }
+
+            if(const int at = m_outline_shader->uniform_location("u_outline_colour"); at != -1)
+            {
+                glUniform3f(at, c.r, c.g, c.b);
+            }
+        };
+
+        auto draw_with_outline_shader = [&]() {
+            // Bound behind the backend's back just now, so it must not trust
+            // what it thinks is bound.
+            m_opengl_backend.invalidate_state_cache();
+            m_opengl_backend.force_shader(m_outline_shader);
+            m_opengl_backend.execute_commands(m_outline_commands);
+            m_opengl_backend.force_shader(nullptr);
+        };
+
+        bool any = false;
+
+        for(auto ro : scene->render_objects())
+        {
+            if(ro->outline_width() <= 0.0f || !is_visible(ro, context.eye_position, context.view_frustum))
+            {
+                continue;
+            }
+
+            any = true;
+
+            m_outline_commands.clear();
+            ro->render(m_outline_commands, context);
+
+            // First the shape itself, into the stencil and nowhere else:
+            // every pixel it covers, hidden or not, is marked.
+            glClear(GL_STENCIL_BUFFER_BIT);
+            glEnable(GL_STENCIL_TEST);
+            glStencilMask(0xFF);
+            glStencilFunc(GL_ALWAYS, 1, 0xFF);
+            glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+            glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+            glDisable(GL_DEPTH_TEST);
+
+            set_uniforms(0.0f, ro->outline_colour());
+            draw_with_outline_shader();
+
+            // Then the same shape swollen, everywhere it was not: what is
+            // left is a rim exactly round its edge, whatever its normals do.
+            // Depth-tested, so a wall in front hides the rim as it hides the
+            // thing itself.
+            glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+            glStencilMask(0x00);
+            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+            glEnable(GL_DEPTH_TEST);
+
+            set_uniforms(ro->outline_width(), ro->outline_colour());
+            draw_with_outline_shader();
+        }
+
+        if(any)
+        {
+            glStencilMask(0xFF);
+            glDisable(GL_STENCIL_TEST);
+            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+            glEnable(GL_DEPTH_TEST);
+            m_opengl_backend.invalidate_state_cache();
+        }
     }
 
     void renderer_3d::render_to(ref<scene_3d> scene, render_texture& target, const glm::vec4& clear)
