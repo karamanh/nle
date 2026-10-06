@@ -68,7 +68,19 @@ enum class particle_style
      * fast down one line. The emitter is placed where the strike should
      * land and the column arrives at it.
      */
-    bolt
+    bolt,
+
+    /**
+     * @brief Lightning: a jagged arc that strikes, flickers out, and strikes
+     *        again somewhere else after a while.
+     *
+     * Every particle sits on one crooked line from a radius and a half up
+     * down to the emitter, and the line is a new shape every strike. Not
+     * every lifetime strikes: speed is reused as the share that do, nought
+     * to one, so the gaps between are uneven the way real crackling is --
+     * with no timer anywhere outside the shader.
+     */
+    arc
 };
 
 /**
@@ -127,6 +139,16 @@ public:
     float intensity() const;
 
     void render(render_command_buffer& command_buffer, const render_context& context) override;
+
+    /// Light casts no shadow -- and drawn into the shadow pass, a fire aged
+    /// twice a frame.
+    bool casts_shadow() const override { return false; }
+
+    /// Drawn after everything solid. Particles write no depth, so among the
+    /// solid things they were drawn in whatever order the scene held them,
+    /// and a body drawn after a staff's flame painted over it whether it
+    /// stood in front of the flame or behind it.
+    bool see_through() override { return true; }
 
 private:
     /// Builds the one quad and the shader, once for the whole process.

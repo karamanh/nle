@@ -76,6 +76,15 @@ public:
     virtual bool see_through() { return false; }
 
     /**
+     * @brief Whether this is drawn into the sun's shadow map.
+     *
+     * True by default. Something made of light -- particles -- casts no
+     * shadow, and drawing it there anyway drew it with its own shader and
+     * its own blending into a pass that wanted depth and nothing else.
+     */
+    virtual bool casts_shadow() const { return true; }
+
+    /**
      * @brief The radius of a sphere around this, in world units.
      *
      * For asking whether the camera could see it at all. Zero means it does
@@ -115,6 +124,19 @@ public:
      * Needs the renderer to have an outline shader; see
      * renderer_3d::set_outline_shader.
      */
+    /**
+     * @brief A polish laid over it: brighter, a rim of light, a glint.
+     *
+     * @param amount from nought, none, upwards; about one is a lot.
+     * @param colour the tint of the rim and the glint.
+     *
+     * Handed down to the pieces of something made of several, so setting it
+     * on a model sets it on all of it.
+     */
+    void set_sheen(float amount, const glm::vec3& colour = glm::vec3(1.0f));
+    float sheen() const;
+    const glm::vec3& sheen_colour() const;
+
     void set_outline(float width, const glm::vec3& colour = glm::vec3(1.0f));
     float outline_width() const;
     const glm::vec3& outline_colour() const;
@@ -145,6 +167,8 @@ private:
     ref<class material> m_material_override;
 
     float m_outline_width = 0.0f;
+    float m_sheen = 0.0f;
+    glm::vec3 m_sheen_colour = glm::vec3(1.0f);
     glm::vec3 m_outline_colour = glm::vec3(1.0f);
 
     std::set<ref<class render_object_3d>, std::owner_less<ref<class render_object_3d>>> m_render_objects;

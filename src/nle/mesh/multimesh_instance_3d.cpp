@@ -66,6 +66,9 @@ namespace nle
     {
         for(auto ro : render_objects())
         {
+            // The whole of it polished alike: the pieces take the sheen that
+            // was asked of the model.
+            ro->set_sheen(this->sheen(), this->sheen_colour());
             ro->render(command_buffer, context);
         }
     }

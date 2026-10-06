@@ -33,6 +33,17 @@ void opengl_backend::begin_frame(const render_context& context)
     m_frame_uniform_programs.clear();
     m_statistics = frame_statistics{};
     invalidate_state_cache();
+
+    // The state the cache now believes in, made true. Blending is left on
+    // between frames -- the renderer turns it on at the start and bloom puts
+    // it back after its passes -- with whatever function was set last. That
+    // was a particle's additive one after any frame with a fire in it, and
+    // every solid thing drawn before the next change of blending was added
+    // onto what was behind it instead of covering it.
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDepthMask(GL_TRUE);
+    m_current_depth_mask = 1;
 }
 
 void opengl_backend::invalidate_state_cache()
@@ -352,8 +363,12 @@ void opengl_backend::execute_command(const render_command& cmd)
 
             switch (mode)
             {
+                // Back to how every frame starts rather than off: a solid
+                // thing is opaque either way, and a texture with holes in
+                // it -- leaves -- has always been drawn through this.
                 case blend_mode::none:
-                    glDisable(GL_BLEND);
+                    glEnable(GL_BLEND);
+                    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                     break;
 
                 case blend_mode::additive:

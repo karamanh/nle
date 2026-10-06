@@ -208,10 +208,23 @@ void gltf_instance_3d::render(render_command_buffer& command_buffer, const rende
             command_buffer.set_depth_mask(false);
         }
 
+        // Its sheen, for these draws alone.
+        const bool polished = this->sheen() > 0.0f;
+
+        if(polished)
+        {
+            command_buffer.set_uniform("u_sheen", glm::vec4(this->sheen_colour(), this->sheen()));
+        }
+
         command_buffer.draw_elements(static_cast<GLenum>(this->primitive_type()),
                                      primitive.mesh->vao(),
                                      primitive.mesh->ebo(),
                                      primitive.mesh->indices().size());
+
+        if(polished)
+        {
+            command_buffer.set_uniform("u_sheen", glm::vec4(0.0f));
+        }
 
         if(faint)
         {

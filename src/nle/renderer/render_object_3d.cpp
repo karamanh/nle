@@ -95,6 +95,22 @@ namespace nle
         return m_material_override;
     }
 
+    void render_object_3d::set_sheen(float amount, const glm::vec3& colour)
+    {
+        m_sheen = amount > 0.0f ? amount : 0.0f;
+        m_sheen_colour = colour;
+    }
+
+    float render_object_3d::sheen() const
+    {
+        return m_sheen;
+    }
+
+    const glm::vec3& render_object_3d::sheen_colour() const
+    {
+        return m_sheen_colour;
+    }
+
     void render_object_3d::set_outline(float width, const glm::vec3& colour)
     {
         m_outline_width = width > 0.0f ? width : 0.0f;

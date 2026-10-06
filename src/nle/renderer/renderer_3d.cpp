@@ -197,7 +197,7 @@ namespace nle
 
                 for(auto ro : scene->render_objects())
                 {
-                    if(!ro->visible())
+                    if(!ro->visible() || !ro->casts_shadow())
                     {
                         continue;
                     }

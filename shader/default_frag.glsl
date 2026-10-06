@@ -219,6 +219,10 @@ uniform int u_point_light_count;
 uniform Material u_material;
 uniform Sky u_sky;
 uniform vec3 u_eye_position;
+
+// A polish laid over one thing: rgb its colour, w how much. Nought for
+// nearly everything, and set only round the draw of the thing that has it.
+uniform vec4 u_sheen = vec4(0.0);
 uniform float u_time;
 
 /**
@@ -377,6 +381,35 @@ void main() {
     }
 
     io_color = vec4(base_color.rgb * light_factor, base_color.a * u_material.dissolve);
+
+    // A sheen, for something that has been worked on: brighter all over, a
+    // rim of light round its edge, a glint where the sun catches it, and a
+    // band of light sweeping along it -- each more, and the sweep faster,
+    // the further it has been taken. u_sheen.w is how far, nought to one.
+    if (u_sheen.w > 0.0)
+    {
+        float w = u_sheen.w;
+
+        float rim = pow(1.0 - max(dot(normal, view_direction), 0.0), 2.0);
+        vec3 towards_sun = normalize(-u_directional_light.direction);
+        vec3 halfway = normalize(towards_sun + view_direction);
+        float glint = pow(max(dot(normal, halfway), 0.0), 64.0);
+
+        // Along the world rather than the model, so it needs nothing of the
+        // mesh: a narrow band every couple of metres, moving up and across.
+        float phase = dot(io_frag_position, vec3(0.35, 1.0, 0.2)) * 3.0
+                    - u_time * (1.6 + 2.4 * w);
+        float sweep = pow(max(sin(phase), 0.0), 28.0) * smoothstep(0.25, 0.6, w);
+
+        // Kept under where bloom starts, all but the sweep: a polished thing
+        // is not a lamp. The band may just cross it at the top, which is
+        // what makes it read as a glint across a field.
+        vec3 polished = io_color.rgb * (1.0 + 0.3 * w)
+                      + u_sheen.rgb * w * (0.4 * rim + 0.6 * glint + 0.04);
+
+        vec3 lit = max(io_color.rgb, min(polished, vec3(0.97)));
+        io_color.rgb = min(lit + u_sheen.rgb * sweep * (0.25 + 0.55 * w), vec3(1.15));
+    }
 
     if (u_sky.distance_fog_enabled == 1)
     {

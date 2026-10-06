@@ -94,8 +94,22 @@ namespace nle
         // that the shared surface uniforms above would otherwise overwrite.
         record_extra_uniforms(command_buffer, context);
 
+        // A sheen, for this draw alone: set round it and taken off after, so
+        // the next thing drawn with the same program is not polished too.
+        const bool polished = this->sheen() > 0.0f;
+
+        if(polished)
+        {
+            command_buffer.set_uniform("u_sheen", glm::vec4(this->sheen_colour(), this->sheen()));
+        }
+
         // Draw the mesh
         command_buffer.draw_elements(static_cast<GLenum>(this->primitive_type()), this->mesh()->m_vao, this->mesh()->m_ebo, this->mesh()->indices().size());
+
+        if(polished)
+        {
+            command_buffer.set_uniform("u_sheen", glm::vec4(0.0f));
+        }
 
         if(see_through)
         {

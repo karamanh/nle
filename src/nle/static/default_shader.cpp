@@ -16,10 +16,12 @@ out vec4 io_vertex_color;
 out vec2 io_texture_coordinates;
 out vec3 io_normal;
 out vec3 io_frag_position;
+out vec4 io_light_space_position;
 
 uniform mat4 u_model;
 uniform mat4 u_projection;
 uniform mat4 u_view;
+uniform mat4 u_light_space;
 
 // Skinning. u_joint_matrices holds, for the skin this draw belongs to,
 // joint_world_matrix * inverse_bind_matrix for every joint.
@@ -70,6 +72,12 @@ void main() {
     io_texture_coordinates = texture;
     io_normal = mat3(transpose(inverse(model))) * normal;
     io_frag_position = world_position.xyz;
+
+    // Where this ends up in the depth map the sun drew. Worked out here
+    // rather than in the fragment shader because it is a matrix multiply
+    // per vertex instead of one per pixel, and interpolating the result is
+    // exactly the same answer.
+    io_light_space_position = u_light_space * world_position;
     io_vertex_color = vec4(color, 1.0f);
 }
 )GLSL";
@@ -84,6 +92,7 @@ in vec4 io_vertex_color;
 in vec2 io_texture_coordinates;
 in vec3 io_normal;
 in vec3 io_frag_position;
+in vec4 io_light_space_position;
 
 out vec4 io_color;
 
@@ -124,6 +133,9 @@ struct Material
     vec3 diffuse;
     vec3 specular;
     int accept_light;
+
+    // The most the distance fog may take of this surface. One lets it take
+    // everything; less keeps a faded silhouette -- scenery on the horizon.
     float fog_limit;
 };
 
@@ -134,6 +146,152 @@ struct Sky
     float distance_fog_far;
     vec3 distance_fog_color;
 };
+
+// The ground, when this surface is one. Off for everything else, which is
+// everything: a prop pays one comparison and never samples any of these.
+//
+// It lives here rather than in a shader of its own because a second copy of
+// all the lighting and fog below is a second copy that will disagree with
+// this one the first time either is touched.
+uniform sampler2D u_terrain_base;
+uniform sampler2D u_terrain_layer_0;
+uniform sampler2D u_terrain_layer_1;
+uniform sampler2D u_terrain_layer_2;
+uniform sampler2D u_terrain_layer_3;
+uniform sampler2D u_terrain_layer_4;
+uniform sampler2D u_terrain_layer_5;
+uniform sampler2D u_terrain_layer_6;
+uniform sampler2D u_terrain_layer_7;
+
+// One splat map to every four layers, a channel to a layer.
+uniform sampler2D u_terrain_splat;
+uniform sampler2D u_terrain_splat_b;
+
+// How many uv units the ground spans, which is also how many samples the
+// paint has across it. Nought means "this surface is not ground", and every
+// other surface is given nought, because a uniform belongs to the program
+// and the program is shared: without that, the first field of grass drawn
+// would go on to wallpaper every tree behind it.
+uniform float u_terrain_extent;
+
+uniform int u_terrain_base_enabled;
+uniform int u_terrain_layers_enabled;
+uniform int u_terrain_splat_enabled;
+uniform int u_terrain_splat_b_enabled;
+
+uniform float u_terrain_base_tiling;
+uniform vec4 u_terrain_layer_tiling;
+uniform vec4 u_terrain_layer_tiling_b;
+
+/**
+ * The ground's own pictures: a base, and up to four painted over it, mixed
+ * by a splat map whose four channels are the weights the paint brush has
+ * been writing all along.
+ *
+ * Returns white when there is nothing to sample, so that multiplying by it
+ * leaves the vertex colour exactly as it was. Ground painted before there
+ * were any pictures is shaded the way it always was.
+ */
+vec3 ground_colour(vec2 uv)
+{
+    if (u_terrain_extent <= 0.0)
+    {
+        return vec3(1.0);
+    }
+
+    if (u_terrain_base_enabled != 1
+        && u_terrain_splat_enabled != 1
+        && u_terrain_splat_b_enabled != 1)
+    {
+        return vec3(1.0);
+    }
+
+    // The ground's own uv counts tiles rather than running nought to one, so
+    // tiling is a multiple of the whole field only after this.
+    vec2 field = uv / u_terrain_extent;
+
+    vec3 result = vec3(1.0);
+
+    if (u_terrain_base_enabled == 1)
+    {
+        result = texture(u_terrain_base, field * u_terrain_base_tiling).rgb;
+    }
+
+    // One texel to a sample, and there is one more sample than there are
+    // tiles, so uv lands on a texel index directly. The half puts the read at
+    // the texel's middle: without it the whole painting sits half a texel out.
+    vec2 splat_uv = (uv + 0.5) / (u_terrain_extent + 1.0);
+
+    vec4 weights = u_terrain_splat_enabled == 1
+        ? texture(u_terrain_splat, splat_uv)
+        : vec4(0.0);
+
+    // Each over the last, in the order they are painted -- which is how the
+    // brush behaves, and so how a road laid over grass is expected to look.
+    if ((u_terrain_layers_enabled & 1) != 0)
+    {
+        result = mix(result, texture(u_terrain_layer_0, field * u_terrain_layer_tiling.x).rgb,
+                     weights.r);
+    }
+
+    if ((u_terrain_layers_enabled & 2) != 0)
+    {
+        result = mix(result, texture(u_terrain_layer_1, field * u_terrain_layer_tiling.y).rgb,
+                     weights.g);
+    }
+
+    if ((u_terrain_layers_enabled & 4) != 0)
+    {
+        result = mix(result, texture(u_terrain_layer_2, field * u_terrain_layer_tiling.z).rgb,
+                     weights.b);
+    }
+
+    if ((u_terrain_layers_enabled & 8) != 0)
+    {
+        result = mix(result, texture(u_terrain_layer_3, field * u_terrain_layer_tiling.w).rgb,
+                     weights.a);
+    }
+
+    // The next four, from the second map. Skipped entirely when there is no
+    // second map, which is the usual case and costs one comparison.
+    if (u_terrain_splat_b_enabled != 1)
+    {
+        return result;
+    }
+
+    vec4 more = texture(u_terrain_splat_b, splat_uv);
+
+    if ((u_terrain_layers_enabled & 16) != 0)
+    {
+        result = mix(result, texture(u_terrain_layer_4, field * u_terrain_layer_tiling_b.x).rgb,
+                     more.r);
+    }
+
+    if ((u_terrain_layers_enabled & 32) != 0)
+    {
+        result = mix(result, texture(u_terrain_layer_5, field * u_terrain_layer_tiling_b.y).rgb,
+                     more.g);
+    }
+
+    if ((u_terrain_layers_enabled & 64) != 0)
+    {
+        result = mix(result, texture(u_terrain_layer_6, field * u_terrain_layer_tiling_b.z).rgb,
+                     more.b);
+    }
+
+    if ((u_terrain_layers_enabled & 128) != 0)
+    {
+        result = mix(result, texture(u_terrain_layer_7, field * u_terrain_layer_tiling_b.w).rgb,
+                     more.a);
+    }
+
+    return result;
+}
+
+uniform sampler2DShadow u_shadow_map;
+uniform int u_shadows_enabled;
+uniform float u_shadow_softness;
+
 
 uniform int u_lighting_enabled = 1;
 uniform int u_point_lighting_enabled = 1;
@@ -147,9 +305,24 @@ uniform int u_point_light_count;
 uniform Material u_material;
 uniform Sky u_sky;
 uniform vec3 u_eye_position;
+
+// A polish laid over one thing: rgb its colour, w how much. Nought for
+// nearly everything, and set only round the draw of the thing that has it.
+uniform vec4 u_sheen = vec4(0.0);
 uniform float u_time;
 
-vec3 directional_light_contribution(vec3 normal, vec3 view_direction)
+/**
+ * The sun's contribution, with what a shadow may take away kept apart from
+ * what it may not.
+ *
+ * @param shaded how much of the sun reaches here, from sunlight_reaching.
+ *
+ * Ambient is the light that gets everywhere by definition, so a shadow does
+ * not touch it. Shadowing it as well simply dims the whole world -- which
+ * is exactly what happened on a level with its ambient at full white: every
+ * surface went down by the same amount and nothing read as a shadow at all.
+ */
+vec3 directional_light_contribution(vec3 normal, vec3 view_direction, float shaded)
 {
     vec3 direction = normalize(u_directional_light.direction);
 
@@ -165,7 +338,7 @@ vec3 directional_light_contribution(vec3 normal, vec3 view_direction)
     float specular_factor = pow(max(dot(view_direction, reflect_direction), 0.0), max(u_material.shininess, 1.0));
     vec3 specular = u_material.specular * u_directional_light.specular * specular_factor;
 
-    return ambient + diffuse + specular;
+    return ambient + (diffuse + specular) * shaded;
 }
 
 vec3 point_light_contribution(PointLight light, vec3 normal, vec3 view_direction)
@@ -202,6 +375,59 @@ float fog_factor()
     return clamp(f, 0.0, 1.0);
 }
 
+/**
+ * How much of this fragment the sun can actually reach.
+ *
+ * One at full daylight, down towards a floor in shadow -- never nought,
+ * because a shadow that is pure black hides everything in it and reads as a
+ * hole in the world rather than as shade.
+ */
+float sunlight_reaching(vec3 normal)
+{
+    if (u_shadows_enabled != 1)
+    {
+        return 1.0;
+    }
+
+    vec3 projected = io_light_space_position.xyz / io_light_space_position.w;
+
+    projected = projected * 0.5 + 0.5;
+
+    // Past the far plane of the light's box: no opinion, so full daylight.
+    if (projected.z > 1.0)
+    {
+        return 1.0;
+    }
+
+    // Surfaces edge-on to the light need a larger bias, because one texel
+    // of the depth map covers a long way across them. Without the slope
+    // term every ground plane gets stripes at dawn and dusk.
+    float facing = max(dot(normalize(normal), normalize(-u_directional_light.direction)), 0.0);
+    float bias = max(0.0025 * (1.0 - facing), 0.0006);
+
+    vec2 texel = u_shadow_softness / vec2(textureSize(u_shadow_map, 0));
+
+    float lit = 0.0;
+
+    // Nine samples in a ring, which is enough to take the staircase off an
+    // edge without costing what a real blur would.
+    for (int x = -1; x <= 1; ++x)
+    {
+        for (int y = -1; y <= 1; ++y)
+        {
+            vec3 at = vec3(projected.xy + vec2(x, y) * texel, projected.z - bias);
+            lit += texture(u_shadow_map, at);
+        }
+    }
+
+    lit /= 9.0;
+
+    // A floor, so shade is shade rather than a void. It can be lower than
+    // it was now that this only takes the sun away and leaves the ambient
+    // light alone -- nothing goes black, whatever this says.
+    return mix(0.1, 1.0, lit);
+}
+
 void main() {
     vec3 normal = normalize(io_normal);
     vec3 view_direction = normalize(u_eye_position - io_frag_position);
@@ -209,6 +435,11 @@ void main() {
     vec4 base_color = u_texture_enabled == 1
         ? texture(u_texture_0, io_texture_coordinates)
         : io_vertex_color;
+
+    // Ground with pictures on it. White for everything that is not ground,
+    // so this multiply changes nothing at all for a prop.
+    base_color = vec4(base_color.rgb * ground_colour(io_texture_coordinates),
+                      base_color.a);
 
     // Unlit surfaces (the sky, for one) keep their colour untouched.
     vec3 light_factor = vec3(1.0);
@@ -219,7 +450,11 @@ void main() {
 
         if (u_lighting_enabled == 1)
         {
-            light_factor += directional_light_contribution(normal, view_direction);
+            // Only the sun is shadowed. A point light is a lamp in a room
+            // and casting shadows from every one of them would mean a depth
+            // map each; the sun is the one everybody can see the shadow of.
+            light_factor += directional_light_contribution(normal, view_direction,
+                                                           sunlight_reaching(normal));
         }
 
         if (u_point_lighting_enabled == 1)
@@ -232,6 +467,35 @@ void main() {
     }
 
     io_color = vec4(base_color.rgb * light_factor, base_color.a * u_material.dissolve);
+
+    // A sheen, for something that has been worked on: brighter all over, a
+    // rim of light round its edge, a glint where the sun catches it, and a
+    // band of light sweeping along it -- each more, and the sweep faster,
+    // the further it has been taken. u_sheen.w is how far, nought to one.
+    if (u_sheen.w > 0.0)
+    {
+        float w = u_sheen.w;
+
+        float rim = pow(1.0 - max(dot(normal, view_direction), 0.0), 2.0);
+        vec3 towards_sun = normalize(-u_directional_light.direction);
+        vec3 halfway = normalize(towards_sun + view_direction);
+        float glint = pow(max(dot(normal, halfway), 0.0), 64.0);
+
+        // Along the world rather than the model, so it needs nothing of the
+        // mesh: a narrow band every couple of metres, moving up and across.
+        float phase = dot(io_frag_position, vec3(0.35, 1.0, 0.2)) * 3.0
+                    - u_time * (1.6 + 2.4 * w);
+        float sweep = pow(max(sin(phase), 0.0), 28.0) * smoothstep(0.25, 0.6, w);
+
+        // Kept under where bloom starts, all but the sweep: a polished thing
+        // is not a lamp. The band may just cross it at the top, which is
+        // what makes it read as a glint across a field.
+        vec3 polished = io_color.rgb * (1.0 + 0.3 * w)
+                      + u_sheen.rgb * w * (0.4 * rim + 0.6 * glint + 0.04);
+
+        vec3 lit = max(io_color.rgb, min(polished, vec3(0.97)));
+        io_color.rgb = min(lit + u_sheen.rgb * sweep * (0.25 + 0.55 * w), vec3(1.15));
+    }
 
     if (u_sky.distance_fog_enabled == 1)
     {

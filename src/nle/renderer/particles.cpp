@@ -148,6 +148,35 @@ void main()
         // Brightest as it arrives, which is where the eye ends up.
         size *= (0.4 + r.z * 0.5) * (0.35 + age * 0.65);
     }
+    else if(u_style == 6)
+    {
+        // Arc: the whole of it strikes at once, so its age is the strike's
+        // rather than each particle's, and which strike this is decides its
+        // shape and whether it happens at all.
+        age = fract(u_time / u_lifetime);
+        float strike = floor(u_time / u_lifetime);
+
+        float t = fract(r.z * 7.31 + r.y);
+
+        // Six crooked legs from a radius and a half up to the emitter. The
+        // ends wander less than the middle, so it lands on what it hits.
+        float legs = 6.0;
+        float k = floor(t * legs);
+        float along = fract(t * legs);
+
+        vec2 a = (hash3(strike * 13.0 + k).xy - 0.5) * u_radius * 0.9 * min(k, legs - k) / 3.0;
+        vec2 b = (hash3(strike * 13.0 + k + 1.0).xy - 0.5) * u_radius * 0.9
+               * min(k + 1.0, legs - k - 1.0) / 3.0;
+
+        vec2 sideways = mix(a, b, along);
+        float height = u_radius * 1.5 * (1.0 - (k + along) / legs);
+
+        local = vec3(sideways.x, height, sideways.y);
+
+        // Thin, and gone between strikes that do not happen.
+        float strikes = step(hash3(strike * 3.7).x, u_speed);
+        size *= (0.55 + r.x * 0.45) * strikes;
+    }
     else
     {
         // Spark: straight out, fast, gone. Born inside the radius for the
