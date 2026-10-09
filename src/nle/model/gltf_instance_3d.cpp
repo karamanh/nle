@@ -132,9 +132,10 @@ void gltf_instance_3d::render(render_command_buffer& command_buffer, const rende
         return;
     }
 
-    if(m_auto_advance)
+    if(m_auto_advance && context.time != m_advanced_at)
     {
         m_animator->update(context.delta_time);
+        m_advanced_at = context.time;
     }
 
     command_buffer.set_polygon_mode(GL_FRONT_AND_BACK, static_cast<GLenum>(render_mode()));
@@ -206,6 +207,15 @@ void gltf_instance_3d::render(render_command_buffer& command_buffer, const rende
         {
             command_buffer.set_blending(override_material->blending());
             command_buffer.set_depth_mask(false);
+        }
+
+        // As far as fog may hide it. Set after the material's own, which is
+        // what each draw starts from, so nothing needs putting back.
+        if(this->fog_cap() < 1.0f)
+        {
+            const auto& used = override_material ? override_material : primitive.mesh->material();
+            const float material_limit = used ? used->fog_limit() : 1.0f;
+            command_buffer.set_uniform("u_material.fog_limit", std::min(material_limit, this->fog_cap()));
         }
 
         // Its sheen, for these draws alone.

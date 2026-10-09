@@ -107,6 +107,17 @@ private:
     ref<class animator> m_animator;
     bool m_auto_advance = true;
 
+    /**
+     * @brief The frame it last moved on in, by the frame's clock.
+     *
+     * Something may be drawn more than once in a frame -- again for its
+     * outline, again for the sun's shadows -- and each draw used to move
+     * the pose on by a whole frame, so whatever was outlined played its
+     * clips at twice the pace. It moves on in the first draw of a frame and
+     * holds still for the rest.
+     */
+    float m_advanced_at = -1.0f;
+
     /// Nodes whose geometry is not drawn. A set rather than a flag per node,
     /// because hiding anything at all is the unusual case.
     std::set<int> m_hidden_nodes;

@@ -436,6 +436,17 @@ void main() {
         ? texture(u_texture_0, io_texture_coordinates)
         : io_vertex_color;
 
+    // A picture with holes in it -- leaves on a card, a fence, hair -- is cut
+    // out rather than blended. Blended, the clear part still wrote depth, so
+    // whatever happened to be drawn after it (water, the tree behind) was
+    // hidden behind nothing: the same tree drew right or wrong depending on
+    // where it fell in the draw order. Cut out, the holes are holes. Only the
+    // texture's own alpha: a whole thing made faint is still blended.
+    if (u_texture_enabled == 1 && base_color.a < 0.5)
+    {
+        discard;
+    }
+
     // Ground with pictures on it. White for everything that is not ground,
     // so this multiply changes nothing at all for a prop.
     base_color = vec4(base_color.rgb * ground_colour(io_texture_coordinates),

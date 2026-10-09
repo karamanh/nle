@@ -12,7 +12,10 @@
 #include "window_glfw.h"
 #include "../core/utils.h"
 
+#include <algorithm>
+#include <chrono>
 #include <stdexcept>
+#include <thread>
 
 namespace nle
 {
@@ -88,8 +91,65 @@ void window_glfw::display()
         
         glfwSwapBuffers(m_handle);
         glfwPollEvents();
+
+        pace(now);
     }
     m_closed = true;
+}
+
+void window_glfw::set_frame_limit(int fps, int unfocused)
+{
+    m_frame_limit = fps > 0 ? fps : 0;
+    m_unfocused_limit = unfocused > 0 ? unfocused : 0;
+}
+
+void window_glfw::set_vsync(bool on)
+{
+    glfwMakeContextCurrent(m_handle);
+    glfwSwapInterval(on ? 1 : 0);
+}
+
+void window_glfw::pace(double frame_started)
+{
+    // Minimised, nobody sees anything; behind another window, barely.
+    int limit = m_frame_limit;
+
+    if(glfwGetWindowAttrib(m_handle, GLFW_ICONIFIED))
+    {
+        limit = 5;
+    }
+    else if(!glfwGetWindowAttrib(m_handle, GLFW_FOCUSED) && m_unfocused_limit > 0)
+    {
+        limit = limit > 0 ? std::min(limit, m_unfocused_limit) : m_unfocused_limit;
+    }
+
+    if(limit <= 0)
+    {
+        return;
+    }
+
+    const double frame = 1.0 / static_cast<double>(limit);
+
+    // Slept for most of what is left, and the last millisecond waited out by
+    // yielding, since a sleep may overshoot by about that much.
+    for(;;)
+    {
+        const double left = frame - (glfwGetTime() - frame_started);
+
+        if(left <= 0.0)
+        {
+            break;
+        }
+
+        if(left > 0.002)
+        {
+            std::this_thread::sleep_for(std::chrono::duration<double>(left - 0.0015));
+        }
+        else
+        {
+            std::this_thread::yield();
+        }
+    }
 }
 
 void window_glfw::close()

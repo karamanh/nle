@@ -137,6 +137,18 @@ public:
     float sheen() const;
     const glm::vec3& sheen_colour() const;
 
+    /**
+     * @brief The most distance fog may hide this, nought to one.
+     *
+     * One, the default, lets fog take it entirely, as it takes everything.
+     * Less keeps a landmark standing out of the haze however far off it is
+     * -- the one thing on the horizon you are meant to be able to steer by.
+     * The material's own limit still applies; this only lowers it, and for
+     * this object alone.
+     */
+    void set_fog_cap(float cap);
+    float fog_cap() const;
+
     void set_outline(float width, const glm::vec3& colour = glm::vec3(1.0f));
     float outline_width() const;
     const glm::vec3& outline_colour() const;
@@ -168,6 +180,7 @@ private:
 
     float m_outline_width = 0.0f;
     float m_sheen = 0.0f;
+    float m_fog_cap = 1.0f;
     glm::vec3 m_sheen_colour = glm::vec3(1.0f);
     glm::vec3 m_outline_colour = glm::vec3(1.0f);
 

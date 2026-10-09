@@ -94,6 +94,13 @@ namespace nle
         // that the shared surface uniforms above would otherwise overwrite.
         record_extra_uniforms(command_buffer, context);
 
+        // As far as fog may hide it, after the material's own limit.
+        if(this->fog_cap() < 1.0f)
+        {
+            command_buffer.set_uniform("u_material.fog_limit",
+                                       std::min(used ? used->fog_limit() : 1.0f, this->fog_cap()));
+        }
+
         // A sheen, for this draw alone: set round it and taken off after, so
         // the next thing drawn with the same program is not polished too.
         const bool polished = this->sheen() > 0.0f;

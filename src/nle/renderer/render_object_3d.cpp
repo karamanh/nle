@@ -101,6 +101,16 @@ namespace nle
         m_sheen_colour = colour;
     }
 
+    void render_object_3d::set_fog_cap(float cap)
+    {
+        m_fog_cap = cap < 0.0f ? 0.0f : (cap > 1.0f ? 1.0f : cap);
+    }
+
+    float render_object_3d::fog_cap() const
+    {
+        return m_fog_cap;
+    }
+
     float render_object_3d::sheen() const
     {
         return m_sheen;
